@@ -1,0 +1,4 @@
+include README.MD
+include LICENSE
+recursive-exclude docs *
+recursive-include pangenome2panmetabolome *
