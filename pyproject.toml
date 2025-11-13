@@ -34,7 +34,8 @@ dependencies = [
 	"h5py",
 	"hdf5plugin",
     "ppanggolin",
-    "pybiopax"
+    "pybiopax",
+    "anosql",
 ]
 
 license = { file = "LICENSE" }
@@ -60,4 +61,3 @@ pangenome2panmetabolome = "pangenome2panmetabolome.main:main"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
-
