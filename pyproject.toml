@@ -33,9 +33,11 @@ dependencies = [
 	"numpy",
 	"h5py",
 	"hdf5plugin",
-    "ppanggolin",
-    "pybiopax",
-    "anosql",
+	"ppanggolin",
+	"pybiopax",
+	"aiosql",
+	"sparqlwrapper",
+	"python-dotenv",
 ]
 
 license = { file = "LICENSE" }

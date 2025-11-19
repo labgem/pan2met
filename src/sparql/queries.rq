@@ -1,0 +1,51 @@
+# name: get_all_predicate()
+# Get all predicates
+SELECT DISTINCT ?predicate
+WHERE {
+  ?subject ?predicate ?object .
+}
+
+# name: get_all_pathways()
+# Get all pathway IDs
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?pathwayId
+WHERE {
+  ?pathway bp:Pathway ?pathway
+  ?pathwayId bp:id ?pathway .
+}
+
+# name: get_all_sequences()
+# Get all reference protein sequences
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?subject ?sequence WHERE {
+  ?subject bp:sequence ?sequence .
+}
+
+# name: get_id
+# Get BioPAX id
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?item ?predicate ?xref ?id WHERE {
+  ?xref rdf:type bp:UnificationXref . 
+  ?xref bp:id ?id .
+  ?item ?predicate ?xref . 
+}
+
+# name: get_sequence_and_xref_ids()
+# Get reference protein sequences and ID
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?item ?xref ?id ?sequence WHERE {
+  ?xref rdf:type bp:UnificationXref . 
+  ?xref bp:id ?id .
+  ?item bp:xref ?xref . 
+  ?item bp:sequence ?sequence .
+}
+LIMIT 100
+
