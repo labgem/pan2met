@@ -38,6 +38,7 @@ dependencies = [
 	"aiosql",
 	"sparqlwrapper",
 	"python-dotenv",
+	"pythoncyc",
 ]
 
 license = { file = "LICENSE" }

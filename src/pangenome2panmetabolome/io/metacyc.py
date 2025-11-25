@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+
+"""
+Get data from BioCyc PGDB
+
+Before running this script, launch pathway-tools python API with
+   pathway-tools -lisp -python-local-only-non-strict
+
+"""
+
+import os
+import sys
+import logging
+import argparse
+
+import sqlite3
+import aiosql
+import pythoncyc
+from tqdm import tqdm
+
+
+logger = logging.getLogger("pangenome2panmetabolome:io:metacyc")
+logger.setLevel(logging.DEBUG)
+
+PGDB_ID: str = "META"
+METACYC_SQL_QUERIES_PATH: str = os.path.join(
+    os.path.dirname(__file__), "../../sql/metacyc/insert.sql"
+)
+METACYC_SQL_CREATE_PATH: str = os.path.join(
+    os.path.dirname(__file__), "../../sql/metacyc/create.sql"
+)
+
+
+def remove_pipes(identifier: str) -> str:
+    return identifier.replace("|", "")
+
+
+def get_pgdb_reactions(pgdb) -> list[str]:
+    return pgdb.all_rxns(type_of_reactions=":all")
+
+
+def get_pgdb_pathways(pgdb) -> list[str]:
+    return pgdb.all_pathways()
+
+
+def enzymes_of_reaction(pgdb, reaction: str) -> list[str]:
+    return pgdb.enzymes_of_reactions(reaction)
+
+
+def get_monomers_of_enzyme(pgdb, enzyme: str) -> list[str]:
+    return pgdb.monomers_of_protein(enzyme, unmodify=True)
+
+
+def get_reactions_of_pathway(pgdb, pathway: str) -> list[str]:
+    frame_object = pgdb.get_frame_objects([pathway])[0]
+    return frame_object["reaction_list"]
+
+
+def insert_pathway(
+    conn, queries, metacyc_pathway_id: str, metacyc_pathway_name: str
+) -> str:
+    """
+    Insert a pathway in SQL database, and return the created record id.
+    """
+    db_pathway_id = queries.insert_pathway(conn, name=metacyc_pathway_name)
+    queries.insert_crossref(
+        conn,
+        local_table="pathway",
+        local_id=db_pathway_id,
+        reference_database="MetaCyc",
+        reference_id=metacyc_pathway_id,
+    )
+    return db_pathway_id
+
+
+def insert_reaction(
+    conn, queries, metacyc_reaction_id: str, metacyc_reaction_name: str
+) -> str:
+    """
+    Insert a reaction in SQL database, and return the created record id.
+    """
+    db_reaction_id = queries.insert_reaction(conn, name=metacyc_reaction_name)
+    queries.insert_crossref(
+        conn,
+        local_table="reaction",
+        local_id=db_reaction_id,
+        reference_database="MetaCyc",
+        reference_id=metacyc_reaction_id,
+    )
+    return db_reaction_id
+
+
+def add_reaction_to_pathway(conn, queries, db_pathway_id: int, db_reaction_id: int):
+    """
+    Insert a relation pathway - reaction in SQL database
+    """
+    queries.add_reaction_to_pathway(
+        conn, pathway_id=db_pathway_id, reaction_id=db_reaction_id
+    )
+
+
+def name_of_frame(pgdb, frame_id: str) -> str:
+    frame_object = pgdb.get_frame_objects([frame_id])[0]
+    if frame_object["names"] is not None and len(frame_object["names"]) >= 1:
+        return frame_object["names"][0]
+    else:
+        return f"unnamed: {frame_id}"
+
+
+def load_pathway_data_into_sqlite(conn, queries, pgdb):
+    logger.info("Loading pathways data into sqlite")
+    # Load pathways
+    pathways = get_pgdb_pathways(pgdb)
+    for pathway_id in tqdm(pathways):
+        pathway_id_norm = remove_pipes(pathway_id)
+        pathway_name = name_of_frame(pgdb, pathway_id)
+        db_pathway_id = insert_pathway(conn, queries, pathway_id_norm, pathway_name)
+        for reaction_id in get_reactions_of_pathway(pgdb, pathway_id):
+            reaction_id_norm = remove_pipes(reaction_id)
+            reaction_name = name_of_frame(pgdb, reaction_id)
+            db_reaction_id = insert_reaction(
+                conn, queries, reaction_id_norm, reaction_name
+            )
+            add_reaction_to_pathway(conn, queries, db_pathway_id, db_reaction_id)
+    logger.info("Loading done.")
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Load MetaCyc data into a SQLite database."
+    )
+    parser.add_argument("-o", "--outdb", help="Output SQLite database")
+    parser.add_argument(
+        "-f",
+        "--force",
+        action=argparse.BooleanOptionalAction,
+        help="Overwrite existing database SQLite file, if any.",
+    )
+    return parser.parse_args(), parser
+
+
+def main():
+    args, parser = parse_arguments()
+    if args.outdb is None:
+        parser.print_help(sys.stderr)
+        exit(1)
+    schema_queries: aiosql.Queries = aiosql.from_path(
+        METACYC_SQL_CREATE_PATH, "sqlite3"
+    )
+    insert_queries: aiosql.Queries = aiosql.from_path(
+        METACYC_SQL_QUERIES_PATH, "sqlite3"
+    )
+    pgdb = pythoncyc.select_organism("meta")
+    # Prepare the SQLite database schema
+    if os.path.exists(args.outdb) and args.force:
+        os.remove(args.outdb)
+    with sqlite3.connect(args.outdb) as conn:
+        # Create the database schema
+        schema_queries.create_schema(conn)
+        # Load the pathway information in the database
+        load_pathway_data_into_sqlite(conn, insert_queries, pgdb)
+
+
+if __name__ == "__main__":
+    main()
