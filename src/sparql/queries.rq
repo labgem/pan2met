@@ -31,9 +31,9 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
 
 SELECT DISTINCT ?item ?predicate ?xref ?id WHERE {
-  ?xref rdf:type bp:UnificationXref . 
+  ?xref rdf:type bp:UnificationXref .
   ?xref bp:id ?id .
-  ?item ?predicate ?xref . 
+  ?item ?predicate ?xref .
 }
 
 # name: get_sequence_and_xref_ids()
@@ -41,11 +41,152 @@ SELECT DISTINCT ?item ?predicate ?xref ?id WHERE {
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
 
-SELECT DISTINCT ?item ?xref ?id ?sequence WHERE {
-  ?xref rdf:type bp:UnificationXref . 
+SELECT DISTINCT ?id ?sequence WHERE {
+  ?xref rdf:type bp:UnificationXref .
   ?xref bp:id ?id .
-  ?item bp:xref ?xref . 
+  ?item bp:xref ?xref .
   ?item bp:sequence ?sequence .
 }
-LIMIT 100
 
+# name: get_all_protein_sequence_with_id_by_source_database
+# Get all protein sequences with reference identifiers from a give database
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?metacycId ?proteinSequence WHERE {
+  ?xref rdf:type bp:UnificationXref ;
+        bp:id ?metacycId ;
+        bp:db :database .
+  ?referenceProtein bp:xref ?xref .
+  ?referenceProtein bp:sequence ?proteinSequence .
+}
+
+# name: list_reference_db
+# Get the list of database referenced in the Knowledge Base as source of UnificationXref identifiers
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?database WHERE {
+   ?xref rdf:type bp:UnificationXref ;
+         bp:db ?database .
+}
+
+# name: get_metacyc_pathways
+# Get the list of pathway that comes from MetaCyc
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?pathway WHERE {
+    ?xref rdf:type bp:UnificationXref ;
+          bp:db 'MetaCyc' .
+	?pathway bp:xref ?xref ;
+	         rdf:type bp:Pathway .
+}
+
+# name: count_metacyc_pathways
+# Count how many different MetaCyc pathways are referenced
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT (count(distinct ?pathway) as ?count) WHERE {
+    ?xref rdf:type bp:UnificationXref ;
+          bp:db 'MetaCyc' .
+	?pathway bp:xref ?xref ;
+	      rdf:type bp:Pathway .
+}
+
+# name: reactions_of_pathway(pathway_id)
+# List all reaction of a given pathway,
+# regardless it is spontaneous or orphan,
+# neither taking into account the fact that
+# it is a biochemical reaction or a generic reaction
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?reaction ?reactionLabel  WHERE {
+  ?xref rdf:type bp:UnificationXref ;
+        bp:id :pathway_id .
+  ?pathway rdf:type bp:Pathway ;
+            bp:xref ?xref ;
+			bp:pathwayComponent ?reaction .
+}
+
+# name: standard_name_of_reaction(reaction_id)
+# Get the standard name of a reaction by its id in the BioPAX (e.g. biocyc:BiochemicalReaction010302)
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX biocyc: <http://biocyc.org/biopax/biopax-level3#>
+SELECT distinct ?name WHERE {
+    :reaction_id bp:standardName ?name .
+}
+
+# name: metacyc_id_of_an_object(object_iri)
+# Get the MetaCyc ID of an object linked to a UnificationXref,
+# by giving the object IRI (e.g., http://biocyc.org/biopax/biopax-level3#BiochemicalReaction155310)
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX biocyc: <http://biocyc.org/biopax/biopax-level3#>
+SELECT distinct ?id WHERE {
+    ?xref rdf:type bp:UnificationXref ;
+	      bp:id ?id ;
+		  bp:db "MetaCyc" .
+	 :object_iri bp:xref ?xref.
+}
+
+# name: spontaneous_metacyc_reaction()
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?metacycReactionId WHERE {
+  ?reactionXref rdf:type bp:UnificationXref ;
+                bp:id ?metacycReactionId ;
+				bp:db "MetaCyc" .
+  ?reaction rdf:type bp:BiochemicalReaction ;
+            bp:xref ?reactionXref ;
+			bp:spontaneous ?reactionSpontaneous .
+  FILTER (?reactionSpontaneous = true)
+}
+
+# name: spontaneous_reactions_by_pathway(pathway_metacyc_id)
+# Retrieve all MetaCyc reaction identifiers given a MetaCyc pathway id
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT DISTINCT ?metacycPathwayId ?metacycReactionId   WHERE {
+  ?pathwayXref rdf:type bp:UnificationXref ;
+               bp:id :pathway_metacyc_id ;
+               bp:db "MetaCyc" .
+  ?pathway rdf:type bp:Pathway ;
+           bp:xref ?pathwayXref ;
+		   bp:pathwayComponent ?reaction .
+  ?reactionXref rdf:type bp:UnificationXref ;
+                bp:id ?metacycReactionId ;
+				bp:db "MetaCyc" .
+  ?reaction rdf:type bp:BiochemicalReaction ;
+            bp:xref ?reactionXref ;
+			bp:spontaneous ?reactionSpontaneous .
+  FILTER (?reactionSpontaneous = true)
+}
+
+# name: non_spontaneous_reactions_by_pathway(pathway_metacyc_id)
+# Get a list of MetaCyc reaction ID from the list of reactions
+# components of a pathway whose MetaCyc identifier is given.
+# Returns a list of MetaCyc reaction id (e.g., RXN-XXXX),
+# corresponding to reaction that are not spontaneous.
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT DISTINCT ?metacycPathwayId  ?metacycReactionId   WHERE {
+  ?pathwayXref rdf:type bp:UnificationXref ;
+               bp:id :pathway_metacyc_id ;
+               bp:db "MetaCyc" .
+  ?pathway rdf:type bp:Pathway ;
+           bp:xref ?pathwayXref ;
+		   bp:pathwayComponent ?reaction .
+  ?reactionXref rdf:type bp:UnificationXref ;
+                bp:id ?metacycReactionId ;
+				bp:db "MetaCyc" .
+  ?reaction rdf:type bp:BiochemicalReaction ;
+            bp:xref ?reactionXref ;
+  OPTIONAL { ?reaction bp:spontaneous ?reactionSpontaneous . FILTER (?reactionSpontaneous != true) }
+}
