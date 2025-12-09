@@ -24,10 +24,10 @@ logger.setLevel(logging.DEBUG)
 
 PGDB_ID: str = "META"
 METACYC_SQL_QUERIES_PATH: str = os.path.join(
-    os.path.dirname(__file__), "../../sql/metacyc/insert.sql"
+    os.path.dirname(__file__), "../../sql/kb/insert_data.sql"
 )
 METACYC_SQL_CREATE_PATH: str = os.path.join(
-    os.path.dirname(__file__), "../../sql/metacyc/create.sql"
+    os.path.dirname(__file__), "../../sql/kb/create_schema.sql"
 )
 
 
@@ -140,6 +140,8 @@ def parse_arguments():
 
 
 def main():
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.INFO)
     args, parser = parse_arguments()
     if args.outdb is None:
         parser.print_help(sys.stderr)

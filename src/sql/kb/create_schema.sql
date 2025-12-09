@@ -8,12 +8,21 @@ create table protein_reference (
 
 create table protein_monomer (
     id integer not null,
-    constraint pk_protein_monomer primary key (id)
+    protein_reference_id integer,
+    constraint pk_protein_monomer primary key (id),
+);
+
+create table protein_complex_member (
+   complex_id integer not null,
+   protein_monomer_id integer not null,
+   constraint fk_protein_complex_member foreign key protein_monomer_id references protein_monomer (id),
+   constraint primary key (complex_id, protein_monomer_id)
 );
 
 create table reaction (
     id integer not null,
     name text,
+    ec_number text,
     is_spontaneous integer, -- bool (0, 1)
     is_orphan integer, -- bool (0, 1)
     constraint pk_reaction primary key (id),
