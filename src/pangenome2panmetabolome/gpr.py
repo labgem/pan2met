@@ -9,11 +9,13 @@ Launch Pathway Tools python API with:
 
 import logging
 import argparse
-from typing import Iterable, Literal
+from typing import Iterable
 
 import pythoncyc
 
 from .io.metacyc import remove_pipes
+from .asp import catalysis_asp_rule, protein_complex_asp_rule
+
 
 logger = logging.getLogger("pangenome2panmetabolome:gpr")
 
@@ -45,18 +47,13 @@ def proteic_complex_subunits(pgdb, enzyme: str) -> Iterable[str]:
     return components
 
 
-def protein_complex_asp_rule(complex: str, components: list[str]) -> str:
+def is_homomeric(pgdb, polymer: str) -> bool:
+    components = pgdb.get_frame_objects([polymer])[0]["components"]
     return (
-        f'complex("{complex}") :- '
-        + " , ".join(f'monomer("{monomer}")' for monomer in components)
-        + "."
+        is_proteic_complex(pgdb, polymer)
+        and components is not None
+        and len(components) == 1
     )
-
-
-def catalysis_asp_rule(
-    enzyme: str, enzyme_type: Literal["monomer", "complex"], reaction: str
-) -> str:
-    return f'reaction("{reaction}") :- {enzyme_type}("{enzyme}").'
 
 
 def gpr_asp_generator(pgdb) -> Iterable[str]:
@@ -102,9 +99,9 @@ def gpr_asp_generator(pgdb) -> Iterable[str]:
     Remark
     ------
 
-    Note that the rules are list going from the list of known reactions.
+    Note that the rules are listing asp rules, coming from the list of known reactions.
     It does not cover exhaustively the set of protein complex: if a protein complex is referenced
-    in MetaCyc but is not associated with any referenced reaction, it will simply raise not be reported
+    in MetaCyc but is not associated with any referenced reaction, it will simply not be reported
     in any GPR ASP rule.
     """
     # Iter all reactions and generate GPR rules
@@ -113,8 +110,8 @@ def gpr_asp_generator(pgdb) -> Iterable[str]:
         for enzyme in enzymes_of_reaction(pgdb, reaction):
             logger.debug(f"{reaction} catalyzed by {enzyme}")
             if is_proteic_complex(pgdb, enzyme):
-                if "MONOMER" in enzyme:
-                    logger.info(f"Suspicious complex {enzyme}")
+                if "MONOMER" in enzyme and not is_homomeric(pgdb, enzyme):
+                    logger.info(f"complex MONOMER but not homomeric: {enzyme}")
                 yield catalysis_asp_rule(
                     remove_pipes(enzyme), "complex", remove_pipes(reaction)
                 )

@@ -3,8 +3,16 @@
 import logging
 
 logger = logging.getLogger("pangenome2panmetabolome")
-logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
+
+
+def read_list(filename: str) -> list[str]:
+    with open(filename, "r") as f:
+        return f.read().splitlines()
+
+
+def write_output(filename: str, content: list[str]):
+    with open(filename, "w") as output_file:
+        output_file.writelines(line + "\n" for line in content)
 
 
 def static_vars(**kwargs):
