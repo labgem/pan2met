@@ -1,3 +1,7 @@
+"""
+Format Answer Set Programming AnsProlog rules.
+"""
+
 from typing import Literal
 
 
@@ -17,3 +21,11 @@ def catalysis_asp_rule(
 
 def monomer_asp_rule(monomer: str) -> str:
     return f'monomer("{monomer}").'
+
+
+def pathway_asp_rule(pathway: str, reactions: list[str]) -> str:
+    return (
+        f'pathway("{pathway}") :- '
+        + " , ".join(f'reaction("{reaction}")' for reaction in reactions)
+        + "."
+    )

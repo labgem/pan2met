@@ -31,6 +31,34 @@ METACYC_SQL_CREATE_PATH: str = os.path.join(
 )
 
 
+def is_spontaneous(pgdb, reaction: str) -> bool:
+    """
+    Return True if and only if reaction spontaneous_p predicate is True, otherwise returns False.
+    """
+    pgdb[reaction].spontaneous_p is not None and pgdb[reaction].spontaneous_p
+
+
+def is_orphan(pgdb, reaction: str) -> bool:
+    """
+    Return true of value 'orphan_p' is either "YES-CONFIRMED" or "YES-PUTATIVE", False if orphan_p is "NO".
+
+    Raises a value error if orphan_p is neither of these three cases. If orphan_p is None, return None.
+    """
+    if pgdb[reaction].orphan_p is None:
+        logger.warning(f"{reaction} reaction's 'orphan_p' is None")
+        return None
+    orphan_p = pgdb[reaction].orphan_p[0]
+    if orphan_p in ["|YES-CONFIRMED|", "|YES-PUTATIVE|"]:
+        return True
+    elif orphan_p == "|NO|":
+        return False
+    else:
+        raise ValueError(
+            "'orphan_p' predicate is neither YES-CONFIRMED, YES-PUTATIVE nor NO: "
+            + orphan_p
+        )
+
+
 def remove_pipes(identifier: str) -> str:
     return identifier.replace("|", "")
 
@@ -51,9 +79,26 @@ def get_monomers_of_enzyme(pgdb, enzyme: str) -> list[str]:
     return pgdb.monomers_of_protein(enzyme, unmodify=True)
 
 
+def is_pathway(pgdb, pathway: str) -> bool:
+    return pgdb[pathway]["instance_name_template"] == "PWY-*"
+
+
 def get_reactions_of_pathway(pgdb, pathway: str) -> list[str]:
     frame_object = pgdb.get_frame_objects([pathway])[0]
-    return frame_object["reaction_list"]
+    reaction_list = frame_object["reaction_list"]
+    # reaction_list can contain subpathways, so we return also the reactions of the subpathays:
+    # FIXME: this be not the best way to deal with such situations.
+    mask = [is_pathway(pgdb, reaction) for reaction in reaction_list]
+    subpathways = [
+        pathway for index, pathway in enumerate(reaction_list) if mask[index]
+    ]
+    reactions = [
+        pathway for index, pathway in enumerate(reaction_list) if not mask[index]
+    ]
+    for subpathway in subpathways:
+        subreactions = get_reactions_of_pathway(pgdb, subpathway)
+        reactions = reactions + subreactions
+    return reactions
 
 
 def insert_pathway(
