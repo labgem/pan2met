@@ -1,13 +1,22 @@
-#!/usr/bin/env python3
+"""
+Reactome inference
+
+Simple inference rule: if a reaction has an enzyme that can catalyze it in an organism,
+ simply infer the presence of the reaction in the reactome.
+
+"""
 
 from typing import Iterable
 
 from clyngor import solve
 
 from .asp import monomer_asp_rule
+from .knowledge_base import KnowledgeBase
 
 
-def infer_reactome(monomers: list[str], inference_rules_path: str) -> Iterable[str]:
+def infer_reactome_from_monomers(
+    monomers: list[str], inference_rules_path: str
+) -> Iterable[str]:
     """
     Infer the reactome using Answer Set Programming
 
@@ -17,19 +26,19 @@ def infer_reactome(monomers: list[str], inference_rules_path: str) -> Iterable[s
     Arguments
     ---------
 
-        monomers: list of monomer id
-        inference_rules_path: Path to a AnsProlog file (i.e., .lp) with reaction
-        inference rules built from the knowledge base
+        :monomers: list of monomer id
+        :inference_rules_path: Path to a AnsProlog file (i.e., .lp) with reaction inference rules built from the knowledge base
 
-    Returns
+    Yields
     -------
 
-        The list of reaction identifers (e.g., "RXN-1")
+        reaction identifers (e.g., "RXN-1")
 
     Format of the infered reaction atoms
     ------------------------------------
 
     This function expects atoms identified with AnsProlog atoms in answer set such as
+
     .. code:: prolog
 
       reaction("RXN-1").
@@ -43,9 +52,19 @@ def infer_reactome(monomers: list[str], inference_rules_path: str) -> Iterable[s
     answers = solve(
         inference_rules_path, inline=monomer_asp_rules, use_clingo_module=False
     )
-    answer = next(answers)
+    answer = next(answers)  # Take the first answer of the clingo output.
     for predicate, value in answer:
         if predicate == "reaction":
             reaction = value[0]
             reaction = reaction.replace('"', "")
-            yield reaction
+            yield reaction  # For all predicate reaction("RXN-1"), yield RXN-1
+
+
+def infer_reactome_from_ec_numbers(
+    ec_numbers: list[str], kb: KnowledgeBase
+) -> list[str]:
+    reaction_set: set[str] = set()
+    for ec_number in ec_numbers:
+        for reaction in kb.reactions_by_ec_number(ec_number):
+            reaction_set.add(reaction)
+    return list(reaction_set)

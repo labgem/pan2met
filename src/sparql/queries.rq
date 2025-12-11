@@ -190,3 +190,17 @@ SELECT DISTINCT ?metacycPathwayId  ?metacycReactionId   WHERE {
             bp:xref ?reactionXref ;
   OPTIONAL { ?reaction bp:spontaneous ?reactionSpontaneous . FILTER (?reactionSpontaneous != true) }
 }
+
+
+# name: reactions_by_ec_number(ec_number)
+# Get a list of MetaCyc reaction ID given an EC-number (e.g. "1.1.1.1")
+# nb. It will not have a look for any of the other source of reactions (Rhea, etc.)
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT DISTINCT ?reactionId   WHERE {
+  ?reaction bp:eCNumber :ec_number ;
+            bp:xref ?reactionXref .
+  ?reactionXref rdf:type bp:UnificationXref ;
+                bp:db "MetaCyc" ;
+				bp:id ?reactionId .
+}
