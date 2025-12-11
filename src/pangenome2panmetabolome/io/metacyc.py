@@ -184,6 +184,15 @@ def parse_arguments():
     return parser.parse_args(), parser
 
 
+def list_all_monomers(pgdb):
+    return list(
+        filter(
+            lambda monomer: "MONOMER" in monomer,
+            pgdb.get_class_all_instances("|Polypeptides|"),
+        )
+    )
+
+
 def main():
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)
