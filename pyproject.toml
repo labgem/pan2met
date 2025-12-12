@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pangenome2panmetabolome"
-description = "Reconstruct panmetabolome based on pangenome"
+description = "Reconstruct (pan)metabolome based on (pan)genome"
 dynamic = ["version"]
 authors = [
 	{ name = "Samuel Ortion" },
@@ -39,7 +39,7 @@ dependencies = [
 	"sparqlwrapper",
 	"python-dotenv",
 	"pythoncyc",
-    	"clyngor",
+    "clyngor",
 	#"ouisparql", (currently installed from git)
 ]
 

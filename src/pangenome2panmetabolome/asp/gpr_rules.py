@@ -13,36 +13,14 @@ from typing import Iterable
 
 import pythoncyc
 
-from .io.metacyc import remove_pipes
+from ..io.metacyc import (
+    remove_pipes,
+    is_proteic_complex,
+    is_homomeric,
+    proteic_complex_subunits,
+)
 from .asp import catalysis_asp_rule, protein_complex_asp_rule
-
-
-logger = logging.getLogger("pangenome2panmetabolome:gpr")
-
-
-def is_proteic_complex(pgdb, enzyme: str) -> bool:
-    """
-    Assert True if `enzyme` is a protein complex.
-    """
-    return pgdb.complex_p(enzyme)
-
-
-def proteic_complex_subunits(pgdb, enzyme: str) -> Iterable[str]:
-    """
-    Iter over enzyme protein complex subunits
-    """
-    enzyme_frame_objects = pgdb.get_frame_objects([enzyme])[0]
-    components = enzyme_frame_objects["components"]
-    return components
-
-
-def is_homomeric(pgdb, polymer: str) -> bool:
-    components = pgdb.get_frame_objects([polymer])[0]["components"]
-    return (
-        is_proteic_complex(pgdb, polymer)
-        and components is not None
-        and len(components) == 1
-    )
+from ..utils import logger
 
 
 def gpr_asp_generator(pgdb) -> Iterable[str]:

@@ -195,6 +195,7 @@ SELECT DISTINCT ?metacycPathwayId  ?metacycReactionId   WHERE {
 # name: reactions_by_ec_number(ec_number)
 # Get a list of MetaCyc reaction ID given an EC-number (e.g. "1.1.1.1")
 # nb. It will not have a look for any of the other source of reactions (Rhea, etc.)
+# nb. ec_number should be a string literal "1.1.1.1", not 1.1.1.1
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
 SELECT DISTINCT ?reactionId   WHERE {
@@ -203,4 +204,14 @@ SELECT DISTINCT ?reactionId   WHERE {
   ?reactionXref rdf:type bp:UnificationXref ;
                 bp:db "MetaCyc" ;
 				bp:id ?reactionId .
+}
+
+# name: rhea_reactions_by_ec_number(ec_number)
+# Get a list of Rhea reaction id given an EC-number (e.g. 1.1.1.1)
+# nb. ec_number should not be a string literal, but the string itself. (1.1.1.1, not "1.1.1.1")
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rhea: <http://rdf.rhea-db.org/>
+PREFIX enzyme: <http://purl.uniprot.org/enzyme/>
+SELECT DISTINCT ?reaction WHERE {
+   ?reaction rhea:ec enzyme:1.1.1.1 .
 }

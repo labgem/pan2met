@@ -9,12 +9,69 @@ Simple inference rule: if a reaction has an enzyme that can catalyze it in an or
 from typing import Iterable
 
 from clyngor import solve
+import pythoncyc
 
-from .asp import monomer_asp_rule
+from .asp.asp import monomer_asp_rule
 from .knowledge_base import KnowledgeBase
+from .io import metacyc  # TODO: enable more source of knowledge.
+from .utils import logger
 
 
-def infer_reactome_from_monomers(
+def infer_complex_from_monomers(
+    monomers: set[str], complex: str, pgdb: pythoncyc.PGDB
+) -> bool:
+    """
+    True if the given complex can be formed by the given set of protein monomers.
+    """
+    components = metacyc.proteic_complex_subunits(pgdb, complex)
+    if len(components) == 0:
+        logger.error(f"{complex} complex has no components")
+        return False
+    for component in components:
+        if component not in complex:
+            return False
+    return True
+
+
+def infer_complexes_from_monomers(monomers: set[str], pgdb: pythoncyc.PGDB) -> set[str]:
+    complexes: set[str] = set()
+    for complex in pgdb.all_complexes():
+        if infer_complex_from_monomers(monomers, complex, pgdb):
+            complexes.add(complex)
+    return complexes
+
+
+def infer_reactome_from_monomers(monomers: set[str], pgdb: pythoncyc.PGDB) -> set[str]:
+    """
+    Naive inference of a set of reaction.
+
+    Arguments
+    ---------
+
+        monomers -- list of monomer identifiers
+        pgdb -- PythonCyc PGDB adapter
+
+    Yields
+    ------
+
+        reaction identifiers
+    """
+
+    # Start by infering all reachable complex
+    complexes: set[str] = infer_complexes_from_monomers()
+    # Continue, by infering the possible reactions
+    reactions: set[str] = set()
+    for reaction in pgdb.all_rxns():
+        for enzyme in pgdb.enzymes_of_reaction(pgdb, reaction):
+            if metacyc.is_proteic_complex(pgdb, enzyme):
+                if enzyme in complexes:
+                    reactions.add(reaction)
+            elif enzyme in monomers:
+                reactions.add(reaction)
+    return reactions
+
+
+def infer_reactome_from_monomers_asp(
     monomers: list[str], inference_rules_path: str
 ) -> Iterable[str]:
     """

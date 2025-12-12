@@ -12,6 +12,7 @@ import os
 import sys
 import logging
 import argparse
+from typing import Iterable
 
 import sqlite3
 import aiosql
@@ -190,6 +191,31 @@ def list_all_monomers(pgdb):
             lambda monomer: "MONOMER" in monomer,
             pgdb.get_class_all_instances("|Polypeptides|"),
         )
+    )
+
+
+def is_proteic_complex(pgdb, enzyme: str) -> bool:
+    """
+    Assert True if `enzyme` is a protein complex.
+    """
+    return pgdb.complex_p(enzyme)
+
+
+def proteic_complex_subunits(pgdb, enzyme: str) -> Iterable[str]:
+    """
+    Iter over enzyme protein complex subunits
+    """
+    enzyme_frame_objects = pgdb.get_frame_objects([enzyme])[0]
+    components = enzyme_frame_objects["components"]
+    return components
+
+
+def is_homomeric(pgdb, polymer: str) -> bool:
+    components = pgdb.get_frame_objects([polymer])[0]["components"]
+    return (
+        is_proteic_complex(pgdb, polymer)
+        and components is not None
+        and len(components) == 1
     )
 
 
