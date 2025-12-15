@@ -14,7 +14,10 @@ help:
 
 .PHONY: help Makefile
 
+api:
+	sphinx-apidoc -f -o source/pydoc ../src/pangenome2panmetabolome
+
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
+%: Makefile api
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

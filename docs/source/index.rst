@@ -10,5 +10,5 @@ pangenome2panmetabolome documentation
 
 .. toctree::
 
-   tutorial/index
-   api/index
+   Tutorials <tutorial/index>
+   API <pydoc/modules>
