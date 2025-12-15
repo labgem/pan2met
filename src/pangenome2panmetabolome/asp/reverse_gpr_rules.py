@@ -12,7 +12,7 @@ from ..utils import read_list, write_output
 
 def reverse_gpr_asp(gpr_rules: Iterable[str]) -> Iterable[str]:
     """
-    Convert forward GPR ASP rules:
+    Convert forward GPR ASP rules to reverse GPR rules.
 
     .. code:: prolog
 
@@ -26,7 +26,8 @@ def reverse_gpr_asp(gpr_rules: Iterable[str]) -> Iterable[str]:
 
       potential_complex("CPLX-1") :- reaction("RXN-1").
       potential_monomer("MONOMER-C") :- reaction("RXN-2").
-      potential_monomer("MONOMER-A") , potential_monomer("MONOMER-B") :- potential_complex("CPLX-1").
+      potential_monomer("MONOMER-A") :- potential_complex("CPLX-1").
+      potential_monomer("MONOMER-B") :- potential_complex("CPLX-1").
 
     This is useful to infer the potential set of monomer that may be involved in the catalyzis of a set of reactions.
     """

@@ -4,7 +4,7 @@
 %        - a list of reactions that is expected to be realized in an organism,
 %        - a set of potential monomers
 %        - a set of inference rule from monomer to reactions,
-% compute a minimal list of monomers that is required to realize the reaction.
+% compute a minimal set of monomers that is required to realize the reaction.
 %
 % Usage:
 % clingo reactions.lp potential_monomers.lp gpr_rules.lp
