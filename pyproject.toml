@@ -39,8 +39,8 @@ dependencies = [
 	"sparqlwrapper",
 	"python-dotenv",
 	"pythoncyc",
-    "clyngor",
-	#"ouisparql", (currently installed from git)
+	"clyngor",
+	"ouisparql"
 ]
 
 license = { file = "LICENSE" }
