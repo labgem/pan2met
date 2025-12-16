@@ -1,3 +1,4 @@
+.gitlab-ci-local
 data
 *.html
 *.db
@@ -218,3 +219,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 tmp/
+# pixi environments
+.pixi/*
+!.pixi/config.toml
