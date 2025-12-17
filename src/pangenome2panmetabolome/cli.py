@@ -9,7 +9,7 @@ import logging
 
 from .utils import logger, read_list, write_output
 
-from .reactome import infer_reactome
+from .reactome import infer_reactome_from_monomers_asp, minimal_monomer_set
 from .metabolome import infer_metabolome
 
 
@@ -18,8 +18,19 @@ def reactome(args):
     `pangenome2panmetabolome reactome` subcommand
     """
     monomers: list[str] = read_list(args.input)
-    reactions = infer_reactome(monomers, inference_rules_path=args.gpr)
+    reactions = infer_reactome_from_monomers_asp(
+        monomers, inference_rules_path=args.gpr
+    )
     write_output(args.output, reactions)
+
+
+def reverse_reactome(args):
+    """
+    `pangenome2panmetabolome reverse_reactome` subcommand
+    """
+    reactions: list[str] = read_list(args.reactions)
+    monomers: set[str] = minimal_monomer_set(reactions, args.reverse_gpr, args.gpr)
+    write_output(args.output, monomers)
 
 
 def metabolome(args):
@@ -72,6 +83,33 @@ def parse_arguments():
         "listing all identifiers of pathway infered to be present",
         required=True,
     )
+    parser_reverse_reactome = subparsers.add_parser(
+        "reverse_reactome",
+        help="Infer a minimal set of monomers required to catalyze a set of reactions",
+    )
+    parser_reverse_reactome.add_argument(
+        "-r",
+        "--reactions",
+        help="A file containing a list of reaction identifiers",
+        required=True,
+    )
+    parser_reverse_reactome.add_argument(
+        "-o",
+        "--output",
+        help="The path of the output file containing monomer identifiers",
+        required=True,
+    )
+    parser_reverse_reactome.add_argument(
+        "--gpr",
+        help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
+        required=True,
+    )
+    parser_reverse_reactome.add_argument(
+        "--reverse-gpr",
+        help="An AnsProlog 'reverse' Gene-Protein-Reaction (GPR) rules reference file",
+        required=True,
+    )
+    parser_reverse_reactome.set_defaults(func=reverse_reactome)
     parser_metabolome.set_defaults(func=metabolome)
     return parser, parser.parse_args()
 

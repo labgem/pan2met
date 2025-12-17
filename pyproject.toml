@@ -38,7 +38,7 @@ dependencies = [
 	"sparqlwrapper",
 	"python-dotenv",
 	"pythoncyc",
-	"clyngor",
+	#"clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
 	"ouisparql"
 ]
 
@@ -61,7 +61,7 @@ Repository = "https://gitlab.com/sortion/pangenome2panmetabolome"
 # Documentation = ""
 
 [project.scripts]
-pangenome2panmetabolome = "pangenome2panmetabolome.main:main"
+pangenome2panmetabolome = "pangenome2panmetabolome.cli:main"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
