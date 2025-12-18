@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-
-from .main import main
+from . import cli
 
 if __name__ == "__main__":
-    main()
+    cli.main()

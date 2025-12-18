@@ -1,3 +1,7 @@
-from dotenv import load_dotenv
+"""
+(pan)genome to (pan)metabolome
+"""
 
-load_dotenv()
+from . import config
+
+__all__ = ["config"]

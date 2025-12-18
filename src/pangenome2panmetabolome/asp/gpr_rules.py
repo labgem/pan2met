@@ -19,7 +19,7 @@ from ..io.metacyc import (
     is_homomeric,
     proteic_complex_subunits,
 )
-from .asp import catalysis_asp_rule, protein_complex_asp_rule
+from .rule import catalysis_asp_rule, protein_complex_asp_rule
 from ..utils import logger
 
 
@@ -77,7 +77,7 @@ def gpr_asp_generator(pgdb) -> Iterable[str]:
     # Iter all reactions and generate GPR rules
     for reaction in pgdb.all_rxns():
         logger.debug(f"Exploring {reaction}")
-        for enzyme in pgdb.enzymes_of_reaction(pgdb, reaction):
+        for enzyme in pgdb.enzymes_of_reaction(reaction):
             logger.debug(f"{reaction} catalyzed by {enzyme}")
             if is_proteic_complex(pgdb, enzyme):
                 if "MONOMER" in enzyme and not is_homomeric(pgdb, enzyme):

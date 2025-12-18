@@ -88,7 +88,7 @@ def get_reactions_of_pathway(pgdb, pathway: str) -> list[str]:
     frame_object = pgdb.get_frame_objects([pathway])[0]
     reaction_list = frame_object["reaction_list"]
     # reaction_list can contain subpathways, so we return also the reactions of the subpathays:
-    # FIXME: this be not the best way to deal with such situations.
+    # FIXME: this might be not the best way to deal with such situations.
     mask = [is_pathway(pgdb, reaction) for reaction in reaction_list]
     subpathways = [
         pathway for index, pathway in enumerate(reaction_list) if mask[index]
@@ -241,6 +241,13 @@ def main():
         schema_queries.create_schema(conn)
         # Load the pathway information in the database
         load_pathway_data_into_sqlite(conn, insert_queries, pgdb)
+
+
+class SingletonMetaCycPGDB:
+    def __new__(cls):
+        if not hasattr(cls, "instance"):
+            cls.instance = super(SingletonMetaCycPGDB, cls).__new__(cls)
+        return cls.instance
 
 
 if __name__ == "__main__":
