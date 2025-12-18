@@ -119,3 +119,19 @@ Answer: 1
 reaction("RXN-20780")
 SATISFIABLE
 ```
+
+
+
+## Fix clyngor clingo Answer set parsing error
+
+On clingo v5.8.0 (at least), the output Answer set is followed by the execution time, e.g.:
+
+``` text
+Answer 1 (Time: 0.608s)
+```
+
+This cause an int parse error in clyngor (see [clyngor merged pr #34](https://github.com/Aluriak/clyngor/pull/34), until a new version is available on PyPI including this fix, if you have a clingo version having the execution time in answer set output, you should install clyngor with:
+
+``` bash
+pip install git+https://github.com/Aluriak/clyngor@master
+```
