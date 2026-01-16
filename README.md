@@ -135,3 +135,8 @@ This cause an int parse error in clyngor (see [clyngor merged pr #34](https://gi
 ``` bash
 pip install git+https://github.com/Aluriak/clyngor@master
 ```
+
+
+## NCBI-Taxonomy
+
+Download NCBI Taxonomy dump in https://ftp.ncbi.nih.gov/pub/taxonomy/
