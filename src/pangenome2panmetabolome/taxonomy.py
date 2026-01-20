@@ -14,7 +14,7 @@ import csv
 
 class NCBITaxonomyTree:
     def __init__(self, dump_path: str):
-        self.parent_dict = self.parse_parent_dict(dump_path)
+        self.parent_dict = self.parse_parent_dict_even_faster(dump_path)
         self.root_tax_id = 1
 
     def parse_parent_dict(self, dump_path: str) -> dict[int, int]:
@@ -46,6 +46,31 @@ class NCBITaxonomyTree:
             for row in reader:
                 tax_id = int(row["tax_id"].replace("\t", ""))
                 parent_tax_id = int(row["parent tax_id"].replace("\t", ""))
+                parent_dict[tax_id] = parent_tax_id
+        return parent_dict
+
+    def parse_parent_dict_faster(self, dump_path: str) -> dict[int, int]:
+        parent_dict: dict[str, str] = {}
+
+        with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
+            reader = csv.reader(
+                nodes_file,
+                delimiter="|",
+            )
+            for row in reader:
+                tax_id = int(row[0].replace("\t", ""))
+                parent_tax_id = int(row[1].replace("\t", ""))
+                parent_dict[tax_id] = parent_tax_id
+        return parent_dict
+
+    def parse_parent_dict_even_faster(self, dump_path: str) -> dict[int, int]:
+        parent_dict: dict[str, str] = {}
+
+        with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
+            for row in nodes_file:
+                row = row[:20].split("\t|\t")
+                tax_id = int(row[0])
+                parent_tax_id = int(row[1])
                 parent_dict[tax_id] = parent_tax_id
         return parent_dict
 
