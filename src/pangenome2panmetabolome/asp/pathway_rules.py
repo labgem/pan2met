@@ -23,14 +23,21 @@ from typing import Iterable
 
 import pythoncyc
 
-from .utils import logger
-from .io.metacyc import (
+from ..utils import logger
+from ..io.metacyc import (
     get_reactions_of_pathway,
     is_spontaneous,
     is_orphan,
     remove_pipes,
 )
-from .asp import pathway_asp_rule
+
+
+def pathway_asp_rule(pathway: str, reactions: Iterable[str]) -> str:
+    return (
+        f'pathway("{pathway}") :- '
+        + " , ".join(f'reaction("{reaction}")' for reaction in reactions)
+        + "."
+    )
 
 
 def pathway_asp_generator(pgdb, ignore_orphan: bool = False) -> Iterable[str]:

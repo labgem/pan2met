@@ -9,7 +9,7 @@ Launch Pathway Tools python API with:
 
 import logging
 import argparse
-from typing import Iterable
+from typing import Iterable, Literal
 
 import pythoncyc
 
@@ -19,8 +19,21 @@ from ..io.metacyc import (
     is_homomeric,
     proteic_complex_subunits,
 )
-from .rule import catalysis_asp_rule, protein_complex_asp_rule
 from ..utils import logger
+
+
+def catalysis_asp_rule(
+    polypeptide: str, polypeptide_type: Literal["monomer", "complex"], reaction: str
+) -> str:
+    return f'reaction("{reaction}") :- {polypeptide_type}("{polypeptide}").'
+
+
+def protein_complex_asp_rule(complex: str, components: Iterable[str]) -> str:
+    return (
+        f'complex("{complex}") :- '
+        + " , ".join(f'monomer("{component}")' for component in components)
+        + "."
+    )
 
 
 def gpr_asp_generator(pgdb) -> Iterable[str]:
