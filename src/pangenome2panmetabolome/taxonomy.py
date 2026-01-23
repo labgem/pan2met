@@ -21,7 +21,7 @@ class NCBITaxonomyTree:
         """
         Return a dictionnary linking a taxid to its direct parent in the NCBI Taxonomy tree.
         """
-        parent_dict: dict[str, str] = {}
+        parent_dict: dict[int, int] = {}
 
         with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
             reader = csv.DictReader(
@@ -50,7 +50,7 @@ class NCBITaxonomyTree:
         return parent_dict
 
     def parse_parent_dict_faster(self, dump_path: str) -> dict[int, int]:
-        parent_dict: dict[str, str] = {}
+        parent_dict: dict[int, int] = {}
 
         with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
             reader = csv.reader(
@@ -64,7 +64,7 @@ class NCBITaxonomyTree:
         return parent_dict
 
     def parse_parent_dict_even_faster(self, dump_path: str) -> dict[int, int]:
-        parent_dict: dict[str, str] = {}
+        parent_dict: dict[int, int] = {}
 
         with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
             for row in nodes_file:

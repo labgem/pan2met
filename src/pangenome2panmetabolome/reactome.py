@@ -14,10 +14,10 @@ import os
 import clyngor
 import pythoncyc
 
-from .asp import rule
 from .knowledge_base import KnowledgeBase
 from .io import metacyc  # TODO: enable more source of knowledge.
 from .utils import logger
+from . import asp
 
 
 def infer_complex_from_monomers(
@@ -27,7 +27,7 @@ def infer_complex_from_monomers(
     True if the given complex can be formed by the given set of protein monomers.
     """
     components = metacyc.proteic_complex_subunits(pgdb, complex)
-    if components is None or len(components) == 0:
+    if components is None or len(list(components)) == 0:
         logger.error(f"{complex} complex has no components")
         return False
     for component in components:
@@ -110,7 +110,7 @@ def infer_reactome_from_monomers_asp(
 
     """
     SHOW_REACTION_DIRECTIVE = "#show reaction/1."
-    monomer_asp_rules = "\n".join(map(rule.monomer_asp_rule, monomers))
+    monomer_asp_rules = "\n".join(map(asp.rules.monomer_asp_rule, monomers))
     monomer_asp_rules += "\n" + SHOW_REACTION_DIRECTIVE
     answers = clyngor.solve(
         inference_rules_path, inline=monomer_asp_rules, use_clingo_module=False

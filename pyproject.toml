@@ -39,7 +39,10 @@ dependencies = [
 	"python-dotenv",
 	"pythoncyc",
 	#"clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
-	"ouisparql"
+	"ouisparql",
+	"pytest>=9.0.2",
+	"psycopg>=3.3.2",
+	"mpwt>=0.8.8",
 ]
 
 license = { file = "LICENSE" }
