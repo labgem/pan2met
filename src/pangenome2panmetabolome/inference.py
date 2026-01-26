@@ -5,13 +5,15 @@ based on its annotated (pan)genome.
 """
 
 import logging
+import argparse
 
+from .utils import read_list
 from .config import config
 from .knowledge_base import KnowledgeBase
+from .io.metabiantes.kb import MetabiantesKnowledgeBase
 from .taxonomy import NCBITaxonomyTree
 
 logger = logging.getLogger("pangenome2panmetabolome:inference")
-logger.setLevel(logging.DEBUG)
 
 
 class PathwayInference:
@@ -91,11 +93,14 @@ class PathwayInference:
         $$
 
         """
-        return (
-            self.presence_score(reaction_id)
-            + self.uniqueness_score(reaction_id)
-            + self.key_reaction_score(reaction_id, pathway_id)
+        presence_score = self.presence_score(reaction_id)
+        uniqueness_score = self.uniqueness_score(reaction_id)
+        key_reaction_score = self.key_reaction_score(reaction_id, pathway_id)
+        logger.debug(
+            f"Pathway {pathway_id}: reaction({reaction_id}) presence({presence_score}) uniqueness({uniqueness_score}), key_reaction({key_reaction_score}))"
         )
+        score = presence_score + uniqueness_score + key_reaction_score
+        return score
 
     def presence_score(self, reaction_id: str) -> float:
         if reaction_id in self.reactome:
@@ -103,13 +108,7 @@ class PathwayInference:
         else:
             return 0
 
-    def uniqueness_score(
-        self,
-        reaction_id: str,
-        max_score: float = 0.6,
-        min_score: float = 0.0,
-        max_pathway_uniqueness: int = 10,
-    ) -> float:
+    def uniqueness_score(self, reaction_id: str) -> float:
         r"""
         Unique score $U$ ranges between 0.6 for reaction belonging to a single pathway, and 0 for reaction present in multiple pathways.
 
@@ -128,13 +127,15 @@ class PathwayInference:
         TODO: try to dive deeper in how PathoLogic deals with this computation.
 
         """
-
-        slope: float = (max_score - min_score) / (1 - max_pathway_uniqueness)
+        if reaction_id not in self.reactome:
+            return 0
         pathways_having_reaction: int = len(
             self.template.pathways_with_reaction(reaction_id)
         )
-        score: float = max(0.0, (1.0 - pathways_having_reaction) * slope + max_score)
-        return score
+        if pathways_having_reaction > 2:
+            return 0
+        else:
+            return 0.6
 
     def key_reaction_score(self, reaction: str, pathway: str) -> float:
         if self.template.reaction_is_key(reaction, pathway):
@@ -155,6 +156,11 @@ class PathwayInference:
         PS = \frac{\sum_{r \in R}RS(r)}{|R|} + T
         $$
         """
+        if len(non_orphan_non_spontaneous_pathway_reactions) == 0:
+            logger.debug(
+                f"Pathway {pathway_id} has no non-orphan non-spontaneous reaction."
+            )
+            return 0
         score: float = sum(
             self.reaction_score(reaction_id, pathway_id)
             for reaction_id in non_orphan_non_spontaneous_pathway_reactions
@@ -162,6 +168,7 @@ class PathwayInference:
 
         score += self.taxonomic_range_boost(pathway_id)
 
+        score /= len(non_orphan_non_spontaneous_pathway_reactions)
         return score
 
     def taxonomic_range_boost(self, pathway: str):
@@ -222,7 +229,9 @@ class PathwayInference:
         # TODO
 
         # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
-        all_reactions_are_present: bool = all(
+        all_reactions_are_present: bool = len(
+            non_orphan_non_spontaneous_pathway_reactions
+        ) >= 1 and all(
             reaction in self.reactome
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
@@ -233,24 +242,27 @@ class PathwayInference:
         if all_reactions_are_present:
             if in_taxonomic_range:
                 logger.debug(
-                    f"Pathway {pathway_id} accepted because 'all reactions are present' and 'in taxonomic range'"
+                    f"Pathway {pathway_id} accepted because all reactions are present and in taxonomic range."
                 )
                 return True
             elif len(non_orphan_non_spontaneous_pathway_reactions) >= 3:
                 logger.debug(
-                    f"Pathway {pathway_id} accepted because 'all reactions are present' and 'at least 3 reactions are non orphan and non spontaneous' despite not being 'in taxonomic range'"
+                    f"Pathway {pathway_id} accepted because all reactions are present and at least 3 reactions are non orphan and non spontaneous despite not being in taxonomic rang"
                 )
+                return True
         else:
             logger.debug(
-                f"Pathway {pathway_id}: criterion 'all reactions are present' is not satisfied."
+                f"Pathway {pathway_id} criterion all reactions are present is not satisfied."
             )
 
         # REJECT P if P is outside its taxonomic range
         if not in_taxonomic_range:
             logger.debug(
-                f"Pathway {pathway_id} is rejected because 'not in taxonomic range'."
+                f"Pathway {pathway_id} is rejected because not in taxonomic range."
             )
             return False
+        else:
+            logger.debug(f"Pathway {pathway_id} in taxonomic range.")
 
         # REJECT P if P is missing enzymes for all key reactions of P
         key_reactions = self.template.key_reactions_of_pathway(pathway_id)
@@ -282,8 +294,12 @@ class PathwayInference:
                 f"Pathway {pathway_id} is accepted because pathway score {pathway_scores[pathway_id]} is above PATHWAY-SCORE-CUTOFF ({PathwayInference.PATHWAY_COMPLETION_THRESHOLD})."
             )
             return True
+        else:
+            logger.debug(
+                f"Pathway {pathway_id} has pathway score {pathway_scores[pathway_id]} below PATHWAY-SCORE-CUTOFF ({PathwayInference.PATHWAY_COMPLETION_THRESHOLD})."
+            )
         # Otherwise, by default, reject the pathway.
-        logger.debug(f"Pathway {pathway_id} is rejected because 'rejected by default'.")
+        logger.debug(f"Pathway {pathway_id} is rejected because rejected by default.")
         return False
 
     def consider_pathway_score_to_be_greater(
@@ -317,6 +333,8 @@ class PathwayInference:
             pathway: self.pathway_score(pathway, pathway_reactions[pathway])
             for pathway in self.pathways
         }
+        for pathway_id, score in pathway_scores.items():
+            logger.debug(f"pathway_score({pathway_id}): {score}")
         pathway_present: dict[str, bool] = {
             pathway: self.pathway_presence_decision(
                 pathway, pathway_scores, pathway_reactions[pathway]
@@ -333,3 +351,27 @@ class PathwayInference:
         pathway_present: dict[str, bool] = self.predict_all_pathway_presence()
         inferred = {pathway for pathway, present in pathway_present.items() if present}
         return inferred
+
+
+def main():
+    logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("reactome")
+    parser.add_argument("-t", "--taxon", help="NCBI Taxonomy tax-id", type=int)
+    args = parser.parse_args()
+    reactome: set[str] = set(read_list(args.reactome))
+    print(reactome)
+    kb = MetabiantesKnowledgeBase()
+    inference = PathwayInference(kb, reactome, args.taxon)
+    metabolome: set[str] = inference.inferred_pathways()
+    # print(metabolome)
+    # write_output("/tmp/pathway_list.txt", list(metabolome))
+    for pathway_id in metabolome:
+        logger.debug(
+            f"Pathway {pathway_id}: {kb.reactions_of_pathway(pathway_id)} where {kb.reactions_of_pathway(pathway_id)} are non-spontaneous and non-orphan."
+        )
+
+
+if __name__ == "__main__":
+    main()

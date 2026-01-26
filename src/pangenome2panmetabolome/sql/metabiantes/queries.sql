@@ -42,12 +42,12 @@ ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
 WHERE pathway.name = :pathway_id
-AND reaction.spontaneous IS DISTINCT FROM TRUE
-AND NOT EXISTS (
+AND (reaction.spontaneous IS DISTINCT FROM TRUE
+OR NOT EXISTS (
     SELECT 1
     FROM reaction_enzyme
     WHERE reaction_enzyme.reaction_id = reaction.id
-);
+));
 
 -- name: get_enzymes_of_reaction(reaction_id)
 -- List the enzymes catalyzing a reaction
