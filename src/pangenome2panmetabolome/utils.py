@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+from typing import Iterable
 
 import logging
 
@@ -10,7 +10,7 @@ def read_list(filename: str) -> list[str]:
         return f.read().splitlines()
 
 
-def write_output(filename: str, content: list[str]):
+def write_output(filename: str, content: Iterable[str]):
     with open(filename, "w") as output_file:
         output_file.writelines(line + "\n" for line in content)
 

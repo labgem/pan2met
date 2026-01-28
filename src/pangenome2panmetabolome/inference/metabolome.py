@@ -7,11 +7,10 @@ based on its annotated (pan)genome.
 import logging
 import argparse
 
-from .utils import read_list
-from .config import config
-from .knowledge_base import KnowledgeBase
-from .io.metabiantes.kb import MetabiantesKnowledgeBase
-from .taxonomy import NCBITaxonomyTree
+from ..utils import read_list, write_output
+from ..config import config
+from ..io.knowledge_base import KnowledgeBase, select_kb
+from ..taxonomy import NCBITaxonomyTree
 
 logger = logging.getLogger("pangenome2panmetabolome:inference")
 
@@ -353,6 +352,13 @@ class PathwayInference:
         return inferred
 
 
+def infer_metabolome(reactome: set[str], taxon: int) -> set[str]:
+    kb = select_kb(config["reference"]["source"])
+    inference = PathwayInference(kb, reactome, taxon)
+    metabolome: set[str] = inference.inferred_pathways()
+    return metabolome
+
+
 def main():
     logger.setLevel(logging.DEBUG)
     logging.basicConfig(level=logging.DEBUG)
@@ -361,16 +367,8 @@ def main():
     parser.add_argument("-t", "--taxon", help="NCBI Taxonomy tax-id", type=int)
     args = parser.parse_args()
     reactome: set[str] = set(read_list(args.reactome))
-    print(reactome)
-    kb = MetabiantesKnowledgeBase()
-    inference = PathwayInference(kb, reactome, args.taxon)
-    metabolome: set[str] = inference.inferred_pathways()
-    # print(metabolome)
-    # write_output("/tmp/pathway_list.txt", list(metabolome))
-    for pathway_id in metabolome:
-        logger.debug(
-            f"Pathway {pathway_id}: {kb.reactions_of_pathway(pathway_id)} where {kb.reactions_of_pathway(pathway_id)} are non-spontaneous and non-orphan."
-        )
+    metabolome: set[str] = infer_metabolome(reactome, int(args.taxon))
+    write_output("/tmp/pathway_list.txt", list(metabolome))
 
 
 if __name__ == "__main__":

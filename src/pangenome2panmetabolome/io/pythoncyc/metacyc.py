@@ -9,14 +9,10 @@ Before running this script, launch pathway-tools python API with
 """
 
 import os
-import sys
 import logging
 import argparse
 from typing import Iterable
 
-import sqlite3
-import aiosql
-import pythoncyc
 from tqdm import tqdm
 
 
@@ -219,36 +215,8 @@ def is_homomeric(pgdb, polymer: str) -> bool:
     )
 
 
-def main():
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.INFO)
-    args, parser = parse_arguments()
-    if args.outdb is None:
-        parser.print_help(sys.stderr)
-        exit(1)
-    schema_queries: aiosql.Queries = aiosql.from_path(
-        METACYC_SQL_CREATE_PATH, "sqlite3"
-    )
-    insert_queries: aiosql.Queries = aiosql.from_path(
-        METACYC_SQL_QUERIES_PATH, "sqlite3"
-    )
-    pgdb = pythoncyc.select_organism("meta")
-    # Prepare the SQLite database schema
-    if os.path.exists(args.outdb) and args.force:
-        os.remove(args.outdb)
-    with sqlite3.connect(args.outdb) as conn:
-        # Create the database schema
-        schema_queries.create_schema(conn)
-        # Load the pathway information in the database
-        load_pathway_data_into_sqlite(conn, insert_queries, pgdb)
-
-
 class SingletonMetaCycPGDB:
     def __new__(cls):
         if not hasattr(cls, "instance"):
             cls.instance = super(SingletonMetaCycPGDB, cls).__new__(cls)
         return cls.instance
-
-
-if __name__ == "__main__":
-    main()

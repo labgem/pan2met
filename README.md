@@ -31,24 +31,6 @@ pip install -e .
 
 There are two alternatives currently under exploration to serve as a basis for the pathway knowledge base.
 
-
-### Configure a SQLite backend for BioPAX RDFs
-
-1. Install [rdftab.rs](https://github.com/ontodev/rdftab.rs).
-2. Export MetaCyc BioPAX level 3 OWL file.
-3. Replace biocyc.org with biopax.org in the owl file:
-   ``` bash
-   sed 's$http://biocyc.org/biopax/biopax-level3\#$http://www.biopax.org/release/biopax-level3.owl\#$g' metacyc-biopax-level3.owl > metacyc-biopax-level3-biopax-prefix.owl
-   ```
-4. Prepare a SQLite database with a table of RDF prefix:
-   ``` bash
-   sqlite3 metacyc-biopax.db < resources/prefix.sql
-   ```
-5. Load the RDF from the OWL file into the SQLite database:
-   ``` bash
-   rdftab metacyc-biopax.db < metacyc-biopax-level3.owl
-   ```
-
 ### Configure a SPARQL query endpoint with BioPAX RDFs
 
 Requirements: docker or podman, and podman / docker-compose.
@@ -62,12 +44,11 @@ Requirements: docker or podman, and podman / docker-compose.
 2. Import the BioPAX OWL file into the Fuseki RDF triplestore database, using the web interface.
 3. Copy the .env.example file to .env and adapt the Fuseki API credentials.
 
-
-
 ## Gene-Protein-Reaction rules
 
 `pangenome2panmetabolome` includes a script to export Gene-Protein-Reaction rules in Answer Set Programming (AnsProlog) format from MetaCyc database using pythoncyc.
 To do so, make sure to install [pythoncyc](https://github.com/networkbiolab/PythonCyc).
+<!-- TODO fix the documentation to adapt to the new 'metabiantes' approach-->
 
 Then, launch PathwayTools python API server:
 ``` bash
@@ -119,7 +100,6 @@ Answer: 1
 reaction("RXN-20780")
 SATISFIABLE
 ```
-
 
 
 ## Fix clyngor clingo Answer set parsing error

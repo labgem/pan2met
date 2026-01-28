@@ -2,18 +2,17 @@
 A knowledge base on Pathway data based on a SPARQL Endpoint from BioPAX data
 """
 
+import pangenome2panmetabolome
+
 import os
+import importlib.resources
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 import ouisparql
 
 
 from ..utils import logger
-from ..knowledge_base import KnowledgeBase
-
-SPARQL_QUERY_FILE_PATH = os.path.join(
-    os.path.dirname(__file__), "../../sparql/queries.rq"
-)
+from .knowledge_base import KnowledgeBase
 
 
 class SPARQL:
@@ -27,17 +26,20 @@ class SPARQL:
 
 class SPARQLBackendKnowledgeBase(KnowledgeBase):
     def __init__(self):
-        self.queries = ouisparql.from_path(SPARQL_QUERY_FILE_PATH, "sparql_wrapper")
+        queries_str: str = importlib.resources.read_text(
+            pangenome2panmetabolome, "sparql/queries.rq"
+        )
+        self.queries = ouisparql.from_str(queries_str, "sparql_wrapper")
         self.sparql_wrapper = SPARQL().wrapper
 
     def pathways(self):
         return self.queries.list_pathways(self.sparql_wrapper)
 
     def reactions_of_pathway(self, pathway_id: str) -> list[str]:
-        pass
+        raise NotImplementedError()
 
     def reaction_enzymes(self, reaction_id: str) -> list[str]:
-        pass
+        raise NotImplementedError()
 
     def reactions_by_ec_number(self, ec_number: str) -> list[str]:
         ec_number_literal = ouisparql.utils.to_string_literal(

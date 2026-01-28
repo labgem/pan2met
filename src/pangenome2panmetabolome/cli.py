@@ -8,13 +8,9 @@ import argparse
 import logging
 import sys
 
-
-import pythoncyc
-
-from .io import sparql
-from .utils import logger, read_list, write_output
-from . import reactome
-from . import metabolome
+from .utils import read_list, write_output
+from .inference import reactome
+from .inference import metabolome
 
 
 def reactome_command(args):
@@ -22,37 +18,10 @@ def reactome_command(args):
     `pangenome2panmetabolome reactome` subcommand
     """
     monomers: list[str] = read_list(args.input)
-    if args.straight:
-        if args.monomers is not None:
-            try:
-                pgdb = pythoncyc.select_organism("meta")
-            except Exception as e:
-                logger.error(
-                    "Make sure you launch PathwayTools python API with "
-                    "`pathway-tools -lisp -python-local-only-non-strict` before running this command"
-                )
-
-                raise e
-            reactions_by_monomers = reactome.infer_reactome_from_monomers(
-                monomers, pgdb
-            )
-            logger.info(
-                f"{len(reactions_by_monomers)} reactions identified from monomers."
-            )
-        if args.ec_numbers is not None:
-            kb = sparql.SPARQLBasedKnowledgeBase()
-            reactions_by_ec = reactome.infer_reactome_from_ec_numbers(monomers, kb)
-            logger.info(
-                f"{len(reactions_by_ec)} reactions identified by EC-number matching."
-            )
-        if args.monomers is not None and args.ec_numbers is not None:
-            reactions = reactions_by_monomers | reactions_by_ec
-
-    else:
-        reactions = reactome.infer_reactome_from_monomers_asp(
-            monomers, inference_rules_path=args.gpr
-        )
-        write_output(args.output, reactions)
+    reactions = reactome.infer_reactome_from_monomers_asp(
+        monomers, inference_rules_path=args.gpr
+    )
+    write_output(args.output, reactions)
 
 
 def reverse_reactome_command(args):
@@ -71,7 +40,8 @@ def metabolome_command(args):
     `pangenome2panmetabolome metabolome` subcommand
     """
     reactome: set[str] = set(read_list(args.input))
-    pathways = metabolome.infer_metabolome(reactome)
+    taxon_id: int = int(args.taxon)
+    pathways = metabolome.infer_metabolome(reactome, taxon_id)
     write_output(args.output, pathways)
 
 
@@ -103,12 +73,6 @@ def parse_arguments():
         "--gpr",
         help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
     )
-    parser_reactome.add_argument(
-        "--straight",
-        action=argparse.BooleanOptionalAction,
-        help="Use 'straightforward' inference, using PythonCyc",
-    )
-    parser_reactome.add_argument("--ec-numbers", help="A file listing EC-numbers")
     parser_metabolome = subparsers.add_parser(
         "metabolome",
         help="infer the (pan)metabolome",
@@ -124,6 +88,12 @@ def parse_arguments():
         "--output",
         help="The path of the output file "
         "listing all identifiers of pathway infered to be present",
+        required=True,
+    )
+    parser_metabolome.add_argument(
+        "-t",
+        "--taxon-id",
+        help="The NCBI-Taxonomy tax id of the target organism.",
         required=True,
     )
     parser_reverse_reactome = subparsers.add_parser(

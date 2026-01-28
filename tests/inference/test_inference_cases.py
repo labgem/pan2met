@@ -1,7 +1,7 @@
 import pytest
 
 import pangenome2panmetabolome.io.metabiantes.kb
-import pangenome2panmetabolome.inference
+import pangenome2panmetabolome.inference.metabolome
 from pangenome2panmetabolome.utils import read_list, write_output
 
 
@@ -18,7 +18,7 @@ def test_d_apiose(kb):
     reactome: set[str] = set(read_list("tests/cases/test0/reactome"))
     expected_pathway_set: set[str] = set(read_list("tests/cases/test0/pathways"))
     ecoli_tax_id: int = 562
-    inference = pangenome2panmetabolome.inference.PathwayInference(
+    inference = pangenome2panmetabolome.inference.metabolome.PathwayInference(
         kb, reactome, ecoli_tax_id
     )
     infered_pathway_set: set[str] = inference.inferred_pathways()

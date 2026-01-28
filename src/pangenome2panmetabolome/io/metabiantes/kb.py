@@ -1,5 +1,5 @@
 """
-A SQLite backend using 'metabiantes' model for data imported from MetaCyc.
+A SQL backend using 'metabiantes' model for data imported from MetaCyc.
 """
 
 from typing import Iterable
@@ -10,7 +10,7 @@ import psycopg
 
 import pangenome2panmetabolome
 
-from ...knowledge_base import KnowledgeBase
+from ..knowledge_base import KnowledgeBase
 from ...config import config
 
 
@@ -29,6 +29,12 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
     def aiosql_to_list(self, iterator: Iterable[tuple]):
         if iterator is not None:
             return [item[0] for item in iterator]
+
+    def monomers(self) -> list[str]:
+        """
+        List monomer polypeptides
+        """
+        return self.aiosql_to_list(self.queries.get_monomers(self.connection))
 
     def pathways(self) -> list[str]:
         """

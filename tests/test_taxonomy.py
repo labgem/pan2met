@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 from pangenome2panmetabolome import taxonomy
+from pangenome2panmetabolome.config import config
 
 
 def test_taxonomy_parent_tax_id():
-    tree = taxonomy.NCBITaxonomyTree(
-        "/home/sortion/bank/NCBI-Taxonomy/taxdmp_2026-01-01"
-    )
+    tree = taxonomy.NCBITaxonomyTree(config["reference"]["ncbi_taxonomy"])
 
     # Escherichia coli is a bacteria
     ecoli_tax_id = 562

@@ -14,14 +14,15 @@ import os
 import clyngor
 import pythoncyc
 
-from .knowledge_base import KnowledgeBase
-from .io import metacyc  # TODO: enable more source of knowledge.
-from .utils import logger
-from . import asp
+from ..config import config
+from ..io.knowledge_base import KnowledgeBase, select_kb
+from ..io.pythoncyc import metacyc
+from ..utils import logger, write_output
+from ..asp import rules
 
 
 def infer_complex_from_monomers(
-    monomers: set[str], complex: str, pgdb: pythoncyc.PGDB
+    monomers: list[str], complex: str, pgdb: pythoncyc.PGDB
 ) -> bool:
     """
     True if the given complex can be formed by the given set of protein monomers.
@@ -36,7 +37,9 @@ def infer_complex_from_monomers(
     return True
 
 
-def infer_complexes_from_monomers(monomers: set[str], pgdb: pythoncyc.PGDB) -> set[str]:
+def infer_complexes_from_monomers(
+    monomers: list[str], pgdb: pythoncyc.PGDB
+) -> set[str]:
     complexes: set[str] = set()
     for complex in pgdb.all_protein_complexes():
         if infer_complex_from_monomers(monomers, complex, pgdb):
@@ -44,7 +47,7 @@ def infer_complexes_from_monomers(monomers: set[str], pgdb: pythoncyc.PGDB) -> s
     return complexes
 
 
-def infer_reactome_from_monomers(monomers: set[str], pgdb: pythoncyc.PGDB) -> set[str]:
+def infer_reactome_from_monomers(monomers: list[str], pgdb: pythoncyc.PGDB) -> set[str]:
     """
     Naive inference of a set of reaction.
 
@@ -110,7 +113,7 @@ def infer_reactome_from_monomers_asp(
 
     """
     SHOW_REACTION_DIRECTIVE = "#show reaction/1."
-    monomer_asp_rules = "\n".join(map(asp.rules.monomer_asp_rule, monomers))
+    monomer_asp_rules = "\n".join(map(rules.monomer_asp_rule, monomers))
     monomer_asp_rules += "\n" + SHOW_REACTION_DIRECTIVE
     answers = clyngor.solve(
         inference_rules_path, inline=monomer_asp_rules, use_clingo_module=False
@@ -203,3 +206,11 @@ def minimal_monomer_set(
             identifier = identifier.replace('"', "")
             selected_monomers.add(identifier)
     return selected_monomers
+
+
+def write_potential_monomers(filename: str):
+    kb = select_kb(config["reference"]["source"])
+    write_output(
+        "tmp/potential_monomers.lp",
+        list(map(rules.potential_monomer_asp_rule, kb.monomers())),
+    )
