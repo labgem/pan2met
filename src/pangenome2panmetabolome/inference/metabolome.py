@@ -2,6 +2,10 @@
 Inference rules to infer the presence
 of a pathway in an organism
 based on its annotated (pan)genome.
+
+
+Try to reproduce the PathoLogic algorithm
+as presented in section 7.3.7 of Pathway-Tools user guide UserGuide.pdf (page 187 for v29.5).
 """
 
 import logging
@@ -56,8 +60,10 @@ class PathwayInference:
             return self.decision_reason[pathway_id]
 
     def amend_reason(self, pathway_id: str, details: str):
+        # Initialize the reason, if no reason exist for the moment
         if pathway_id not in self.decision_reason:
             self.decision_reason[pathway_id] = ""
+        # Amend the existing reason
         self.decision_reason[pathway_id] += details
 
     def pathway_completion(self, template_reactions: list[str]) -> float:
@@ -89,7 +95,9 @@ class PathwayInference:
         )
         return completion >= PathwayInference.PATHWAY_COMPLETION_THRESHOLD
 
-    def reaction_score(self, reaction_id: str, pathway_id: str) -> float:
+    def reaction_score(
+        self, reaction_id: str, pathway_id: str, pathway_key_reactions: set[str]
+    ) -> float:
         r"""
         Compute the reaction score $RS$ following the definition of PathoLogic.
 
@@ -123,7 +131,9 @@ class PathwayInference:
         """
         presence_score = self.presence_score(reaction_id)
         uniqueness_score = self.uniqueness_score(reaction_id)
-        key_reaction_score = self.key_reaction_score(reaction_id, pathway_id)
+        key_reaction_score = self.key_reaction_score(
+            reaction_id, pathway_id, pathway_key_reactions
+        )
         score = presence_score + uniqueness_score + key_reaction_score
         if self.record_reason:
             self.amend_reason(
@@ -166,23 +176,31 @@ class PathwayInference:
         else:
             return 0.6
 
-    def key_reaction_score(self, reaction: str, pathway: str) -> float:
-        if self.template.reaction_is_key(reaction, pathway):
+    def key_reaction_score(
+        self, reaction: str, pathway: str, pathway_key_reactions: set[str]
+    ) -> float:
+        if reaction in pathway_key_reactions:
             return 0.5
         else:
             return 0
 
     def pathway_score(
-        self, pathway_id: str, non_orphan_non_spontaneous_pathway_reactions: list[str]
+        self,
+        pathway_id: str,
+        non_orphan_non_spontaneous_pathway_reactions: list[str],
+        pathway_key_reactions: set[str],
     ) -> float:
         r"""
         Compute the pathway score $PS$ according to the PathoLogic heuristic.
 
         $RS(r)$ is the reaction score of reaction $r$ of the pathway, where $r$ in both non-spontaneous and non-orphan,
-        $T$ is a boost if the organism belongs the the taxonomic range of the pathway.
+
+        $T2$ is a boost if the organism belongs the the taxonomic range of the pathway.
+        $T2 \geq 1$.
+        TODO: deal with T1 and T2.
 
         $$
-        PS = \frac{\sum_{r \in R}RS(r)}{|R|} + T
+        PS = \frac{\sum_{r \in R}RS(r)}{|R|} * T1 * T2
         $$
         """
         n = len(non_orphan_non_spontaneous_pathway_reactions)
@@ -190,7 +208,7 @@ class PathwayInference:
             return 0
         score: float = (
             sum(
-                self.reaction_score(reaction_id, pathway_id)
+                self.reaction_score(reaction_id, pathway_id, pathway_key_reactions)
                 for reaction_id in non_orphan_non_spontaneous_pathway_reactions
             )
             + self.taxonomic_range_boost(pathway_id) / n
@@ -209,6 +227,10 @@ class PathwayInference:
             return 0
 
     def taxonomic_range_belonging_precompute(self, pathways: list[str]):
+        """
+        Precompute the Boolean saying whether the target organism
+        is under the given NCBI-Taxonomy ID for the target organism.
+        """
         self.pathway_in_taxonomic_range: dict[str, bool] = {
             pathway: self.taxonomy.is_child_of_parent_tax_id(
                 self.template.pathway_taxonomic_range(pathway), self.taxon_id
@@ -345,10 +367,10 @@ class PathwayInference:
         """
         We consider a pathway score $Score(P1)$ to be greater that the pathway score $Score(P2)$ if $Score(P1) > Score(P2) + sigma$
 
-        # FIXME: How is this implemented in PathoLogic ?
-        # It is unclear, It says it test for significance of the pathway score difference, but which test does it use?
-        # As the pathway score is probably not normally distributed, and we have a single value to compare It is unclear how to deal with this properly.
-        # It is an heuristic though, so we might simply discard our veleity to do proper statistics, at least for now.
+        FIXME: How is this implemented in PathoLogic ?
+        It is unclear. It says it test for significance of the pathway score difference, but which test does it use?
+        As the pathway score is probably not normally distributed, and we have a single value to compare It is unclear how to deal with this properly.
+        It is an heuristic though, so we might simply discard our veleity to do proper statistics, at least for now.
         """
         sigma = 0.1
         return pathway_1_score > pathway_2_score + sigma
@@ -363,10 +385,17 @@ class PathwayInference:
             )
             for pathway in self.pathways
         }
-        pathway_scores: dict[str, float] = {
-            pathway: self.pathway_score(pathway, pathway_reactions[pathway])
+        pathway_key_reactions: dict[str, list[str]] = {
+            pathway: self.template.key_reactions_of_pathway(pathway)
             for pathway in self.pathways
         }
+        pathway_scores: dict[str, float] = {
+            pathway: self.pathway_score(
+                pathway, pathway_reactions[pathway], set(pathway_key_reactions[pathway])
+            )
+            for pathway in self.pathways
+        }
+
         pathway_present: dict[str, bool] = {
             pathway: self.pathway_presence_decision(
                 pathway, pathway_scores, pathway_reactions[pathway]
@@ -404,7 +433,6 @@ def infer_metabolome(reactome: set[str], taxon: int, reason: str) -> set[str]:
 
 def main():
     logger.setLevel(logging.DEBUG)
-    logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument("reactome", help="Inpur list of reaction identifiers.")
     parser.add_argument("-t", "--taxon", help="NCBI Taxonomy tax-id", type=int)

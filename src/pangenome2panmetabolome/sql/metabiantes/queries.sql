@@ -15,12 +15,14 @@ WHERE pathway.name = :pathway_id;
 -- name: get_key_reactions_of_pathway(pathway_id)
 -- Get all reactions of a pathway
 SELECT reaction.name
-FROM pathway
+FROM (SELECT pathway.id, pathway.name
+        FROM pathway
+        WHERE name = :pathway_id)
+        pathway
 INNER JOIN pathway_key_reaction
 ON pathway_key_reaction.pathway_id = pathway.id
 INNER JOIN reaction
-ON reaction.id = pathway_key_reaction.reaction_id
-WHERE pathway.name = :pathway_id;
+ON reaction.id = pathway_key_reaction.reaction_id;
 
 -- name: get_non_spontaneous_reactions_of_pathway(pathway_id)
 -- Get all non-spontaneous reactions of a pathway
