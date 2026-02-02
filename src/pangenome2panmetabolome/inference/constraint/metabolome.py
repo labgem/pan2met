@@ -96,9 +96,10 @@ class ASPPathwayInference:
         inline_asp = self.reactome_to_asp()
 
         answers = clyngor.solve(
-            [minimal_covering_pathway_rule_path, kb_asp_path], inline=inline_asp
-        )
-        logger.info("Done clingo prediction")
+            [minimal_covering_pathway_rule_path, kb_asp_path],
+            inline=inline_asp,
+            nb_model=1,
+        )  # FIXME: we might be interested in more than one model.
         answer = next(answers)
         inferred: set[str] = set()
         for predicate, value in answer:
@@ -151,7 +152,7 @@ def main():
         # Infer the metabolome and write to output if -o/--output <path> is set
         if args.output is not None:
             inferred_pathways: list[str] = inference.inferred_pathways(args.kb_asp)
-            write_output(args.output, "\n".join(inferred_pathways))
+            write_output(args.output, inferred_pathways)
 
 
 if __name__ == "__main__":
