@@ -26,7 +26,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             f"dbname={config['reference']['postgresql_database']}"
         )
 
-    def aiosql_to_list(self, iterator: Iterable[tuple]):
+    def _aiosql_to_list(self, iterator: Iterable[tuple]):
         if iterator is not None:
             return [item[0] for item in iterator]
 
@@ -34,29 +34,35 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List monomer polypeptides
         """
-        return self.aiosql_to_list(self.queries.get_monomers(self.connection))
+        return self._aiosql_to_list(self.queries.get_monomers(self.connection))
 
     def pathways(self) -> list[str]:
         """
         List the pathways referenced by the knowledge base
         """
-        return self.aiosql_to_list(self.queries.get_pathways(self.connection))
+        return self._aiosql_to_list(self.queries.get_pathways(self.connection))
 
     def reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List reactions of a pathway
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_reactions_of_pathway(
                 self.connection, pathway_id=pathway_id
             )
         )
 
+    def reactions(self) -> list[str]:
+        """
+        List all reactions referenced in the knowledge base
+        """
+        return self._aiosql_to_list(self.queries.get_reactions(self.connection))
+
     def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_non_spontaneous_reactions_of_pathway(
                 self.connection, pathway_id=pathway_id
             )
@@ -68,7 +74,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         Non-orphan and non-spontaneous reactions of a pathway
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_non_orphan_non_spontaneous_reactions_of_pathway(
                 self.connection, pathway_id=pathway_id
             )
@@ -78,7 +84,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List enzymes catalyzing a reaction
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_enzymes_of_reaction(
                 self.connection, reaction_id=reaction_id
             )
@@ -88,7 +94,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List reactions annotated with given EC-number
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_reactions_by_ec_number(
                 self.connection, ec_number=ec_number
             )
@@ -116,7 +122,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List all key reactions of a pathway.
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_key_reactions_of_pathway(
                 self.connection, pathway_id=pathway_id
             )
@@ -126,7 +132,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List all pathways with the given reaction identifier.
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_pathways_with_reaction(
                 self.connection, reaction_id=reaction_id
             )
@@ -144,6 +150,6 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List the variants of a pathway.
         """
-        return self.aiosql_to_list(
+        return self._aiosql_to_list(
             self.queries.get_variants_of_pathway(self.connection, pathway_id=pathway_id)
         )

@@ -407,7 +407,7 @@ class PathwayInference:
 
     def inferred_pathways(self) -> set[str]:
         """
-        List all infered pathways.
+        List all inferred pathways.
         """
         pathway_present: dict[str, bool] = self.predict_all_pathway_presence()
         inferred = {pathway for pathway, present in pathway_present.items() if present}

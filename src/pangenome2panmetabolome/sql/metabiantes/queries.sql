@@ -2,6 +2,10 @@
 -- Get all pathway in the database
 SELECT name FROM pathway;
 
+-- name: get_reactions()
+-- Get all reactions in the database
+SELECT name FROM reaction;
+
 -- name: get_reactions_of_pathway(pathway_id)
 -- Get all reactions of a pathway
 SELECT reaction.name

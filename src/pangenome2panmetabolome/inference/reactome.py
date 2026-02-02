@@ -12,42 +12,38 @@ Simple inference rule:
 import os
 
 import clyngor
-import pythoncyc
 
 from ..config import config
 from ..io.knowledge_base import KnowledgeBase, select_kb
-from ..io.pythoncyc import metacyc
 from ..utils import logger, write_output
 from ..asp import rules
 
 
 def infer_complex_from_monomers(
-    monomers: list[str], complex: str, pgdb: pythoncyc.PGDB
+    monomers: list[str], complex: str, kb: KnowledgeBase
 ) -> bool:
     """
     True if the given complex can be formed by the given set of protein monomers.
     """
-    components = metacyc.proteic_complex_subunits(pgdb, complex)
+    components = kb.proteic_complex_subunits(complex)
     if components is None or len(list(components)) == 0:
         logger.error(f"{complex} complex has no components")
         return False
     for component in components:
-        if metacyc.remove_pipes(component) not in monomers:
+        if component not in monomers:
             return False
     return True
 
 
-def infer_complexes_from_monomers(
-    monomers: list[str], pgdb: pythoncyc.PGDB
-) -> set[str]:
+def infer_complexes_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
     complexes: set[str] = set()
-    for complex in pgdb.all_protein_complexes():
-        if infer_complex_from_monomers(monomers, complex, pgdb):
+    for complex in kb.all_protein_complexes():
+        if infer_complex_from_monomers(monomers, complex, kb):
             complexes.add(complex)
     return complexes
 
 
-def infer_reactome_from_monomers(monomers: list[str], pgdb: pythoncyc.PGDB) -> set[str]:
+def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
     """
     Naive inference of a set of reaction.
 
@@ -55,7 +51,7 @@ def infer_reactome_from_monomers(monomers: list[str], pgdb: pythoncyc.PGDB) -> s
     ---------
 
         monomers -- list of monomer identifiers
-        pgdb -- PythonCyc PGDB adapter
+        kb -- a knowledge base adapter
 
     Yields
     ------
@@ -64,19 +60,16 @@ def infer_reactome_from_monomers(monomers: list[str], pgdb: pythoncyc.PGDB) -> s
     """
 
     # Start by infering all reachable complex
-    complexes: set[str] = infer_complexes_from_monomers(monomers, pgdb)
+    complexes: set[str] = infer_complexes_from_monomers(monomers, kb)
     # Continue, by infering the possible reactions
     reactions: set[str] = set()
-    for reaction in pgdb.all_rxns():
-        for enzyme in pgdb.enzymes_of_reaction(reaction):
-            enzyme_name = metacyc.remove_pipes(enzyme)
-            if metacyc.is_proteic_complex(pgdb, enzyme):
+    for reaction in kb.reactions():
+        for enzyme in kb.enzymes_of_reaction(reaction):
+            if kb.is_proteic_complex(enzyme):
                 if enzyme in complexes:
-                    reactions.add(metacyc.remove_pipes(reaction))
-                    logger.error(enzyme)
-                    logger.error(complexes)
-            elif enzyme_name in monomers:
-                reactions.add(metacyc.remove_pipes(reaction))
+                    reactions.add(reaction)
+            elif enzyme in monomers:
+                reactions.add(reaction)
     return reactions
 
 

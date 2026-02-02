@@ -1,4 +1,11 @@
+
 .gitlab-ci-local
+perf.data
+perf.data.old
+program.prof
+tests/cases/generated/*
+
+
 data
 *.html
 *.db

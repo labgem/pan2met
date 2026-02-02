@@ -24,7 +24,7 @@ from typing import Iterable
 import pythoncyc
 
 from ..utils import logger
-from ..io.metacyc import (
+from ..io.pythoncyc.metacyc import (
     get_reactions_of_pathway,
     is_spontaneous,
     is_orphan,
