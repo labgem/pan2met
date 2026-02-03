@@ -45,7 +45,7 @@ with open("./tests/cases/generated/taxon_id.tsv", "w") as taxon_id_file:
             organism_id = (
                 f"pathways{test_case_size}_frac{int(100 * pathway_fraction)}_seed{SEED}"
             )
-            test_folder = f"./tests/cases/generated2/{organism_id}"
+            test_folder = f"./tests/cases/generated/{organism_id}"
             taxon_id_file.write(f"{organism_id}\t1\n")
             os.makedirs(test_folder, exist_ok=True)
             shutil.copy2(
