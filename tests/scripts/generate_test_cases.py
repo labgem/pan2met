@@ -5,6 +5,7 @@ import shutil
 import pangenome2panmetabolome.io.metabiantes.kb
 
 SEED = 1
+TAX_ID = 562
 
 kb = pangenome2panmetabolome.io.metabiantes.kb.MetabiantesKnowledgeBase()
 
