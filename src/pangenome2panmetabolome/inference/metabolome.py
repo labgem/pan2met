@@ -318,14 +318,16 @@ class PathwayInference:
                 )
             return False
 
-        # REJECT P if P is missing enzymes for all key reactions of P
+        # REJECT P if P is missing enzymes for all key reactions of P # FIXME: here I used 'for **any** key reactions'
         key_reactions = self.template.key_reactions_of_pathway(pathway_id)
-        if key_reactions is not None and all(
-            key_reaction not in self.reactome for key_reaction in key_reactions
-        ):
-            if self.record_reason:
-                self.amend_reason(pathway_id, "REJECT: all key reactions are missing.")
-            return False
+        for key_reaction in key_reactions:
+            if key_reaction not in self.reactome:
+                if self.record_reason:
+                    self.amend_reason(
+                        pathway_id,
+                        f"REJECT: key reaction {key_reaction} not in reactome.",
+                    )
+                return False
 
         # REJECT P if the score of P is significantly less than the score of a variant pathway of P
         variant_pathways = self.template.variants_of_pathway(pathway_id)
@@ -419,15 +421,15 @@ class PathwayInference:
         )
         with open(filename, "w") as f:
             for pathway_id, decision_reason in self.decision_reason.items():
-                f.writelines(["DECISION:" + pathway_id + "\n", decision_reason])
+                f.writelines(["DECISION:" + pathway_id + "\n", decision_reason + "\n"])
 
 
-def infer_metabolome(reactome: set[str], taxon: int, reason: str) -> set[str]:
+def infer_metabolome(reactome: set[str], taxon: int, reason_filename: str) -> set[str]:
     kb = select_kb(config["reference"]["source"])
-    inference = PathwayInference(kb, reactome, taxon, reason is not None)
+    inference = PathwayInference(kb, reactome, taxon, reason_filename is not None)
     metabolome: set[str] = inference.inferred_pathways()
-    if reason is not None:
-        inference.dump_reason(reason)
+    if reason_filename is not None:
+        inference.dump_reason(reason_filename)
     return metabolome
 
 
