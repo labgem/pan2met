@@ -124,4 +124,4 @@ SELECT pathway_ontology.pathway_class
 FROM pathway_ontology
 INNER JOIN pathway
 ON pathway.id = pathway_ontology.pathway_id
-WHERE pathway.name = :name;
+WHERE pathway.name = :pathway_id;
