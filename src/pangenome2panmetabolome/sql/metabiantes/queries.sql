@@ -117,3 +117,11 @@ FROM pathway, pathway variant, pathway_variant
 WHERE pathway_variant.pathway_id = pathway.id
 AND pathway_variant.variant_id = variant.id
 AND pathway.name = :pathway_id;
+
+-- name: get_ontology_parent_class_of_pathway(pathway_id)
+-- List all ontology parent class of a pathway
+SELECT pathway_ontology.pathway_class
+FROM pathway_ontology
+INNER JOIN pathway
+ON pathway.id = pathway_ontology.pathway_id
+WHERE pathway.name = :name;

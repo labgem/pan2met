@@ -245,6 +245,26 @@ class PathwayInference:
         non_orphan_non_spontaneous_pathway_reactions: list[str],
     ) -> bool:
         """
+        Decide whether a pathway is inferred present or not.
+
+        Arguments
+        ----------
+
+            pathway_id:
+                the identifier of the pathway
+            pathway_score:
+                a dictionnary mapping a pathway identifier to its precomputed pathway score
+            non_orphan_non_spontaneous_pathway_reactions:
+                the list of reaction identifiers that are both
+                - non-orphan (that is to say, they have a known associated enzyme in the knowledge base), and
+                - non-spontaneous (that is to say, they do not occur spontaneously in physiological conditions)
+
+        Rules
+        -----
+
+        An excerpt of pathway-tools user guide describing the
+        decision rules for a pathway in pathologic algorithm:
+
         REJECT P if P is a transport, signaling, or
         synthetic (engineered) pathway
 
@@ -270,25 +290,47 @@ class PathwayInference:
         Default decision: REJECT
 
         Returns True if pathway is predicted, False otherwise.
+
+        Returns
+        -------
+
+        True if the pathway is inferred present, False otherwise.
+
         """
-        # pathway_type: str = self.template.pathway_type(pathway_id) # TODO
-        # pathway_type should be in ["transport", "signaling", "pathway", "synthetic"]
+        pathway_ontology_parents: list[str] = (
+            self.template.ontology_parent_class_of_pathway(pathway_id)
+        )
 
         # REJECT P if P is a transport, signaling, or synthetic (engineered) pathway
-        # if pathway_type in ["transport", "signaling", "synthetic"]:
-        #    return False
-        # TODO
+        for pathway_class in pathway_ontology_parents:
+            if pathway_class == "Transport-Pathways":
+                if self.record_reason:
+                    self.amend_reason(pathway_id, "REJECT: is a transport pathway.")
+                    return False
+            if (
+                pathway_class == "Signaling-Pathways"
+            ):  # INFO: it seems that in MetaCyc, no signaling pathway are reported though
+                if self.record_reason:
+                    self.amend_reason(pathway_id, "REJECT: is a signaling pathway.")
+                    return False
 
-        # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
-        # TODO
-
-        # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
         all_reactions_are_present: bool = len(
             non_orphan_non_spontaneous_pathway_reactions
         ) >= 1 and all(
             reaction in self.reactome
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
+
+        # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
+        if "Electron-Transfer" and not all_reactions_are_present:
+            if self.record_reason:
+                self.amend_reason(
+                    pathway_id,
+                    "REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
+                )
+            return False
+
+        # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
         in_taxonomic_range: bool = (
             self.pathway_in_taxonomic_range[pathway_id] is None
             or self.pathway_in_taxonomic_range[pathway_id]
@@ -356,7 +398,7 @@ class PathwayInference:
         if self.record_reason:
             self.amend_reason(
                 pathway_id,
-                "REJECT: no applicable case to reject or accept the pathway; reject by default.",
+                "REJECT: no applicable case to reject or accept the pathway, so reject by default.",
             )
         return False
 

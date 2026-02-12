@@ -153,3 +153,13 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         return self._aiosql_to_list(
             self.queries.get_variants_of_pathway(self.connection, pathway_id=pathway_id)
         )
+
+    def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
+        """
+        List the parent class of a pathway in the ontology of pathway tools
+        """
+        return self._aiosql_to_list(
+            self.queries.get_ontology_parent_class_of_pathway(
+                self.connection, pathway_id=pathway_id
+            )
+        )
