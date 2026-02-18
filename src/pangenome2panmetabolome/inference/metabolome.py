@@ -10,6 +10,7 @@ as presented in section 7.3.7 of Pathway-Tools user guide UserGuide.pdf (page 18
 
 import logging
 import argparse
+import configparser
 from typing import Optional
 
 from ..utils import read_list, write_output
@@ -171,7 +172,9 @@ class PathwayInference:
         pathways_having_reaction: int = len(
             self.template.pathways_with_reaction(reaction_id)
         )
-        if pathways_having_reaction > 2:
+        if (
+            pathways_having_reaction > 5
+        ):  # defines "A large number of MetaCyc pathway" (UserGuide p. 188)
             return 0
         else:
             return 0.6
@@ -211,8 +214,10 @@ class PathwayInference:
                 self.reaction_score(reaction_id, pathway_id, pathway_key_reactions)
                 for reaction_id in non_orphan_non_spontaneous_pathway_reactions
             )
-            + self.taxonomic_range_boost(pathway_id) / n
+            / n
         )
+        # TODO score *= self.taxonomic_neighborhood_boost(pathway_id) # T1
+        score *= self.taxonomic_range_boost(pathway_id)  # T2
         if self.record_reason:
             self.amend_reason(
                 pathway_id,
@@ -220,8 +225,26 @@ class PathwayInference:
             )
         return score
 
-    def taxonomic_range_boost(self, pathway: str):
-        if self.pathway_in_taxonomic_range[pathway]:
+    def taxonomic_neighborhood_boost(self, pathway_id: str):
+        """
+        "T1 is highest if the two organisms are the same strain, weaker if the same species, weaker still if the same genus." (UserGuide.pdf v29.5 p. 187)
+
+        We do not know the exact weight of this boost in the PathoLogic implementation.
+        Hence the choice made below is arbitrary.
+
+        T1 >= 1.
+        """
+        # Warning: in metabiantes, the strain is not taken into account
+        pass
+
+    def taxonomic_range_boost(self, pathway_id: str):
+        """
+        "PS receives an additional boost T2 if the subject organism is within the expected taxonomic range
+        of the pathway as designated within MetaCyc (e.g., if the subject organism is a plant and the path-
+        way is designated as a plant pathway). If the subject organism is outside the expected taxonomic
+        range of the pathway then T2 < 1." (UserGuide.pdf v29.5 p.187)
+        """
+        if self.pathway_in_taxonomic_range[pathway_id]:
             return 0.1
         else:
             return 0
@@ -245,56 +268,66 @@ class PathwayInference:
         non_orphan_non_spontaneous_pathway_reactions: list[str],
     ) -> bool:
         """
-        Decide whether a pathway is inferred present or not.
+                Decide whether a pathway is inferred present or not.
 
-        Arguments
-        ----------
+                Arguments
+                ----------
 
-            pathway_id:
-                the identifier of the pathway
-            pathway_score:
-                a dictionnary mapping a pathway identifier to its precomputed pathway score
-            non_orphan_non_spontaneous_pathway_reactions:
-                the list of reaction identifiers that are both
-                - non-orphan (that is to say, they have a known associated enzyme in the knowledge base), and
-                - non-spontaneous (that is to say, they do not occur spontaneously in physiological conditions)
+                    pathway_id:
+                        the identifier of the pathway
+                    pathway_score:
+                        a dictionnary mapping a pathway identifier to its precomputed pathway score
+                    non_orphan_non_spontaneous_pathway_reactions:
+                        the list of reaction identifiers that are both
+                        - non-orphan (that is to say, they have a known associated enzyme in the knowledge base), and
+                        - non-spontaneous (that is to say, they do not occur spontaneously in physiological conditions)
 
-        Rules
-        -----
+                Rules
+                -----
 
-        An excerpt of pathway-tools user guide describing the
-        decision rules for a pathway in pathologic algorithm:
+                An excerpt of pathway-tools user guide describing the
+                decision rules for a pathway in pathologic algorithm:
 
-        REJECT P if P is a transport, signaling, or
-        synthetic (engineered) pathway
+                REJECT P if P is a transport, signaling, or
+                synthetic (engineered) pathway
 
-        REJECT P if P is an electron transport pathway
-        AND P lacks enzymes for any reaction
+                REJECT P if P is an electron transport pathway
+                AND P lacks enzymes for any reaction
 
-        INCLUDE P if P has all reactions present
-        (meaning an enzyme is present for each reaction)
-        AND if P is outside its taxonomic range, P
-        contains more than 3 reactions
+                REJECT P if any key-non-reactions are present.
 
-        REJECT P if P is outside its taxonomic range
+                INCLUDE P if P has all reactions present
+                (meaning an enzyme is present for each reaction)
 
-        REJECT P if P is missing enzymes for all key
-        reactions of P
+                AND if P is outside its taxonomic range, P
+                contains more than 3 reactions
 
-        REJECT P if the score of P is significantly less
-        than the score of a variant pathway of P
+                REJECT P if P is missing enzymes for any key reactions of P
 
-        INCLUDE P if the score of P exceeds the
-        threshold PATHWAY-PREDICTION-CUTOFF efined in ptools-init.dat or specified in Automated Build dialog
+                REJECT P if the score of P is significantly less
+                than the score of a variant pathway of P
 
-        Default decision: REJECT
+                TODO REJECT P if the score of P is slightly more than a preferred variant pathway of P (the “stan-
+        dard” glycolysis and TCA pathways are designated as preferred variants).
 
-        Returns True if pathway is predicted, False otherwise.
+                REJECT P if P is outside its taxonomic range
 
-        Returns
-        -------
+                INCLUDE P if the score of P exceeds the
+                threshold PATHWAY-PREDICTION-CUTOFF efined in ptools-init.dat or specified in Automated Build dialog
 
-        True if the pathway is inferred present, False otherwise.
+                Default decision: REJECT
+
+                Returns True if pathway is predicted, False otherwise.
+
+                TODO REJECT P if P is either:
+                – A biosynthetic pathway missing enzymes for its final steps
+                – A catabolic pathway missing enzymes for its initial steps
+                – An energy pathway missing enzymes for more than half of its steps
+
+                Returns
+                -------
+
+                True if the pathway is inferred present, False otherwise.
 
         """
         pathway_ontology_parents: list[str] = (
@@ -302,6 +335,7 @@ class PathwayInference:
         )
 
         # REJECT P if P is a transport, signaling, or synthetic (engineered) pathway
+        # TODO deal with synthetic pathways
         for pathway_class in pathway_ontology_parents:
             if pathway_class == "Transport-Pathways":
                 if self.record_reason:
@@ -360,7 +394,7 @@ class PathwayInference:
                 )
             return False
 
-        # REJECT P if P is missing enzymes for all key reactions of P # FIXME: here I used 'for **any** key reactions'
+        # REJECT P if P is missing enzymes for all key reactions of P
         key_reactions = self.template.key_reactions_of_pathway(pathway_id)
         for key_reaction in key_reactions:
             if key_reaction not in self.reactome:
@@ -394,6 +428,7 @@ class PathwayInference:
                     pathway_id, "ACCEPT: pathway score exceeds the minimum value."
                 )
             return True
+
         # Otherwise, by default, reject the pathway.
         if self.record_reason:
             self.amend_reason(
@@ -485,12 +520,19 @@ def main():
     )
     parser.add_argument(
         "--reason",
-        help="Give me a reason for your choice.",
+        help="Give me a reason for your choice and dump it to the file.",
         required=False,
         default=None,
     )
-
+    parser.add_argument("-c", "--config", help="Path to the config file")
     args = parser.parse_args()
+    # Update config globally overriding default_config with keys from given config filename
+    global config
+    config_override = configparser.ConfigParser()
+    config_override.read([args.config])
+    config.update(config_override)
+    logger.info(f"Using config: {config}")
+    # Infer the metabolome
     reactome: set[str] = set(read_list(args.reactome))
     metabolome: set[str] = infer_metabolome(reactome, int(args.taxon), args.reason)
     write_output(args.output, metabolome)

@@ -93,14 +93,18 @@ class KnowledgeBase(ABC):
 def select_kb(choice: str) -> KnowledgeBase:
     match choice:
         case "metabiantes":
-            from .metabiantes.kb import MetabiantesKnowledgeBase
+            from .metabiantes_kb.kb import MetabiantesKnowledgeBase
 
             return MetabiantesKnowledgeBase()
         case "pythoncyc":
-            from .pythoncyc.kb import PythonCycKnowledgeBase
+            from .pythoncyc_kb.kb import PythonCycKnowledgeBase
 
             return PythonCycKnowledgeBase()
+        case "padmet":
+            from .padmet_kb.kb import PADMetKnowledgeBase
+
+            return PADMetKnowledgeBase()
         case _:
             raise ValueError(
-                f"Cannot load kb for choice {choice}. Not in {['metabiantes', 'pythoncyc']}"
+                f"Cannot load kb for choice {choice}. Not in {set(['metabiantes', 'pythoncyc', 'padmet'])}"
             )
