@@ -268,67 +268,66 @@ class PathwayInference:
         non_orphan_non_spontaneous_pathway_reactions: list[str],
     ) -> bool:
         """
-                Decide whether a pathway is inferred present or not.
+        Decide whether a pathway is inferred present or not.
 
-                Arguments
-                ----------
+        Arguments
+        ----------
 
-                    pathway_id:
-                        the identifier of the pathway
-                    pathway_score:
-                        a dictionnary mapping a pathway identifier to its precomputed pathway score
-                    non_orphan_non_spontaneous_pathway_reactions:
-                        the list of reaction identifiers that are both
-                        - non-orphan (that is to say, they have a known associated enzyme in the knowledge base), and
-                        - non-spontaneous (that is to say, they do not occur spontaneously in physiological conditions)
+            pathway_id:
+                the identifier of the pathway
+            pathway_score:
+                a dictionnary mapping a pathway identifier to its precomputed pathway score
+            non_orphan_non_spontaneous_pathway_reactions:
+                the list of reaction identifiers that are both
+                - non-orphan (that is to say, they have a known associated enzyme in the knowledge base), and
+                - non-spontaneous (that is to say, they do not occur spontaneously in physiological conditions)
 
-                Rules
-                -----
+        Rules
+        -----
 
-                An excerpt of pathway-tools user guide describing the
-                decision rules for a pathway in pathologic algorithm:
+        An excerpt of pathway-tools user guide describing the
+        decision rules for a pathway in pathologic algorithm:
 
-                REJECT P if P is a transport, signaling, or
-                synthetic (engineered) pathway
+        REJECT P if P is a transport, signaling, or
+        synthetic (engineered) pathway
 
-                REJECT P if P is an electron transport pathway
-                AND P lacks enzymes for any reaction
+        REJECT P if P is an electron transport pathway
+        AND P lacks enzymes for any reaction
 
-                REJECT P if any key-non-reactions are present.
+        REJECT P if any key-non-reactions are present.
 
-                INCLUDE P if P has all reactions present
-                (meaning an enzyme is present for each reaction)
+        INCLUDE P if P has all reactions present
+        (meaning an enzyme is present for each reaction)
 
-                AND if P is outside its taxonomic range, P
-                contains more than 3 reactions
+        AND if P is outside its taxonomic range, P
+        contains more than 3 reactions
 
-                REJECT P if P is missing enzymes for any key reactions of P
+        REJECT P if P is missing enzymes for any key reactions of P
 
-                REJECT P if the score of P is significantly less
-                than the score of a variant pathway of P
+        REJECT P if the score of P is significantly less
+        than the score of a variant pathway of P
 
-                TODO REJECT P if the score of P is slightly more than a preferred variant pathway of P (the “stan-
-        dard” glycolysis and TCA pathways are designated as preferred variants).
+        TODO REJECT P if the score of P is slightly more than a preferred variant pathway of P
+        (the "standard" glycolysis and TCA pathways are designated as preferred variants).
 
-                REJECT P if P is outside its taxonomic range
+        REJECT P if P is outside its taxonomic range
 
-                INCLUDE P if the score of P exceeds the
-                threshold PATHWAY-PREDICTION-CUTOFF efined in ptools-init.dat or specified in Automated Build dialog
+        INCLUDE P if the score of P exceeds the
+        threshold PATHWAY-PREDICTION-CUTOFF efined in ptools-init.dat or specified in Automated Build dialog
 
-                Default decision: REJECT
+        Default decision: REJECT
 
-                Returns True if pathway is predicted, False otherwise.
+        Returns True if pathway is predicted, False otherwise.
 
-                TODO REJECT P if P is either:
-                – A biosynthetic pathway missing enzymes for its final steps
-                – A catabolic pathway missing enzymes for its initial steps
-                – An energy pathway missing enzymes for more than half of its steps
+        TODO REJECT P if P is either:
+        – A biosynthetic pathway missing enzymes for its final steps
+        – A catabolic pathway missing enzymes for its initial steps
+        – An energy pathway missing enzymes for more than half of its steps
 
-                Returns
-                -------
+        Returns
+        -------
 
-                True if the pathway is inferred present, False otherwise.
-
+        True if the pathway is inferred present, False otherwise.
         """
         pathway_ontology_parents: list[str] = (
             self.template.ontology_parent_class_of_pathway(pathway_id)
@@ -354,6 +353,10 @@ class PathwayInference:
             reaction in self.reactome
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
+        if all_reactions_are_present:
+            if self.record_reason:
+                self.amend_reason(pathway_id, "ACCEPT: all reactions are present")
+            return True
 
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
         if "Electron-Transfer" and not all_reactions_are_present:
@@ -513,7 +516,7 @@ def infer_metabolome(reactome: set[str], taxon: int, reason_filename: str) -> se
 def main():
     logger.setLevel(logging.DEBUG)
     parser = argparse.ArgumentParser()
-    parser.add_argument("reactome", help="Inpur list of reaction identifiers.")
+    parser.add_argument("reactome", help="Input list of reaction identifiers.")
     parser.add_argument("-t", "--taxon", help="NCBI Taxonomy tax-id", type=int)
     parser.add_argument(
         "-o", "--output", help="Output list of metabolic pathways.", required=True
@@ -527,10 +530,11 @@ def main():
     parser.add_argument("-c", "--config", help="Path to the config file")
     args = parser.parse_args()
     # Update config globally overriding default_config with keys from given config filename
-    global config
-    config_override = configparser.ConfigParser()
-    config_override.read([args.config])
-    config.update(config_override)
+    if args.config is not None:
+        global config
+        config_override = configparser.ConfigParser()
+        config_override.read([args.config])
+        config.update(config_override)
     logger.info(f"Using config: {config}")
     # Infer the metabolome
     reactome: set[str] = set(read_list(args.reactome))
