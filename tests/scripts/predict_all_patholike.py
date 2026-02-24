@@ -22,7 +22,10 @@ def main():
             output_filename = os.path.join(
                 TEST_CASES_FOLDER, test_case, "pangenome2panmetabolome.pathways.list"
             )
-            metabolome = infer_metabolome(reactome, ECOLI_TAXID, None)
+            reason_filename = os.path.join(
+                TEST_CASES_FOLDER, test_case, "reason.pangenome2panmetabolome.log"
+            )
+            metabolome = infer_metabolome(reactome, ECOLI_TAXID, reason_filename)
             write_output(output_filename, metabolome)
     print("done.")
 

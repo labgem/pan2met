@@ -47,7 +47,7 @@ def report(
 
 def main():
     with open(
-        f"report_{datetime.datetime.today().strftime('%Y-%m-%d_%H-%M')}_gitrev:{git_revision}.tsv",
+        f"./tmp/report_{datetime.datetime.today().strftime('%Y-%m-%d_%H-%M')}_gitrev:{git_revision}.tsv",
         "w",
     ) as report_file:
         report_file.write(

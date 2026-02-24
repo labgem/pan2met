@@ -359,7 +359,10 @@ class PathwayInference:
             return True
 
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
-        if "Electron-Transfer" and not all_reactions_are_present:
+        if (
+            "Electron-Transfer" in pathway_ontology_parents
+            and not all_reactions_are_present
+        ):
             if self.record_reason:
                 self.amend_reason(
                     pathway_id,
@@ -368,12 +371,12 @@ class PathwayInference:
             return False
 
         # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
-        in_taxonomic_range: bool = (
-            self.pathway_in_taxonomic_range[pathway_id] is None
-            or self.pathway_in_taxonomic_range[pathway_id]
-        )
+
         if all_reactions_are_present:
-            if in_taxonomic_range:
+            if (
+                pathway_id in self.pathway_in_taxonomic_range is not None
+                and self.pathway_in_taxonomic_range[pathway_id]
+            ):
                 if self.record_reason:
                     self.amend_reason(
                         pathway_id,
@@ -389,6 +392,7 @@ class PathwayInference:
                 return True
 
         # REJECT P if P is outside its taxonomic range
+        """
         if not in_taxonomic_range:
             if self.record_reason:
                 self.amend_reason(
@@ -396,6 +400,7 @@ class PathwayInference:
                     "REJECT: not all reaction present and not in taxonomic range.",
                 )
             return False
+        """
 
         # REJECT P if P is missing enzymes for all key reactions of P
         key_reactions = self.template.key_reactions_of_pathway(pathway_id)
