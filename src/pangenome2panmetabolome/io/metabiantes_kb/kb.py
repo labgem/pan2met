@@ -22,9 +22,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             ),
             "psycopg2",
         )
-        self.connection = psycopg.connect(
-            f"dbname={config['reference']['postgresql_database']}"
-        )
+        self.connection = psycopg.connect(f"dbname={config['metabiantes']['database']}")
 
     def _aiosql_to_list(self, iterator: Iterable[tuple]):
         if iterator is not None:
