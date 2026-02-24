@@ -1,6 +1,5 @@
 """
 Basic comparison report between PathoLogic metabolome output and the output of pangenome2panmetabolome
-
 """
 
 import datetime
@@ -29,7 +28,7 @@ test_cases = os.listdir(TEST_CASES_FOLDER)
 
 def report(
     pathologic_metabolome: set[str], pangenome2panmetabolome_metabolome: set[str]
-) -> set:
+) -> list[int]:
     union = pathologic_metabolome | pangenome2panmetabolome_metabolome
     unique_pathologic = pathologic_metabolome - pangenome2panmetabolome_metabolome
     unique_pangenome2panmetabolome = (
@@ -48,7 +47,7 @@ def report(
 
 def main():
     with open(
-        f"report_{datetime.datetime.today().strftime('%Y-%m-%d')}_gitrev{git_revision}.tsv",
+        f"report_{datetime.datetime.today().strftime('%Y-%m-%d_%H-%M')}_gitrev:{git_revision}.tsv",
         "w",
     ) as report_file:
         report_file.write(
