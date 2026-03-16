@@ -11,6 +11,10 @@ TODO:
 """
 
 from enum import Enum
+import argparse
+import csv
+from pathlib import Path
+from typing import Dict
 
 from ppanggolin.pangenome import Pangenome
 from ppanggolin.genome import Gene
@@ -33,7 +37,6 @@ def ppanggolin_get_gene_by_identifier(
     :param gene_identifier: a gene identifier in PPanGGOLiN pangenome
     :return: a Gene object from PPanGGOLiN with identifier gene_identifier
     """
-    print(pangenome.organisms)
     for contig in pangenome.contigs:
         for gene in contig.genes:
             if gene.ID == gene_identifier:
@@ -41,35 +44,79 @@ def ppanggolin_get_gene_by_identifier(
     raise ValueError(f"ID {gene_identifier} not found in any contig of the pangenome")
 
 
-def ppanggolin_partition_of_gene_family(
-    gene_name: str, pangenome: Pangenome
-) -> PangenomePartition:
+def ppanggolin_partition_of_gene_family(gene_name: str, pangenome: Pangenome) -> str:
     """
     Get the pangenome partition class of a gene as annoted in PPanGGOLiN pangenome.
 
     :param gene_name: a gene_name
+    :return: a PPanGGOLiN partition name (in { 'persistent', 'shell', 'cloud' })
     """
     gene: Gene = ppanggolin_get_gene_by_identifier(gene_name, pangenome)
     gene_family: GeneFamily = gene.family
     partition = gene_family.named_partition
-    match partition:
-        case "persistent":
-            return PangenomePartition.CORE
-        case "shell":
-            return PangenomePartition.SHELL
-        case "cloud":
-            return PangenomePartition.CLOUD
-        case _:
-            raise ValueError(
-                f"{partition} partition from PPanGGOLiN for family {gene_family.ID} not understood."
-            )
+    return partition
+
+
+def argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--pangenome", help="PPanGGOLiN pangenome HDF5 file", required=True
+    )
+    parser.add_argument("--reactions", help="Reaction list", required=True)
+    parser.add_argument(
+        "--reaction-enzyme",
+        help="Two-column TSV with column 1: reaction identifier and column 2: pangenome monomer identifier catalyzing the reaction.",
+        required=True,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Output, a three-column file with columns 1: reaction identifier, column 2: enzyme gene identifier, column 3: partition (in {persistent, shell, cloud})",
+        required=True,
+    )
+    # TODO: see what to do when a reaction can be catalyzed by several enzymes that may be not on the same pangenome gene family partition
+    return parser
 
 
 def main():
+    parser = argument_parser()
+    args = parser.parse_args()
+    # Open the pangenome
     pangenome = Pangenome()
-    pangenome.add_file(
-        "/home/sortion/data/home/sortion/data/pangbank/GTDB_refseq_s__Escherichia_coli_id615.h5"
-    )
+    pangenome.add_file(Path(args.pangenome))
     check_pangenome_info(
         pangenome, need_families=True, need_annotations=True, disable_bar=True
-    )
+    )  # do not forget the call to this function, otherwise the generator of contigs and genes will be empty as the pangenome would not be loaded.
+
+    # Read the reference mapping of reaction to enzyme file
+    with open(args.reaction_enzyme, "r") as reaction_enzyme_file:
+        reaction_to_enzyme_gene: Dict[str, str] = {}
+        reader = csv.reader(reaction_enzyme_file, delimiter="\t")
+        for row in reader:
+            if len(row) == 2:
+                reaction = row[0]
+                enzyme_gene = row[1]
+                reaction_to_enzyme_gene[reaction] = enzyme_gene
+
+    # Write the output file
+    with open(args.reactions, "r") as reactions_file:
+        with open(args.output, "w") as output_file:
+            writer = csv.writer(output_file, delimiter="\t")
+            writer.writerow(
+                ["reaction", "enzyme_gene", "pangenome_partiton"]
+            )  # write header
+            for row in reactions_file:
+                reaction = row.strip()
+                if reaction != "" and reaction in reaction_to_enzyme_gene:
+                    enzyme_gene = reaction_to_enzyme_gene[reaction]
+                    pangenome_partition = ppanggolin_partition_of_gene_family(
+                        enzyme_gene, pangenome
+                    )
+                else:
+                    enzyme_gene = "NA"
+                    pangenome_partition = "NA"
+                writer.writerow([reaction, enzyme_gene, pangenome_partition])
+
+
+if __name__ == "__main__":
+    main()
