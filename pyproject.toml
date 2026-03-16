@@ -30,8 +30,6 @@ classifiers = [
 
 dependencies = [
 	"numpy",
-	"h5py",
-	"hdf5plugin",
 	"aiosql",
 	"sparqlwrapper",
 	"python-dotenv",
@@ -39,6 +37,7 @@ dependencies = [
 	# "clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
 	"ouisparql",
 	"psycopg>=3.3.2",
+	"blosc2>=4.1.2",
 ]
 
 license = { file = "LICENSE" }
