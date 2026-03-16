@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "pangenome2panmetabolome"
+project = "pan2met"
 copyright = "2025, Samuel Ortion"
 author = "Samuel Ortion"
 

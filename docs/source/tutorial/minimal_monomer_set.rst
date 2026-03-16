@@ -1,7 +1,7 @@
 Infer the minimal set of monomers required to catalyzes a set of reactions
 ==========================================================================
 
-`pangenome2panmetabolome` includes a method to compute an "inverse" problem of the reactome.
+`pan2met` includes a method to compute an "inverse" problem of the reactome.
 
 We define the "inverse" problem of the reactome as follows:
 
@@ -11,7 +11,7 @@ We define the "inverse" problem of the reactome as follows:
 
 
 
-The method implemented in `pangenome2panmetabolome` uses Clingo Answer Set Programming solver.
+The method implemented in `pan2met` uses Clingo Answer Set Programming solver.
 
 It proceeds in two steps:
 
@@ -55,9 +55,9 @@ Then, on another shell:
 
 .. code:: bash
 
-  python3 -m src.pangenome2panmetabolome.asp.gpr_rules -o ./tmp/metacyc_gpr.lp
+  python3 -m src.pan2met.asp.gpr_rules -o ./tmp/metacyc_gpr.lp
 
-  python3 -m src.pangenome2panmetabolome.asp.reverse_gpr_rules -i ./tmp/metacyc_gpr_rules -o ./tmp/metacyc_reverse_gpr.lp
+  python3 -m src.pan2met.asp.reverse_gpr_rules -i ./tmp/metacyc_gpr_rules -o ./tmp/metacyc_reverse_gpr.lp
 
 Application on an example
 -------------------------

@@ -1,12 +1,12 @@
 """
-Basic comparison report between PathoLogic metabolome output and the output of pangenome2panmetabolome
+Basic comparison report between PathoLogic metabolome output and the output of pan2met
 """
 
 import datetime
 import subprocess
 import os
 
-from pangenome2panmetabolome.utils import read_list
+from pan2met.utils import read_list
 
 
 def get_git_revision():
@@ -21,27 +21,23 @@ git_revision = get_git_revision()
 
 TEST_CASES_FOLDER = "tests/cases/generated/"
 PATHOLOGIC_FILENAME = "pathologic.pathways.list"
-PANGENOME2PANMETABOLOME_FILENAME = "pangenome2panmetabolome.pathways.list"
+PANGENOME2PANMETABOLOME_FILENAME = "pan2met.pathways.list"
 
 test_cases = os.listdir(TEST_CASES_FOLDER)
 
 
-def report(
-    pathologic_metabolome: set[str], pangenome2panmetabolome_metabolome: set[str]
-) -> list[int]:
-    union = pathologic_metabolome | pangenome2panmetabolome_metabolome
-    unique_pathologic = pathologic_metabolome - pangenome2panmetabolome_metabolome
-    unique_pangenome2panmetabolome = (
-        pangenome2panmetabolome_metabolome - pathologic_metabolome
-    )
-    intersection = pathologic_metabolome & pangenome2panmetabolome_metabolome
+def report(pathologic_metabolome: set[str], pan2met_metabolome: set[str]) -> list[int]:
+    union = pathologic_metabolome | pan2met_metabolome
+    unique_pathologic = pathologic_metabolome - pan2met_metabolome
+    unique_pan2met = pan2met_metabolome - pathologic_metabolome
+    intersection = pathologic_metabolome & pan2met_metabolome
     return [
         len(pathologic_metabolome),
-        len(pangenome2panmetabolome_metabolome),
+        len(pan2met_metabolome),
         len(union),
         len(intersection),
         len(unique_pathologic),
-        len(unique_pangenome2panmetabolome),
+        len(unique_pan2met),
     ]
 
 
@@ -55,11 +51,11 @@ def main():
                 [
                     "test_case",
                     "pathologic",
-                    "pangenome2panmetabolome",
+                    "pan2met",
                     "union",
                     "intersection",
                     "unique_pathologic",
-                    "unique_pangenome2panmetabolome",
+                    "unique_pan2met",
                 ]
             )
         )
@@ -70,7 +66,7 @@ def main():
                         os.path.join(TEST_CASES_FOLDER, test_case, PATHOLOGIC_FILENAME)
                     )
                 )
-                pangenome2panmetabolome_metabolome = set(
+                pan2met_metabolome = set(
                     read_list(
                         os.path.join(
                             TEST_CASES_FOLDER,
@@ -87,7 +83,7 @@ def main():
                                 str,
                                 report(
                                     pathologic_metabolome,
-                                    pangenome2panmetabolome_metabolome,
+                                    pan2met_metabolome,
                                 ),
                             )
                         )

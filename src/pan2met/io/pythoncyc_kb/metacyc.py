@@ -16,7 +16,7 @@ from typing import Iterable
 from tqdm import tqdm
 
 
-logger = logging.getLogger("pangenome2panmetabolome:io:metacyc")
+logger = logging.getLogger("pan2met:io:metacyc")
 logger.setLevel(logging.DEBUG)
 
 PGDB_ID: str = "META"

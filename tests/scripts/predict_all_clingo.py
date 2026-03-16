@@ -4,9 +4,9 @@ Predict for all generated test cases and make a report
 
 import os
 
-from pangenome2panmetabolome.utils import read_list, write_output
-from pangenome2panmetabolome.inference.constraint.metabolome import ASPPathwayInference
-from pangenome2panmetabolome.io.knowledge_base import select_kb
+from pan2met.utils import read_list, write_output
+from pan2met.inference.constraint.metabolome import ASPPathwayInference
+from pan2met.io.knowledge_base import select_kb
 
 TEST_CASES_FOLDER = "tests/cases/generated/"
 KB_ASP = "tmp/metabiantes_pathway_asp.lp"
@@ -29,7 +29,7 @@ def main():
             output_filename = os.path.join(
                 TEST_CASES_FOLDER,
                 test_case,
-                "pangenome2panmetabolome-asp.pathways.list",
+                "pan2met-asp.pathways.list",
             )
             metabolome = infer_metabolome(reactome)
             write_output(output_filename, metabolome)

@@ -2,7 +2,7 @@ from typing import Iterable
 
 import logging
 
-logger = logging.getLogger("pangenome2panmetabolome")
+logger = logging.getLogger("pan2met")
 
 
 def read_list(filename: str) -> list[str]:

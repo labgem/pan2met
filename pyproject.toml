@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pangenome2panmetabolome"
+name = "pan2met"
 description = "Reconstruct (pan)metabolome based on (pan)genome"
 dynamic = ["version"]
 authors = [
@@ -21,7 +21,6 @@ classifiers = [
 	"Development Status :: 1 - Planning",
 	"Environment :: Console",
 	"Intended Audience :: Science/Research",
-	"License :: OSI Approved :: CEA CNRS Logiciel Libre License, version 2.1 (CeCILL-2.1)",
 	"Natural Language :: English",
 	"Operating System :: POSIX :: Linux",
 	"Programming Language :: Python :: 3",
@@ -33,16 +32,13 @@ dependencies = [
 	"numpy",
 	"h5py",
 	"hdf5plugin",
-	"pybiopax",
 	"aiosql",
 	"sparqlwrapper",
 	"python-dotenv",
 	"pythoncyc",
-	#"clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
+	# "clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
 	"ouisparql",
-	"pytest>=9.0.2",
 	"psycopg>=3.3.2",
-	"mpwt>=0.8.8",
 ]
 
 license = { file = "LICENSE" }
@@ -52,29 +48,29 @@ doc = [
 	"sphinx",
 	"sphinx_rtd_theme",
 	"readthedocs-sphinx-search",
-	"sphinx-autobuild"
+	"sphinx-autobuild",
 ]
 test = [
-	"pytest"
+	"pytest>=9.0.2",
 ]
 
 [project.urls]
 # Homepage = ""
-Repository = "https://gitlab.com/sortion/pangenome2panmetabolome"
+Repository = "https://gitlab.com/sortion/pan2met"
 # Documentation = ""
 
 [project.scripts]
-pangenome2panmetabolome = "pangenome2panmetabolome.cli:main"
+pan2met = "pan2met.cli:main"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
 
 [tool.pixi.workspace]
-channels = ["conda-forge"]
+channels = ["conda-forge", "https://conda.anaconda.org/bioconda"]
 platforms = ["linux-64"]
 
 [tool.pixi.pypi-dependencies]
-pangenome2panmetabolome = { path = ".", editable = true }
+pan2met = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
@@ -82,3 +78,9 @@ doc = { features = ["doc"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+graph-tool = ">=2.98,<3"
+ppanggolin = { version = ">=2.2.6,<3", channel = "bioconda" }
+python = "3.12.*"
+pip = ">=26.0.1,<27"

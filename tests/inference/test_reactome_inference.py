@@ -3,10 +3,10 @@
 import pytest
 import pythoncyc
 
-from pangenome2panmetabolome.utils import read_list
-from pangenome2panmetabolome.io.knowledge_base import KnowledgeBase
-from pangenome2panmetabolome.io.sparql import SPARQLBackendKnowledgeBase
-from pangenome2panmetabolome.inference.reactome import (
+from pan2met.utils import read_list
+from pan2met.io.knowledge_base import KnowledgeBase
+from pan2met.io.sparql import SPARQLBackendKnowledgeBase
+from pan2met.inference.reactome import (
     infer_reactome_from_ec_numbers,
     infer_reactome_from_monomers,
     infer_reactome_from_monomers_asp,

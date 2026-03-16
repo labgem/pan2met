@@ -4,8 +4,8 @@ Predict for all generated test cases and make a report
 
 import os
 
-from pangenome2panmetabolome.utils import read_list, write_output
-from pangenome2panmetabolome.inference.metabolome import infer_metabolome
+from pan2met.utils import read_list, write_output
+from pan2met.inference.metabolome import infer_metabolome
 
 
 TEST_CASES_FOLDER = "tests/cases/generated/"
@@ -20,10 +20,10 @@ def main():
             reactome_filename = os.path.join(TEST_CASES_FOLDER, test_case, "reactome")
             reactome = set(read_list(reactome_filename))
             output_filename = os.path.join(
-                TEST_CASES_FOLDER, test_case, "pangenome2panmetabolome.pathways.list"
+                TEST_CASES_FOLDER, test_case, "pan2met.pathways.list"
             )
             reason_filename = os.path.join(
-                TEST_CASES_FOLDER, test_case, "reason.pangenome2panmetabolome.log"
+                TEST_CASES_FOLDER, test_case, "reason.pan2met.log"
             )
             metabolome = infer_metabolome(reactome, ECOLI_TAXID, reason_filename)
             write_output(output_filename, metabolome)

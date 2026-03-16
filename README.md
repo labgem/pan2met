@@ -1,4 +1,4 @@
-# `pangenome2panmetabolome`
+# `pan2met`
 
 > A python library / CLI to infer metabolic networks at the pangenome scale.
 
@@ -9,14 +9,14 @@
 1. Clone this repository
 
    ``` bash
-   git clone https://gitlab.com/sortion/pangenome2panmetabolome.git
-   cd pangenome2panmetabolome
+   git clone https://gitlab.com/sortion/pan2met.git
+   cd pan2met
    ```
 2. Install locally in a virtual environment
 
    ``` bash
-   python3 -m venv .venv/pangenome2panmetabolome
-   source .venv/pangenome2panmetabolome/bin/activate
+   python3 -m venv .venv/pan2met
+   source .venv/pan2met/bin/activate
    pip install -e .
    ```
 

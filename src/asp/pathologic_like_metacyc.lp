@@ -29,7 +29,7 @@ pathway_ontology_expanded(Pathway, ParentType) :- is_a(Type, ParentType) , is_a(
 
 rule(1, "REJECT", Pathway) :- pathway_ontology_expanded(Pathway, Class) , ignored_pathway_class(Class).
 
-
+%
 % Test data for rule 1:
 pathway("PWY-TEST1").
 is_a("PWY-TEST1", "My Specific Signal 1").

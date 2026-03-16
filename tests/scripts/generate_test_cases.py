@@ -2,12 +2,12 @@ import random
 import os
 import shutil
 
-import pangenome2panmetabolome.io.metabiantes.kb
+import pan2met.io.metabiantes.kb
 
 SEED = 1
 TAX_ID = 562
 
-kb = pangenome2panmetabolome.io.metabiantes.kb.MetabiantesKnowledgeBase()
+kb = pan2met.io.metabiantes.kb.MetabiantesKnowledgeBase()
 
 pathways = kb.pathways()
 

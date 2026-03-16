@@ -7,15 +7,13 @@ import importlib.resources
 
 from dotenv import load_dotenv
 
-import pangenome2panmetabolome
+import pan2met.conf
 from .utils import logger
 
 load_dotenv()
 
-config = configparser.ConfigParser()
-default_config = importlib.resources.read_text(
-    pangenome2panmetabolome, "conf/default.ini"
-)
+config: configparser.ConfigParser = configparser.ConfigParser()
+default_config = importlib.resources.read_text(pan2met.conf, "default.ini")
 config.read_string(default_config)
 
 logger.debug(config)

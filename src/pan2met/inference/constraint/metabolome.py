@@ -8,13 +8,13 @@ import importlib
 
 import clyngor
 
-import pangenome2panmetabolome
+import pan2met
 from ...utils import read_list, write_output
 from ...config import config
 from ...io.knowledge_base import KnowledgeBase, select_kb
 
 
-logger = logging.getLogger("pangenome2panmetabolome:inference:constraint")
+logger = logging.getLogger("pan2met:inference:constraint")
 
 
 class ASPPathwayInference:
@@ -89,7 +89,7 @@ class ASPPathwayInference:
         """
 
         with importlib.resources.path(
-            pangenome2panmetabolome, "../asp/minimal_covering_pathway.lp"
+            pan2met, "../asp/minimal_covering_pathway.lp"
         ) as path:
             minimal_covering_pathway_rule_path = path
 

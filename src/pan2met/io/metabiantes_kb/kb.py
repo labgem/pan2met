@@ -8,7 +8,7 @@ import importlib.resources
 import aiosql
 import psycopg
 
-import pangenome2panmetabolome
+import pan2met
 
 from ..knowledge_base import KnowledgeBase
 from ...config import config
@@ -17,9 +17,7 @@ from ...config import config
 class MetabiantesKnowledgeBase(KnowledgeBase):
     def __init__(self):
         self.queries = aiosql.from_str(
-            importlib.resources.read_text(
-                pangenome2panmetabolome, "sql/metabiantes/queries.sql"
-            ),
+            importlib.resources.read_text(pan2met, "sql/metabiantes/queries.sql"),
             "psycopg2",
         )
         self.connection = psycopg.connect(f"dbname={config['metabiantes']['database']}")

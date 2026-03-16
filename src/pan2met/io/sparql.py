@@ -2,7 +2,7 @@
 A knowledge base on Pathway data based on a SPARQL Endpoint from BioPAX data
 """
 
-import pangenome2panmetabolome
+import pan2met
 
 import os
 import importlib.resources
@@ -26,9 +26,7 @@ class SPARQL:
 
 class SPARQLBackendKnowledgeBase(KnowledgeBase):
     def __init__(self):
-        queries_str: str = importlib.resources.read_text(
-            pangenome2panmetabolome, "sparql/queries.rq"
-        )
+        queries_str: str = importlib.resources.read_text(pan2met, "sparql/queries.rq")
         self.queries = ouisparql.from_str(queries_str, "sparql_wrapper")
         self.sparql_wrapper = SPARQL().wrapper
 

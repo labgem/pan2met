@@ -15,7 +15,7 @@ from .inference import metabolome
 
 def reactome_command(args):
     """
-    `pangenome2panmetabolome reactome` subcommand
+    `pan2met reactome` subcommand
     """
     monomers: list[str] = read_list(args.input)
     reactions = reactome.infer_reactome_from_monomers_asp(
@@ -26,7 +26,7 @@ def reactome_command(args):
 
 def reverse_reactome_command(args):
     """
-    `pangenome2panmetabolome reverse_reactome` subcommand
+    `pan2met reverse_reactome` subcommand
     """
     reactions: list[str] = read_list(args.reactions)
     monomers: set[str] = reactome.minimal_monomer_set(
@@ -37,7 +37,7 @@ def reverse_reactome_command(args):
 
 def metabolome_command(args):
     """
-    `pangenome2panmetabolome metabolome` subcommand
+    `pan2met metabolome` subcommand
     """
     reactome: set[str] = set(read_list(args.input))
     taxon_id: int = int(args.taxon)
@@ -47,7 +47,7 @@ def metabolome_command(args):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        prog="pangenome2panmetabolome",
+        prog="pan2met",
         description="Predict metabolic pathway presence from a (pan)genome",
     )
     parser.add_argument(

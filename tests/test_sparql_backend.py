@@ -3,7 +3,7 @@ import itertools
 import pytest
 import ouisparql
 
-from pangenome2panmetabolome.io.sparql import SPARQL
+from pan2met.io.sparql import SPARQL
 
 
 @pytest.fixture
