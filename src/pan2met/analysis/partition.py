@@ -10,7 +10,6 @@ TODO: summary partition frequency of a pathway.
 TODO:
 """
 
-from enum import Enum
 import argparse
 import csv
 from pathlib import Path
@@ -22,10 +21,22 @@ from ppanggolin.geneFamily import GeneFamily
 from ppanggolin.formats.readBinaries import check_pangenome_info
 
 
-class PangenomePartition(Enum):
-    CORE = 1
-    SHELL = 2
-    CLOUD = 3
+def ppanggolin_extract_gene_to_partition_mapping(
+    pangenome: Pangenome,
+) -> Dict[str, str]:
+    """
+    Construct a mapping between gene identifier and gene family partition
+
+    :param pangenome: a PPanGGOLiN pangenome
+    :return: a dictionnary with gene name as key, and corresponding gene partition as value
+    """
+    mapping: Dict[str, str] = {}
+    for contig in pangenome.contigs:
+        for gene in contig.genes:
+            gene_family = gene.family
+            partition = gene_family.named_partition
+            mapping[gene] = partition
+    return mapping
 
 
 def ppanggolin_get_gene_by_identifier(
@@ -44,14 +55,18 @@ def ppanggolin_get_gene_by_identifier(
     raise ValueError(f"ID {gene_identifier} not found in any contig of the pangenome")
 
 
-def ppanggolin_partition_of_gene_family(gene_name: str, pangenome: Pangenome) -> str:
+def ppanggolin_partition_of_gene_family(
+    gene_identifier: str, pangenome: Pangenome, gene_to_family: Dict[str, str]
+) -> str:
     """
     Get the pangenome partition class of a gene as annoted in PPanGGOLiN pangenome.
 
-    :param gene_name: a gene_name
+    :param gene_identifier: a gene identifier in PPanGGOLiN genome
+    :param pangenome: a PPanGGOLiN pangenome
+    :param gene_to_family: a dictionnary mapping a gene identifier to a gene family partition name
     :return: a PPanGGOLiN partition name (in { 'persistent', 'shell', 'cloud' })
     """
-    gene: Gene = ppanggolin_get_gene_by_identifier(gene_name, pangenome)
+    gene: Gene = ppanggolin_get_gene_by_identifier(gene_identifier, pangenome)
     gene_family: GeneFamily = gene.family
     partition = gene_family.named_partition
     return partition
@@ -87,6 +102,10 @@ def main():
     check_pangenome_info(
         pangenome, need_families=True, need_annotations=True, disable_bar=True
     )  # do not forget the call to this function, otherwise the generator of contigs and genes will be empty as the pangenome would not be loaded.
+    # Prepare a dictionnary mapping a gene identifier to a gene partition
+    gene_to_partition: Dict[str, str] = ppanggolin_extract_gene_to_partition_mapping(
+        pangenome
+    )
 
     # Read the reference mapping of reaction to enzyme file
     with open(args.reaction_enzyme, "r") as reaction_enzyme_file:
@@ -109,9 +128,10 @@ def main():
                 reaction = row.strip()
                 if reaction != "" and reaction in reaction_to_enzyme_gene:
                     enzyme_gene = reaction_to_enzyme_gene[reaction]
-                    pangenome_partition = ppanggolin_partition_of_gene_family(
-                        enzyme_gene, pangenome
-                    )
+                    if enzyme_gene in gene_to_partition:
+                        pangenome_partition = gene_to_partition[enzyme_gene]
+                    else:
+                        pangenome_partition = "NA"
                 else:
                     enzyme_gene = "NA"
                     pangenome_partition = "NA"
