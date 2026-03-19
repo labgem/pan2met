@@ -29,7 +29,7 @@ def test_asp_pathologic_rule_1():
     is_a("My generic biosynthesis", "Biosynthesis-Pathway").
     """
     answers = tuple(
-        solve(["./src/asp/pathologic_like_metacyc.lp"], inline=asp_code).by_predicate
+        solve(["./src/asp/pathologic_like.lp"], inline=asp_code).by_predicate
     )
     assert len(answers) == 1
     assert_reject(1, "PWY-TEST1", answers)
@@ -75,7 +75,7 @@ def test_asp_pathologic_rule_2():
     is_in_pathway("RXN-UNKNOWN", "PWY-TEST3").
     """
     answers = tuple(
-        solve(["./src/asp/pathologic_like_metacyc.lp"], inline=asp_code).by_predicate
+        solve(["./src/asp/pathologic_like.lp"], inline=asp_code).by_predicate
     )
     assert len(answers) == 1
     assert_pass(2, "PWY-TEST1", answers)
@@ -132,7 +132,7 @@ def test_asp_pathologic_rule_4():
     #show rule/3.
     """
     answers = tuple(
-        solve(["./src/asp/pathologic_like_metacyc.lp"], inline=asp_code).by_predicate
+        solve(["./src/asp/pathologic_like.lp"], inline=asp_code).by_predicate
     )
     assert len(answers) == 1
     assert_include(4, "PWY-1", answers)
