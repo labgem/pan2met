@@ -46,7 +46,8 @@ rule(1, "PASS", Pathway) :- not rule(1, "REJECT", Pathway) , pathway(Pathway).
 % REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction.
 % Rationale: Electron transport pathways are very short and specific, therefore all enzymes
 % must be present to include the pathway.
-missing_enzyme_for_reaction(Pathway, Reaction) :- is_in_pathway(Reaction, Pathway) , not reactome(Reaction) , not spontaneous(Reaction) , not orphan(Reaction).
+pathway_enzyme(Pathway, Reaction) :- is_in_pathway(Reaction, Pathway) , not orphan(Reaction) , not spontaneous(Reaction).
+missing_enzyme_for_reaction(Pathway, Reaction) :- pathway_enzyme(Pathway, Reaction) , not reactome(Reaction).
 missing_enzyme(Pathway) :- missing_enzyme_for_reaction(Pathway, _).
 %!trace_rule {"% is an electron transport pathway with a missing enzyme", Pathway}
 rule(2, "REJECT", Pathway) :- pathway_ontology_expanded(Pathway, "Electron-Transfer") , missing_enzyme(Pathway).
@@ -83,5 +84,61 @@ rule(2, "PASS", Pathway) :- not rule(2, "REJECT", Pathway) , pathway(Pathway).
 % pathway("PWY-TEST3").
 % is_a("PWY-TEST3", "Type2").
 % is_in_pathway("RXN-UNKNOWN", "PWY-TEST3").
+
+% #show rule/3.
+
+% Third rule:
+% REJECT P if any key-non-reactions are present.
+% Not handled.
+% rule(3, "PASS",  Pathway) :- pathway(Pathway).
+
+% Fourth rule:
+% INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction)
+% AND if P is outside its taxonomic range, P contains more than 3 reactions. Rationale: We
+% keep pathways outside their designated taxonomic range if very strong evidence for the
+% pathway exists.
+
+pathway_enzyme_count(Pathway, N) :- N = #count{ Enzyme: pathway_enzyme(Pathway, Enzyme) }, pathway(Pathway).
+% achieved: N is the number of reaction that is expected to require an enzyme to be catalyzed (neither spontaneous, nor orphan, but can be absent from the reactome).
+
+rule(4, "INCLUDE", Pathway) :- pathway(Pathway) , not missing_enzyme(Pathway) , in_taxonomic_range(Pathway).
+rule(4, "INCLUDE", Pathway) :- pathway(Pathway) , not missing_enzyme(Pathway) , pathway_enzyme_count(Pathway, N) , N > 3.
+rule(4, "PASS", Pathway) :- pathway(Pathway) , not rule(4, "INCLUDE", Pathway).
+
+
+% % Test cases for rule 4:
+% reactome("RXN-1").
+% reactome("RXN-2").
+% reactome("RXN-3").
+% reactome("RXN-4").
+
+% % Case 1. A pathway with no missing enzyme, and in taxonomic range
+% pathway("PWY-1").
+% in_taxonomic_range("PWY-1").
+% is_in_pathway("RXN-1", "PWY-1").
+% is_in_pathway("RXN-2", "PWY-1").
+% is_in_pathway("RXN-3", "PWY-1").
+
+% % Case 2. A pathway with no missing enzyme, outside of taxonomic range, but with more than 3 reactions with an enzyme.
+% pathway("PWY-2").
+% % not specified atoms are false by default: in_taxonomic_range("PWY-2").
+% is_in_pathway("RXN-1", "PWY-2").
+% is_in_pathway("RXN-2", "PWY-2").
+% is_in_pathway("RXN-3", "PWY-2").
+% is_in_pathway("RXN-4", "PWY-2").
+
+% % Case 3. A pathway with no missing enzyme, outside of taxonomic range, but with at most 3 reactions with an enzyme.
+% pathway("PWY-3").
+% % not specified atoms are false by default: in_taxonomic_range("PWY-2").
+% is_in_pathway("RXN-1", "PWY-1").
+% is_in_pathway("RXN-2", "PWY-2").
+% is_in_pathway("RXN-3", "PWY-3").
+
+% % Case 4. A pathway with missing enzyme, even if in taxonomic range
+% pathway("PWY-4").
+% in_taxonomic_range("PWY-4").
+% is_in_pathway("MISSING-RXN-1", "PWY-4").
+% is_in_pathway("RXN-1", "PWY-4").
+% is_in_pathway("RXN-2", "PWY-4").
 
 % #show rule/3.
