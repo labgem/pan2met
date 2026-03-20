@@ -10,9 +10,8 @@
 % - orphan(Reaction). -- We do not know any enzyme catalyzing the reaction
 % - pathway_key_reaction(Pathway, KeyReaction). -- KeyReaction is considered key for the pathway
 % - pathway_in_taxonomic_range(Pathway). -- The target taxon is in the expected taxonomic range of the pathway
-% - pathway_reaction_order(Pathway, Reaction, Order).
-%   -- If Reaction is the first in a topological ordering of the reaction graph,
-%   Order is 1, Order is maximum if the reaction is last in the topological ordering.
+% - pathway_reaction_order(Pathway, PredecessorReaction, SuccessorReaction).
+%   PredecessorReaction appears before Successor reaction in the pathway reaction graph.
 %   Used for a special rule for catabolysis and biosynthesis pathways.
 % - pathway_passing_score(Pathway).
 % - is_a(Pathway, Type) or is_a(Type, ParentType), define the pathway class ontology
@@ -214,10 +213,11 @@ rule(8, "PASS", Pathway) :- pathway(Pathway) , not rule(8, "REJECT", Pathway).
 is_biosynthesis_pathway(Pathway) :- pathway_ontology_expanded(Pathway, "Biosynthesis").
 is_catabolysis_pathway(Pathway) :- pathway_ontology_expanded(Pathway, "Degradation").
 
-first_reaction(Pathway, Reaction) :- pathway_reaction_order(Pathway, Reaction, FirstOrder) , FirstOrder = #min { Order: pathway_reaction_order(Pathway, _, Order) }.
-% Reaction is the first reaction in the topological ordering of the reaction graph of the pathway.
-last_reaction(Pathway, Reaction) :- pathway_reaction_order(Pathway, Reaction, LastOrder) , LastOrder = #max { Order: pathway_reaction_order(Pathway, _, Order) }.
-% Reaction is the last reaction in the topological ordering ot the reaction graph of the pathay.
+first_reaction(Pathway, FirstReaction) :- pathway_reaction_order(Pathway, FirstReaction, _) , is_in_pathway(OtherReaction, Pathway) , not pathway_reaction_order(Pathway, OtherReaction, FirstReaction).
+% A first reaction is a reaction with no predecessor
+last_reaction(Pathway, FirstReaction) :- pathway_reaction_order(Pathway, _, LastReaction) , is_in_pathway(OtherReaction, Pathway) , not pathway_reaction_order(Pathway, LastReaction, OtherReaction).
+% A last reaction is a reaction with no successor
+% FIXME: check if a pathway could have multiple extremities, in which case, identifying the reaction of interest for anabolism or catabolism could be not that easy.
 
 %!trace_rule { "% pathway is a biosynthesis pathway and missing the last reaction %.", Pathway, Reaction }
 rule(9, "REJECT", Pathway) :-
