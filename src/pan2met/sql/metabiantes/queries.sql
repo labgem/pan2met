@@ -6,6 +6,22 @@ SELECT name FROM pathway;
 -- Get all reactions in the database
 SELECT name FROM reaction;
 
+-- name: get_orphan_reactions()
+-- Get all orphan reactions in the database
+SELECT name FROM reaction
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM reaction_enzyme
+    WHERE reaction_enzyme.reaction_id = reaction.id
+);
+
+
+-- name: get_spontaneous_reactions()
+-- Get all spontaneous reactions in the database
+SELECT name FROM reaction
+WHERE spontaneous = TRUE;
+
+
 -- name: get_reactions_of_pathway(pathway_id)
 -- Get all reactions of a pathway
 SELECT reaction.name
@@ -124,4 +140,18 @@ SELECT pathway_ontology.pathway_class
 FROM pathway_ontology
 INNER JOIN pathway
 ON pathway.id = pathway_ontology.pathway_id
+WHERE pathway.name = :pathway_id;
+
+
+-- name: get_pathway_reaction_order(pathway_id)
+-- List all pairs of reactions in the pathway, where the first reaction is a predecessor of the
+-- second reaction in the pathway.
+SELECT predecessor_reaction.name, successor_reaction.name
+FROM pathway
+INNER JOIN pathway_reaction_graph
+ON pathway_reaction_graph.pathway_id = pathway.id
+INNER JOIN reaction AS predecessor_reaction
+ON predecessor_reaction.id = pathway_reaction_graph.predecessor_reaction_id
+INNER JOIN reaction AS successor_reaction
+ON successor_reaction.id = pathway_reaction_graph.successor_reaction_id
 WHERE pathway.name = :pathway_id;

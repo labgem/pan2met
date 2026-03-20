@@ -9,10 +9,11 @@ Simple inference rule:
 
 """
 
-import os
+import importlib.resources
 
 import clyngor
 
+import pan2met
 from ..config import config
 from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..utils import logger, write_output
@@ -47,16 +48,11 @@ def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[
     """
     Naive inference of a set of reaction.
 
-    Arguments
-    ---------
 
-        monomers -- list of monomer identifiers
-        kb -- a knowledge base adapter
+    :param monomers: list of monomer identifiers
+    :param kb: a knowledge base adapter
 
-    Yields
-    ------
-
-        reaction identifiers
+    :yield: reaction identifiers
     """
 
     # Start by infering all reachable complex
@@ -82,16 +78,10 @@ def infer_reactome_from_monomers_asp(
     Given a list of 'seed' monomer id,
     infer the list of realized reaction ids.
 
-    Arguments
-    ---------
+    :param  monomers: list of monomer id
+    :param inference_rules_path: Path to a AnsProlog file (i.e., .lp) with reaction inference rules built from the knowledge base
 
-        monomers -- list of monomer id
-        inference_rules_path -- Path to a AnsProlog file (i.e., .lp) with reaction inference rules built from the knowledge base
-
-    Yields
-    -------
-
-        reaction identifers (e.g., "RXN-1")
+    :yield: reaction identifers (e.g., "RXN-1")
 
     Format of the infered reaction atoms
     ------------------------------------
@@ -127,7 +117,6 @@ def infer_reactome_from_ec_numbers(
     """
     Infer a set of reactions from a list of EC-numbers.
 
-
     """
     reaction_set: set[str] = set()
     for ec_number in ec_numbers:
@@ -144,35 +133,30 @@ def minimal_monomer_set(
     """
     Use ASP to identify a minimal set of monomer that is expected to be sufficient to catalyze a set of reactions.
 
-    Arguments
-    ---------
-        reactions -- a list of reaction identifiers
-        potential_monomer_inference_rule_path -- a path to 'potential' involved monomer inference rules
-        reaction_inference_rule_path -- a path to inference rules from monomer (to complex) to reaction
 
-    Returns
-    -------
+    :param reactions: a list of reaction identifiers
+    :param potential_monomer_inference_rule_path: a path to 'potential' involved monomer inference rules
+    :param reaction_inference_rule_path: a path to inference rules from monomer (to complex) to reaction
 
-    A 'minimal' set of monomer id sufficient to catalyze the given set of reactions
+    :return:  A 'minimal' set of monomer id sufficient to catalyze the given set of reactions
     """
+    with importlib.resources.path(
+        pan2met, "asp/rules/required_monomer_given_reactions.lp"
+    ) as minimal_set_asp_rule_path:
+        reaction_asp_atoms = "\n".join(
+            [f'reaction("{reaction}").' for reaction in reactions]
+        )
+        target_reaction_asp_atoms = "\n".join(
+            [f'target_reaction("{reaction}").' for reaction in reactions]
+        )
 
-    minimal_set_asp_rule_path = os.path.join(
-        os.path.dirname(__file__), "../asp/required_monomer_given_reactions.lp"
-    )
+        # First, identify the subset of the whole set of monomer that may be involved in the selected reactions,
+        # using the inverse inference rules
+        # The output is a set of atom potential_monomer/1.
+        answers = clyngor.solve(
+            potential_monomer_inference_rule_path, inline=reaction_asp_atoms
+        )
 
-    reaction_asp_atoms = "\n".join(
-        [f'reaction("{reaction}").' for reaction in reactions]
-    )
-    target_reaction_asp_atoms = "\n".join(
-        [f'target_reaction("{reaction}").' for reaction in reactions]
-    )
-
-    # First, identify the subset of the whole set of monomer that may be involved in the selected reactions,
-    # using the inverse inference rules
-    # The output is a set of atom potential_monomer/1.
-    answers = clyngor.solve(
-        potential_monomer_inference_rule_path, inline=reaction_asp_atoms
-    )
     answer = next(answers)
     potential_monomers: set[str] = set()
     for predicate, value in answer:

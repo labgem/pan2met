@@ -6,11 +6,17 @@ logger = logging.getLogger("pan2met")
 
 
 def read_list(filename: str) -> list[str]:
+    """
+    Read a list of strings from a file, one per line
+    """
     with open(filename, "r") as f:
         return f.read().splitlines()
 
 
 def write_output(filename: str, content: Iterable[str]):
+    """
+    Write a list of strings to a file, one per line
+    """
     with open(filename, "w") as output_file:
         output_file.writelines(line + "\n" for line in content)
 
@@ -24,3 +30,32 @@ def static_vars(**kwargs):
         return func
 
     return decorate
+
+
+def set_logging_level(verbose_intensity):
+    """
+    Set the logging level based on the number of -v flags provided to the CLI.
+    The more -v flags, the more verbose the logging level (up to DEBUG).
+
+    :param verbose_intensity: The number of -v flags provided to the CLI
+
+    verbose_intensity is mapped to logging levels as follows:
+    0: ERROR
+    1: WARNING
+    2: INFO
+    3 or more: DEBUG
+    """
+    logging.basicConfig()
+    logging_levels = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][::-1]
+    logging_level_index = min(verbose_intensity, len(logging_levels) - 1)
+    logging_level = logging_levels[logging_level_index]
+    logging.getLogger().setLevel(logging_level)
+
+
+def unquote(text: str) -> str:
+    """
+    Remove leading and trailing quotes from a string, if present
+    """
+    if text.startswith('"') and text.endswith('"'):
+        return text[1:-1]
+    return text

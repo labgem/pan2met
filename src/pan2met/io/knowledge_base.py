@@ -33,6 +33,18 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
+    def spontaneous_reactions(self):
+        """
+        List spontaneous reactions
+        """
+        raise NotImplementedError()
+
+    def orphan_reactions(self):
+        """
+        List orphan reactions
+        """
+        raise NotImplementedError()
+
     def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway

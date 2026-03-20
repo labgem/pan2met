@@ -5,12 +5,11 @@ Command line interface of pangenome2metabolome
 """
 
 import argparse
-import logging
 import sys
 
-from .utils import read_list, write_output
+from .utils import read_list, write_output, set_logging_level
 from .inference import reactome
-from .inference import metabolome
+from .inference.pathologic import metabolome
 
 
 def reactome_command(args):
@@ -126,14 +125,6 @@ def parse_arguments():
     parser_metabolome.set_defaults(func=metabolome_command)
     parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
     return parser, parser.parse_args()
-
-
-def set_logging_level(verbose_intensity):
-    logging.basicConfig()
-    logging_levels = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR][::-1]
-    logging_level_index = min(verbose_intensity, len(logging_levels) - 1)
-    logging_level = logging_levels[logging_level_index]
-    logging.getLogger().setLevel(logging_level)
 
 
 def main():

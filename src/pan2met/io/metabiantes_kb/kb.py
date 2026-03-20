@@ -54,6 +54,20 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         return self._aiosql_to_list(self.queries.get_reactions(self.connection))
 
+    def orphan_reactions(self) -> list[str]:
+        """
+        List orphan reactions
+        """
+        return self._aiosql_to_list(self.queries.get_orphan_reactions(self.connection))
+
+    def spontaneous_reactions(self) -> list[str]:
+        """
+        List spontaneous reactions
+        """
+        return self._aiosql_to_list(
+            self.queries.get_spontaneous_reactions(self.connection)
+        )
+
     def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway
@@ -158,4 +172,12 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_ontology_parent_class_of_pathway(
                 self.connection, pathway_id=pathway_id
             )
+        )
+
+    def pathway_reaction_order(self, pathway_id: str) -> list[tuple[str, str]]:
+        """
+        Return a list of pairs of reactions in the pathway, where the first reaction is a predecessor of the second reaction in the pathway.
+        """
+        return self.queries.get_pathway_reaction_order(
+            self.connection, pathway_id=pathway_id
         )

@@ -28,7 +28,7 @@ Create a configuration file, in e.g. `conf/configuration.ini`, from provided exa
 [reactome]
 
 [inference]
-pathway_score_cutoff = 0.35
+pathway_score_threshold = 0.35
 
 [reference]
 ncbi_taxonomy = /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01

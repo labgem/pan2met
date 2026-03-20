@@ -89,26 +89,24 @@ class ASPPathwayInference:
         """
 
         with importlib.resources.path(
-            pan2met, "../asp/minimal_covering_pathway.lp"
-        ) as path:
-            minimal_covering_pathway_rule_path = path
+            pan2met, "asp/rules/minimal_covering_pathway.lp"
+        ) as minimal_covering_pathway_rule_path:
+            inline_asp = self.reactome_to_asp()
 
-        inline_asp = self.reactome_to_asp()
+            answers = clyngor.solve(
+                [minimal_covering_pathway_rule_path, kb_asp_path],
+                inline=inline_asp,
+                nb_model=1,
+            )  # FIXME: we might be interested in more than one model.
+            answer = next(answers)
+            inferred: set[str] = set()
+            for predicate, value in answer:
+                if predicate == "infer_present_pathway":
+                    identifier = value[0]
+                    identifier = identifier.replace('"', "")
+                    inferred.add(identifier)
 
-        answers = clyngor.solve(
-            [minimal_covering_pathway_rule_path, kb_asp_path],
-            inline=inline_asp,
-            nb_model=1,
-        )  # FIXME: we might be interested in more than one model.
-        answer = next(answers)
-        inferred: set[str] = set()
-        for predicate, value in answer:
-            if predicate == "infer_present_pathway":
-                identifier = value[0]
-                identifier = identifier.replace('"', "")
-                inferred.add(identifier)
-
-        return inferred
+            return inferred
 
 
 def parse_arguments():
