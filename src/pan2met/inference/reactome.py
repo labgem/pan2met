@@ -2,10 +2,9 @@
 Reactome inference
 
 Simple inference rule:
- - If a reaction has an enzyme that can catalyze it in an organism,
- simply infer the presence of the reaction in the reactome.
- - (optionally) For every EC-number found,
-   infer the presence of all reactions annotated with such an EC-number
+
+- If a reaction has an enzyme that can catalyze it in an organism, simply infer the presence of the reaction in the reactome.
+- (optionally) For every EC-number found, infer the presence of all reactions annotated with such an EC-number
 
 """
 

@@ -18,6 +18,9 @@ import argparse
 import configparser
 from typing import Optional
 
+import graph_tool as gt
+import graph_tool.topology
+
 from ...utils import set_logging_level
 from ...utils import read_list, write_output
 from ...config import config
@@ -98,15 +101,12 @@ class PythonicPathwayInference(PathwayInference):
 
         Default decision: REJECT
 
-        TODO REJECT P if P is either:
+        REJECT P if P is either:
         - A biosynthetic pathway missing enzymes for its final steps
         - A catabolic pathway missing enzymes for its initial steps
         - An energy pathway missing enzymes for more than half of its steps
 
-        Returns
-        -------
-
-        True if the pathway is inferred present, False otherwise.
+        :return: True if the pathway is inferred present, False otherwise.
         """
         if PathwayInference.RULES["pathway_ontology"]:
             pathway_ontology_parents: list[str] = (
@@ -133,11 +133,22 @@ class PythonicPathwayInference(PathwayInference):
             reaction in self.reactome
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
+        all_reactions_absent: bool = len(
+            non_orphan_non_spontaneous_pathway_reactions
+        ) >= 1 and all(
+            reaction not in self.reactome
+            for reaction in non_orphan_non_spontaneous_pathway_reactions
+        )
         if all_reactions_are_present:
             if self.record_reason:
                 self.amend_reason(pathway_id, "ACCEPT: all reactions are present")
             return True
-
+        elif all_reactions_absent:
+            if self.record_reason:
+                self.amend_reason(
+                    pathway_id, "REJECT: no known catalyzis at all for this pathway."
+                )
+            return False
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
         if PathwayInference.RULES["pathway_ontology"]:
             if (
@@ -174,6 +185,14 @@ class PythonicPathwayInference(PathwayInference):
                             details="ACCEPT: all reactions are present, not in taxonomic range, but at least three non-orphan, non-spontaneous reactions.",
                         )
                     return True
+                else:
+                    # REJECT, otherwise, when, P if P is outside its taxonomic range
+                    if self.record_reason:
+                        self.amend_reason(
+                            pathway_id,
+                            "REJECT: not in taxonomic range, and no more than 3 catalyzed reactions.",
+                        )
+                        return False
             else:
                 if self.record_reason:
                     self.amend_reason(
@@ -181,16 +200,6 @@ class PythonicPathwayInference(PathwayInference):
                         details="ACCEPT: all reactions are present and we don't care about the taxonomic range.",
                     )
                 return True
-
-        # REJECT P if P is outside its taxonomic range
-        if PathwayInference.RULES["taxonomic_range"]:
-            if not in_taxonomic_range:
-                if self.record_reason:
-                    self.amend_reason(
-                        pathway_id,
-                        "REJECT: not all reaction present and not in taxonomic range.",
-                    )
-                return False
 
         # REJECT P if P is missing enzymes for all key reactions of P
         if PathwayInference.RULES["pathway_key_reaction"]:
@@ -221,6 +230,50 @@ class PythonicPathwayInference(PathwayInference):
                             )
                         return False
 
+        if PathwayInference.RULES["pathway_ontology"]:
+            one_reaction_graph_ordering = self.reaction_graph_topological_order(
+                pathway_id
+            )
+            if len(one_reaction_graph_ordering) > 2:
+                first_reaction_id = one_reaction_graph_ordering[0]
+                last_reaction_id = one_reaction_graph_ordering[-1]
+                # FIXME: It is possible that a pathway reaction graph has multiple dead ends, so we might miss the correct last reaction id.
+                # REJECT P if P is a biosynthetic pathway missing enzymes for its final step
+                if "Biosynthesis" in pathway_ontology_parents:
+                    if last_reaction_id not in self.reactome:
+                        if self.record_reason:
+                            self.amend_reason(
+                                pathway_id,
+                                f"REJECT: biosynthesis pathway {pathway_id}'s last reaction is not present in known catalyzed reactome.",
+                            )
+                        return False
+                # REJECT P if P is a catabolic pathway missing enzymes for its initial step
+                elif "Degradation" in pathway_ontology_parents:
+                    if first_reaction_id not in self.reactome:
+                        if self.record_reason:
+                            self.amend_reason(
+                                pathway_id,
+                                f"REJECT: catabolysis pathway {pathway_id}'s first reaction is not present in known catalyzed reactome.",
+                            )
+                        return False
+                # REJECT P if P is an energy metabolism pathway and is missing more than half its catalyzed reactions (understood as both non orphan and non spontaneous reactions)
+                elif "Energy-Metabolism" in pathway_ontology_parents:
+                    catalyzed_reactions = [
+                        reaction
+                        for reaction in non_orphan_non_spontaneous_pathway_reactions
+                        if reaction in self.reactome
+                    ]
+                    if (
+                        len(catalyzed_reactions)
+                        < len(non_orphan_non_spontaneous_pathway_reactions) / 2
+                    ):
+                        if self.record_reason:
+                            self.amend_reason(
+                                pathway_id,
+                                f"REJECT: energy metabolism pathway {pathway_id} is missing more than half its catalyzed reactions.",
+                            )
+                        return False
+
         # INCLUDE P if the score of P exceeds the threshold PATHWAY-PREDICTION-CUTOFF
         if pathway_scores[pathway_id] > PathwayInference.PATHWAY_SCORE_THRESHOLD:
             if self.record_reason:
@@ -236,6 +289,33 @@ class PythonicPathwayInference(PathwayInference):
                 "REJECT: no applicable case to reject or accept the pathway, so reject by default.",
             )
         return False
+
+    def reaction_graph_topological_order(self, pathway):
+        """
+        Return the topological ordering of a pathway reaction graph.
+
+        Assume that the pathway reaction graph is a directed acyclic graph.
+        """
+        reaction_order = self.kb.pathway_reaction_order(pathway)
+        graph = gt.Graph(directed=True)
+        vmap: dict[str, int] = {}
+        # Create a graph_tool directed reaction graph
+        for predecessor, successor in reaction_order:
+            if predecessor in vmap:
+                u = vmap[predecessor]
+            else:
+                u = graph.add_vertex()
+                vmap[u] = predecessor
+            if successor in vmap:
+                v = vmap[successor]
+            else:
+                v = graph.add_vertex()
+                vmap[v] = successor
+            graph.add_edge(u, v)
+        # Get the topological ordering
+        sort = graph_tool.topology.topological_sort(graph)
+        sort_named = [vmap[vertex] for vertex in sort]
+        return sort_named
 
     def consider_pathway_score_to_be_greater(
         self,

@@ -8,12 +8,9 @@ import importlib.resources
 from dotenv import load_dotenv
 
 import pan2met.conf
-from .utils import logger
 
 load_dotenv()
 
 config: configparser.ConfigParser = configparser.ConfigParser()
 default_config = importlib.resources.read_text(pan2met.conf, "default.ini")
 config.read_string(default_config)
-
-logger.debug(config)

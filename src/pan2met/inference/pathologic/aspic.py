@@ -42,7 +42,7 @@ class AspicPathwayInference(PathwayInference):
         """
         reactome_atoms = kb_as_asp.target_organism_reactions_as_asp(self.reactome)
         taxonomic_range_atoms = kb_as_asp.pathways_in_taxonomic_range_as_asp(
-            self.taxonomic_range_belonging
+            self.pathway_in_taxonomic_range
         )
         return "\n".join([reactome_atoms, taxonomic_range_atoms])
 

@@ -23,7 +23,7 @@ class PathwayInference:
         "pathway_ontology",
         "pathway_variant",
     ]
-    RULES: dict[str, bool] = {key: False for key in AVAILABLE_RULES}
+    RULES: dict[str, bool] = {key: True for key in AVAILABLE_RULES}
     RULES.update(
         {
             key: config["inference"]["rules"].getboolean(key)
@@ -35,6 +35,7 @@ class PathwayInference:
             )
         }
     )
+    # FIXME: rule config does not seem to be correctly taken into account.
 
     def __init__(
         self,
@@ -51,7 +52,7 @@ class PathwayInference:
             config["reference"]["ncbi_taxonomy"]
         )
         self.taxon_id: int = taxon_id
-        self.taxonomic_range_belonging: dict[str, bool] = (
+        self.pathway_in_taxonomic_range: dict[str, bool] = (
             self.taxonomic_range_belonging_precompute(self.pathways)
         )
         # Trace the decision algorithm if `record_reason` option is set to true.
@@ -115,6 +116,7 @@ class PathwayInference:
         :param reaction_id: the identifier of the reaction
         :param pathway_id: the identifier of the pathway
         :param pathway_key_reactions: the set of key reaction of the pathway
+        :return: the reaction score
         """
         score = 0
         # Add base presence score
@@ -200,7 +202,7 @@ class PathwayInference:
         :param pathway_key_reactions: the set of key reaction of the pathway
         :return: the key reaction score of the reaction for the given pathway
         """
-        if reaction in pathway_key_reactions:
+        if reaction in self.reactome and reaction in pathway_key_reactions:
             return 0.5
         else:
             return 0
@@ -244,9 +246,7 @@ class PathwayInference:
 
         #
         if PathwayInference.RULES["taxonomic_range"]:
-            pathway_taxonomic_range_boost_score = self.taxonomic_neighborhood_boost(
-                pathway_id
-            )
+            pathway_taxonomic_range_boost_score = self.taxonomic_range_boost(pathway_id)
             score *= pathway_taxonomic_range_boost_score
         else:
             pathway_taxonomic_range_boost_score = None
@@ -258,34 +258,43 @@ class PathwayInference:
             )
         return score
 
-    def taxonomic_neighborhood_boost(self, pathway_id: str):
+    def taxonomic_neighborhood_boost(self, pathway_id: str) -> float:
         """
         "T1 is highest if the two organisms are the same strain, weaker if the same species, weaker still if the same genus." (UserGuide.pdf v29.5 p. 187)
 
         We do not know the exact weight of this boost in the PathoLogic implementation.
         Hence the choice made below is arbitrary.
 
+        $$
         T1 >= 1.
+        $$
 
         :param pathway_id: the identifier of the pathway
         """
         # Warning: in metabiantes, the strain is not taken into account
         pass
 
-    def taxonomic_range_boost(self, pathway_id: str):
+    def taxonomic_range_boost(self, pathway_id: str) -> float:
         """
         "PS receives an additional boost T2 if the subject organism is within the expected taxonomic range
         of the pathway as designated within MetaCyc (e.g., if the subject organism is a plant and the path-
         way is designated as a plant pathway). If the subject organism is outside the expected taxonomic
         range of the pathway then T2 < 1." (UserGuide.pdf v29.5 p.187)
 
+        $$
+        T2 \geq 1
+        $$
+
         :param pathway_id: the identifier of the pathway
         :return: the taxonomic range boost score of the pathway
         """
-        if self.pathway_in_taxonomic_range[pathway_id]:
-            return 0.1
+        if (
+            pathway_id in self.pathway_in_taxonomic_range
+            and self.pathway_in_taxonomic_range[pathway_id]
+        ):
+            return 1.2
         else:
-            return 0
+            return 1
 
     def taxonomic_range_belonging_precompute(
         self, pathways: list[str]
@@ -295,10 +304,14 @@ class PathwayInference:
         is under the given NCBI-Taxonomy ID for the target organism.
         :param pathways: the list of pathway identifier to precompute the taxonomic range belonging for.
         """
-        pathway_in_taxonomic_range: dict[str, bool] = {
-            pathway: self.taxonomy.is_child_of_parent_tax_id(
-                self.kb.pathway_taxonomic_range(pathway), self.taxon_id
-            )
-            for pathway in pathways
-        }
+
+        pathway_in_taxonomic_range: dict[str, bool] = {}
+        for pathway in pathways:
+            taxonomic_range = self.kb.pathway_taxonomic_range(pathway)
+            if taxonomic_range is not None:
+                pathway_in_taxonomic_range[pathway] = (
+                    self.taxonomy.is_child_of_parent_tax_id(
+                        taxonomic_range, self.taxon_id
+                    )
+                )
         return pathway_in_taxonomic_range

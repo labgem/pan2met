@@ -233,7 +233,6 @@ rule(9, "REJECT", Pathway) :-
           , missing_enzyme_for_reaction(Pathway, Reaction)
           , is_catabolysis_pathway(Pathway).
 
-% TODO: last declination of this decision rule: "An energy pathway missing enzymes for more than half its steps"
 count_pathway_reactions(Pathway, N) :- N = #count{ Reaction: is_in_pathway(Reaction, Pathway) }, pathway(Pathway).
 count_missing_enzyme_reactions(Pathway, N) :- N = #count{ Reaction: missing_enzyme_for_reaction(Pathway, Reaction) }, pathway(Pathway).
 rule(9, "REJECT", Pathway) :-

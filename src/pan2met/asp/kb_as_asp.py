@@ -2,19 +2,16 @@
 Output a metabolic knowledge base in ASP format for use with clingo.
 
 The Answer Set Programming atoms we use are:
+
 - pathway(Pathway)
 - is_in_pathway(Reaction, Pathway).
 - is_a(Pathway, PathwayClass). / is_a(PathwayClass, ParentPathwayClass).
 - in_taxonomic_range(Pathway). (depending on the taxonomic range of the pathway and the taxonomy of the target organism.)
 - reactome(Reaction). (depending on the reactome of the target organism, inferred from its genome, by homology.)
-- orphan(Reaction).
-    when the reaction has no known enzyme in the reference knowledge base.
-- spontaneous(Reaction).
-    when the reaction is spontaneous.
-- pathway_key_reaction(Pathway, Reaction).
-  when the knowledge base specify that the reaction is key for the pathway.
-- pathway_reaction_order(Pathway, Predecessor, Successor).
-    indicates the topological ordering of the reactions in the pathway.
+- orphan(Reaction). (when the reaction has no known enzyme in the reference knowledge base.)
+- spontaneous(Reaction). (when the reaction is spontaneous.)
+- pathway_key_reaction(Pathway, Reaction). (when the knowledge base specify that the reaction is key for the pathway.)
+- pathway_reaction_order(Pathway, Predecessor, Successor). (indicates the topological ordering of the reactions in the pathway.)
 """
 
 import argparse

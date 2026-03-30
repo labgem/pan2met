@@ -56,7 +56,7 @@ test = [
 
 [project.urls]
 # Homepage = ""
-Repository = "https://gitlab.com/sortion/pan2met"
+Repository = "https://github.com/labgem/pan2met"
 # Documentation = ""
 
 [project.scripts]

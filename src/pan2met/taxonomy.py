@@ -13,13 +13,21 @@ import csv
 
 
 class NCBITaxonomyTree:
+    """
+    A parser and utilitary methods on NCBI taxonomy tree.
+    """
+
     def __init__(self, dump_path: str):
+        """
+        :param dump_path: path to the folder containing the dump of the NCBI Taxonomy database.
+        """
         self.parse_parent_dict(dump_path)
         self.root_tax_id = 1
 
     def parse_parent_dict(self, dump_path: str):
         """
-        Return a dictionnary linking a taxid to its direct parent in the NCBI Taxonomy tree.
+        :param dump_path: path to the directory with the dump of the NCBI Taxonomy database.
+        load a dictionnary linking a taxid to its direct parent in the NCBI Taxonomy tree.
         """
         self.parent_dict: dict[int, int] = {}
         self.tax_rank: dict[int, str] = {}
@@ -51,6 +59,20 @@ class NCBITaxonomyTree:
                 self.tax_rank[tax_id] = row["rank"].replace("\t", "")
 
     def is_child_of_parent_tax_id(self, parent_tax_id: int, child_tax_id: int) -> bool:
+        """
+
+        :param parent_tax_id: NCBI Taxonomy identifier
+        :param child_tax_id:  NCBI Taxonomy identifier
+        :return: True if parent_tax_id is a parent of child_tax_id in the NCBI Taxonomy tree
+        """
+        if parent_tax_id not in self.parent_dict:
+            raise ValueError(
+                f"NCBI Taxonomy identifier {parent_tax_id} not found in parsed taxonomy tree."
+            )
+        if child_tax_id not in self.parent_dict:
+            raise ValueError(
+                f"NCBI Taxonomy identifier {child_tax_id} not found in parsed taxonomy tree."
+            )
         current_tax_id = child_tax_id
         if current_tax_id == parent_tax_id:
             return True
@@ -60,12 +82,19 @@ class NCBITaxonomyTree:
             current_tax_id = self.parent_dict[current_tax_id]
         return False
 
-    def path_to_root(self, taxid: int) -> list[int]:
+    def path_to_root(self, tax_id: int) -> list[int]:
         """
         Trace back the path to the root of the tree
+
+        :param tax_id:
+        :return: The list of NCBI Taxonomy identifier from tax_id to the root of the NCBI Taxonomy
         """
+        if tax_id not in self.parent_dict:
+            raise ValueError(
+                f"NCBI Taxonomy identifier {tax_id} not found in parsed taxonomy tree."
+            )
         path = []
-        current = taxid
+        current = tax_id
         while current != self.root_tax_id:
             path.append(current)
             current = self.parent_dict[current]
@@ -80,10 +109,13 @@ class NCBITaxonomyTree:
         and then go down the tree on the two paths from the root,
         while the node is a shared ancestor.
         It is expected to take a time in the order of the depth of the tree.
+
+        :param taxid_1: an NCBI Taxonomy identifier
+        :param taxid_2: an other NCBI Taxonomy identifier
+        :return: the deepest taxonomy identifier in the NCBI Taxonomy tree that is a common ancestor of both tax id.
         """
         if taxid_1 == taxid_2:
             return taxid_1
-
         path1 = self.path_to_root(taxid_1)
         path2 = self.path_to_root(taxid_2)
 

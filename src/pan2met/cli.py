@@ -9,7 +9,7 @@ import sys
 
 from .utils import read_list, write_output, set_logging_level
 from .inference import reactome
-from .inference.pathologic import metabolome
+from .inference.pathologic.pythonic import infer_metabolome
 
 
 def reactome_command(args):
@@ -40,7 +40,8 @@ def metabolome_command(args):
     """
     reactome: set[str] = set(read_list(args.input))
     taxon_id: int = int(args.taxon)
-    pathways = metabolome.infer_metabolome(reactome, taxon_id)
+    reason_filename = args.reason
+    pathways = infer_metabolome(reactome, taxon_id, reason_filename)
     write_output(args.output, pathways)
 
 
@@ -88,6 +89,12 @@ def parse_arguments():
         help="The path of the output file "
         "listing all identifiers of pathway infered to be present",
         required=True,
+    )
+    parser_metabolome.add_argument(
+        "--reason",
+        help="The path to an output file with a reason log.",
+        default=None,
+        required=False,
     )
     parser_metabolome.add_argument(
         "-t",

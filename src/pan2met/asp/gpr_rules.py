@@ -13,7 +13,7 @@ from typing import Iterable, Literal
 
 import pythoncyc
 
-from ..io.pythoncyc.metacyc import (
+from ..io.pythoncyc_kb.metacyc import (
     remove_pipes,
     is_proteic_complex,
     is_homomeric,

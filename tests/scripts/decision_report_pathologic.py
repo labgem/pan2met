@@ -65,7 +65,6 @@ def direct_report_inference_description(
         with open(output_filename, "w") as output_file:
             lisp_code = input_file.read().replace("\n", " ")
             for lisp_object in first_order_lisp_objects(lisp_code):
-                print(lisp_object)
                 pathway: Optional[str] = None
                 explanation: Optional[str] = None
                 keep: Optional[bool] = None
