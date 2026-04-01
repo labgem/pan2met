@@ -35,7 +35,7 @@ def ppanggolin_extract_gene_to_partition_mapping(
         for gene in contig.genes:
             gene_family = gene.family
             partition = gene_family.named_partition
-            mapping[gene] = partition
+            mapping[gene.ID] = partition
     return mapping
 
 
@@ -106,6 +106,7 @@ def main():
     gene_to_partition: Dict[str, str] = ppanggolin_extract_gene_to_partition_mapping(
         pangenome
     )
+    print(gene_to_partition)
 
     # Read the reference mapping of reaction to enzyme file
     with open(args.reaction_enzyme, "r") as reaction_enzyme_file:
@@ -122,7 +123,7 @@ def main():
         with open(args.output, "w") as output_file:
             writer = csv.writer(output_file, delimiter="\t")
             writer.writerow(
-                ["reaction", "enzyme_gene", "pangenome_partiton"]
+                ["reaction", "enzyme_gene", "pangenome_partition"]
             )  # write header
             for row in reactions_file:
                 reaction = row.strip()
