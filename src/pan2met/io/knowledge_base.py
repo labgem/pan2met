@@ -101,6 +101,12 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
+    def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
+        """
+        List species NCBI Taxonomy identifiers where pathway presence evidence were found.
+        """
+        raise NotImplementedError()
+
 
 def select_kb(choice: str) -> KnowledgeBase:
     match choice:

@@ -95,6 +95,14 @@ INNER JOIN pathway_taxonomic_range
 ON pathway_taxonomic_range.pathway_id = pathway.id
 WHERE pathway.name = :pathway_id;
 
+-- name: get_pathway_species(pathway_id)
+-- Get the species evidence of a pathway
+SELECT pathway_species.species_id
+FROM pathway
+INNER JOIN pathway
+ON pathway.id = pathway_species.pathway_id
+WHERE pathway.name = :pathway_id;
+
 -- name: reaction_is_key(pathway_id, reaction_id)^
 -- Check if the reaction is a key for the pathway
 SELECT 1

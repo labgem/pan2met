@@ -8,6 +8,7 @@ This module introduces some helper functions to deal with the taxonomic range.
 The taxonomic "ground truth" is taken from NCBI Taxonomy, as in PathwayTools.
 """
 
+from typing import Dict, Set
 from pathlib import Path
 import csv
 
@@ -29,8 +30,9 @@ class NCBITaxonomyTree:
         :param dump_path: path to the directory with the dump of the NCBI Taxonomy database.
         load a dictionnary linking a taxid to its direct parent in the NCBI Taxonomy tree.
         """
-        self.parent_dict: dict[int, int] = {}
-        self.tax_rank: dict[int, str] = {}
+        self.parent_dict: Dict[int, int] = {}
+        self.tax_rank: Dict[int, str] = {}
+        self.species_taxa: Set[int] = set()
 
         with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
             reader = csv.DictReader(
@@ -55,6 +57,9 @@ class NCBITaxonomyTree:
             for row in reader:
                 tax_id = int(row["tax_id"].replace("\t", ""))
                 parent_tax_id = int(row["parent tax_id"].replace("\t", ""))
+                rank = int(row["rank"])
+                if rank == "species":
+                    self.species_taxa.add(rank)
                 self.parent_dict[tax_id] = parent_tax_id
                 self.tax_rank[tax_id] = row["rank"].replace("\t", "")
 
@@ -128,3 +133,26 @@ class NCBITaxonomyTree:
             common_ancestor = path1[i]
             i += 1
         return common_ancestor
+
+    def is_under_same_species(self, taxid_1: int, taxid_2: int) -> bool:
+        """
+        Check whether two NCBI Taxonomy identifiers are under the same species subtree.
+
+        We arbitrarily assume that a species subtree is at most 5 items deep, and do not explore it further.
+
+        :param taxid_1: a NCBI Taxonomy identifier
+        :param taxid_2: a NCBI Taxonomy identifier
+        :return: True when a parent of the NCBI Taxonomy identifiers is of rank species
+        """
+        if taxid_1 == taxid_2:
+            return True
+        MAX_RECURSE: int = 5
+        common_ancestor: int = self.last_common_ancestor(taxid_1, taxid_2)
+        current = common_ancestor
+        depth = 0  # could be even already greater  than that
+        while depth < MAX_RECURSE:
+            if current in self.species_taxa:
+                return True
+            current = self.parent_dict[current]
+            depth += 1
+        return False

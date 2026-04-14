@@ -30,12 +30,10 @@ classifiers = [
 
 dependencies = [
 	"numpy",
-	"sparqlwrapper",
 	"python-dotenv",
 	"pythoncyc",
 	# "clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
 	"ouisparql",
-	"blosc2>=4.1.2",
 	"padmet",
 	"psycopg>=3.3.2",
 	"aiosql",

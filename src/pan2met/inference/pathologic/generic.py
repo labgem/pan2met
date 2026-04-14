@@ -220,7 +220,8 @@ class PathwayInference:
 
         $T2$ is a boost if the organism belongs the the taxonomic range of the pathway.
         $T2 \geq 1$.
-        TODO: deal with T1 and T2.
+
+        If no non-spontaneous and non orphan reaction exists in the pathway, the pathway score is set to 0.
 
         $$
         PS = \frac{\sum_{r \in R}RS(r)}{|R|} * T1 * T2
@@ -240,11 +241,15 @@ class PathwayInference:
             )
             / n
         )
-        # TODO species evidence neighborhood
-        # if PathwayInference.RULES["pathway_species"]:
-        #    score *= self.taxonomic_neighborhood_boost(pathway_id) # T1
-
-        #
+        # Species evidence neighborhood
+        if PathwayInference.RULES["pathway_species"]:
+            pathway_neighbor_species_boost_score = self.taxonomic_neighborhood_boost(
+                pathway_id
+            )  # T1
+            score *= pathway_neighbor_species_boost_score
+        else:
+            pathway_neighbor_species_boost_score = None
+        # Taxonomic range boost
         if PathwayInference.RULES["taxonomic_range"]:
             pathway_taxonomic_range_boost_score = self.taxonomic_range_boost(pathway_id)
             score *= pathway_taxonomic_range_boost_score
@@ -254,7 +259,7 @@ class PathwayInference:
         if self.record_reason:
             self.amend_reason(
                 pathway_id,
-                f"PathwayScore = {score} for n = {n} non-spontaneous, non-orphan reactions with taxonomic range boost T1 = {pathway_taxonomic_range_boost_score}.\n",
+                f"PathwayScore = {score} for n = {n} non-spontaneous, non-orphan reactions with taxonomic range boost T1 = {pathway_taxonomic_range_boost_score} and neighbor species boost T2 = {pathway_neighbor_species_boost_score}.\n",
             )
         return score
 
@@ -271,8 +276,11 @@ class PathwayInference:
 
         :param pathway_id: the identifier of the pathway
         """
-        # Warning: in metabiantes, the strain is not taken into account
-        pass
+        # FIXME: Warning: in metabiantes, the strain is not taken into account
+        for evidence_species_id in self.kb.species_evidence_of_pathway(pathway_id):
+            if self.taxonomy.is_under_same_species(self.taxon_id, evidence_species_id):
+                return config["inference"]["weights"]["neighbor_species_boost"]
+        return 1
 
     def taxonomic_range_boost(self, pathway_id: str) -> float:
         """
@@ -292,7 +300,7 @@ class PathwayInference:
             pathway_id in self.pathway_in_taxonomic_range
             and self.pathway_in_taxonomic_range[pathway_id]
         ):
-            return 1.2
+            return config["inference"]["weights"]["taxonomic_range_boost"]
         else:
             return 1
 

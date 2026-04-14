@@ -182,3 +182,11 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         return self.queries.get_pathway_reaction_order(
             self.connection, pathway_id=pathway_id
         )
+
+    def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
+        """
+        List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
+        """
+        return self._aiosql_to_list(
+            self.queries.get_pathway_species(self.connection, pathway_id=pathway_id)
+        )

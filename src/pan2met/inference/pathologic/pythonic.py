@@ -78,7 +78,7 @@ class PythonicPathwayInference(PathwayInference):
         REJECT P if P is an electron transport pathway
         AND P lacks enzymes for any reaction (rule id: pathway_ontology)
 
-        REJECT P if any key-non-reactions are present. (rule id: pathway_key_reaction)
+        REJECT P if any key-non-reactions are present. (ignored / not implemented)
 
         INCLUDE P if P has all reactions present
         (meaning an enzyme is present for each reaction)
