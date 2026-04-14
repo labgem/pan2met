@@ -1,4 +1,4 @@
-include README.MD
+include README.md
 include LICENSE
 recursive-exclude docs *
-recursive-include pan2met *
+recursive-include src *
