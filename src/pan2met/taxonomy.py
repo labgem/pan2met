@@ -5,7 +5,7 @@ predictor used in reaction / pathway inference prediction.
 
 This module introduces some helper functions to deal with the taxonomic range.
 
-The taxonomic "ground truth" is taken from NCBI Taxonomy, as in PathwayTools.
+The taxonomic "ground truth" is taken from NCBI Taxonomy.
 """
 
 from typing import Dict, Set
@@ -57,9 +57,10 @@ class NCBITaxonomyTree:
             for row in reader:
                 tax_id = int(row["tax_id"].replace("\t", ""))
                 parent_tax_id = int(row["parent tax_id"].replace("\t", ""))
-                rank = int(row["rank"])
-                if rank == "species":
-                    self.species_taxa.add(rank)
+                if row["rank"] != "no rank":
+                    if row["rank"] == "species":
+                        self.species_taxa.add(tax_id)
+
                 self.parent_dict[tax_id] = parent_tax_id
                 self.tax_rank[tax_id] = row["rank"].replace("\t", "")
 

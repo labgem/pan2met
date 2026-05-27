@@ -1,6 +1,29 @@
 # `pan2met`
 
-> A python library / CLI to infer metabolic networks at the pangenome scale.
+> A python library / CLI to predict metabolic networks at the pangenome scale.
+
+## Usage
+
+To predict metabolic pathways with `pan2met`, you will need a set of catalyzed reactions.
+To identify such a set of reactions, you can use the [nextflow](https://nextflow.io) workflow [pan2met-wf](https://github.com/labgem/pan2met-wf/). This workflow supports multiple enzyme annotation sources to map proteins to MetaCyc reactions.
+
+Given a file `reaction.list` with a list of MetaCyc reaction identifiers, you can use the following command to predict pathways using a set of decision rules.
+
+``` bash
+python3 -m pan2met.inference.pathologic.pythonic \
+    --reactome reaction.list \
+    --output pathway.list \
+    --taxon 561 \
+    --reason pan2met.log
+```
+
+The `pan2met.inference.pathologic.pythonic` module command line interface requires the following options:
+
+- `--reactome` -- a file with a list of reaction identifiers
+- `--output` -- output file with the list of predicted pathways
+- `--taxon` -- an integer corresponding to the taxonomy identifier from the NCBI Taxonomy
+- `--reason` -- a file to log a reason leading to keep the pathway or to reject it
+
 
 ## Installation
 
@@ -9,7 +32,7 @@
 1. Clone this repository
 
    ``` bash
-   git clone https://gitlab.com/sortion/pan2met.git
+   git clone https://github.com/labgem/pan2met.git
    cd pan2met
    ```
 2. Install locally in a virtual environment
@@ -38,27 +61,13 @@ source = metabiantes
 database = metabiantes
 ```
 You will most probably need to adapt the `[reference]` section.
-1. Update `ncbi_taxonomy` directory path, with the directory where lies the NCBI-Taxonomy dump.
-2. Update the `source` key, to either `metabiantes` or `padmet` depending of the _source_ of metabolism knowledge.
+1. Update `ncbi_taxonomy` directory path, with the path to the directory with a dump of the NCBI-Taxonomy.
+2. Update the `source` key, to either `metabiantes` or `padmet` depending of the format of metabolism knowledge base to use.
 
-If you use `metabiantes` as the reference knowledge base for metabolism, please refer to [metabiantes git repository](https://gitlab.com/sortion/metabiantes/) for instructions on how to setup a `metabiantes` SQL database.
+If you use `metabiantes` as the reference knowledge base for metabolism, please refer to [metabiantes git repository](https://github.com/labgem/metabiantes/) for instructions on how to setup a `metabiantes` SQL database.
 
 ### Download support materials
 
-#### Reference taxonomy from the NCBI-Taxonomy database
+#### Reference taxonomy from the NCBI Taxonomy database
 
 Download a NCBI Taxonomy dump from <https://ftp.ncbi.nih.gov/pub/taxonomy/> to a local folder, and adapt the path in the configuration file in section `[reference]`, key `ncbi_taxonomy`.
-
-## Fix clyngor clingo Answer set parsing error
-
-On clingo v5.8.0 (at least), the output Answer set is followed by the execution time, e.g.:
-
-``` text
-Answer 1 (Time: 0.608s)
-```
-
-This cause an int parse error in clyngor (see [clyngor merged pr #34](https://github.com/Aluriak/clyngor/pull/34)), until a new version is available on PyPI including this fix, if you have a clingo version having the execution time in answer set output, you should install clyngor with:
-
-``` bash
-pip install git+https://github.com/Aluriak/clyngor@master
-```

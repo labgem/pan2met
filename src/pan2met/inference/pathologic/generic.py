@@ -279,7 +279,7 @@ class PathwayInference:
         # FIXME: Warning: in metabiantes, the strain is not taken into account
         for evidence_species_id in self.kb.species_evidence_of_pathway(pathway_id):
             if self.taxonomy.is_under_same_species(self.taxon_id, evidence_species_id):
-                return config["inference"]["weights"]["neighbor_species_boost"]
+                return 1.2  # config["inference"]["weights"]["neighbor_species_boost"]
         return 1
 
     def taxonomic_range_boost(self, pathway_id: str) -> float:
@@ -300,7 +300,7 @@ class PathwayInference:
             pathway_id in self.pathway_in_taxonomic_range
             and self.pathway_in_taxonomic_range[pathway_id]
         ):
-            return config["inference"]["weights"]["taxonomic_range_boost"]
+            return 1.2  # config["inference"]["weights"]["taxonomic_range_boost"]
         else:
             return 1
 

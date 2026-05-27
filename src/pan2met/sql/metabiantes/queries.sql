@@ -53,7 +53,7 @@ ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
 WHERE pathway.name = :pathway_id
-WHERE reaction.spontaneous IS DISTINCT FROM TRUE;
+AND reaction.spontaneous IS DISTINCT FROM TRUE;
 
 -- name: get_non_orphan_non_spontaneous_reactions_of_pathway(pathway_id)
 -- Get all non-spontaneous and non-orphan reactions of a pathway
@@ -99,7 +99,7 @@ WHERE pathway.name = :pathway_id;
 -- Get the species evidence of a pathway
 SELECT pathway_species.species_id
 FROM pathway
-INNER JOIN pathway
+INNER JOIN pathway_species
 ON pathway.id = pathway_species.pathway_id
 WHERE pathway.name = :pathway_id;
 

@@ -11,6 +11,8 @@ from .utils import read_list, write_output, set_logging_level
 from .inference import reactome
 from .inference.pathologic.pythonic import infer_metabolome
 
+import pan2met
+
 
 def reactome_command(args):
     """
@@ -49,6 +51,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         prog="pan2met",
         description="Predict metabolic pathway presence from a (pan)genome",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {pan2met.__version__}"
     )
     parser.add_argument(
         "-v",

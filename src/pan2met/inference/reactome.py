@@ -1,14 +1,15 @@
 """
 Reactome inference
 
-Simple inference rule:
+Simple inference rules:
 
 - If a reaction has an enzyme that can catalyze it in an organism, simply infer the presence of the reaction in the reactome.
-- (optionally) For every EC-number found, infer the presence of all reactions annotated with such an EC-number
+- (optionally) For every EC-number found, infer the presence of all reactions annotated with such an EC-number.
 
 """
 
 import importlib.resources
+
 
 import clyngor
 
@@ -19,11 +20,15 @@ from ..utils import logger, write_output
 from ..asp import rules
 
 
-def infer_complex_from_monomers(
+def check_complex_from_monomers(
     monomers: list[str], complex: str, kb: KnowledgeBase
 ) -> bool:
     """
-    True if the given complex can be formed by the given set of protein monomers.
+    Check whether the given complex can be formed by the given set of protein monomers.
+
+    :param monomers: a list of protein monomers
+    :param complex: an identifier of a complex
+    :param kb: a knowledge base adapter
     """
     components = kb.proteic_complex_subunits(complex)
     if components is None or len(list(components)) == 0:
@@ -36,9 +41,16 @@ def infer_complex_from_monomers(
 
 
 def infer_complexes_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
+    """
+    Infer a set of proteic complex from the set of protein monomers.
+
+    :param monomers: a list of monomer identifiers
+    :param kb: a knowledge base adapter
+    :return: a set of proteic complex identifiers, whose monomer protein components are
+    """
     complexes: set[str] = set()
     for complex in kb.all_protein_complexes():
-        if infer_complex_from_monomers(monomers, complex, kb):
+        if check_complex_from_monomers(monomers, complex, kb):
             complexes.add(complex)
     return complexes
 
@@ -47,11 +59,9 @@ def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[
     """
     Naive inference of a set of reaction.
 
-
     :param monomers: list of monomer identifiers
     :param kb: a knowledge base adapter
-
-    :yield: reaction identifiers
+    :return: reaction identifiers
     """
 
     # Start by infering all reachable complex
@@ -60,9 +70,12 @@ def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[
     reactions: set[str] = set()
     for reaction in kb.reactions():
         for enzyme in kb.enzymes_of_reaction(reaction):
+            # If the enzyme of a proteic complex,
+            # check if the enzyme is in the set of inferred complexes
             if kb.is_proteic_complex(enzyme):
                 if enzyme in complexes:
                     reactions.add(reaction)
+            # Else, check if the enzyme is in the set of proteins
             elif enzyme in monomers:
                 reactions.add(reaction)
     return reactions
@@ -116,6 +129,9 @@ def infer_reactome_from_ec_numbers(
     """
     Infer a set of reactions from a list of EC-numbers.
 
+    :param ec_numbers: a list of EC-numbers
+    :param kb: a knowledge base adapter
+    :return: a set of reaction identifiers
     """
     reaction_set: set[str] = set()
     for ec_number in ec_numbers:
@@ -131,7 +147,6 @@ def minimal_monomer_set(
 ) -> set[str]:
     """
     Use ASP to identify a minimal set of monomer that is expected to be sufficient to catalyze a set of reactions.
-
 
     :param reactions: a list of reaction identifiers
     :param potential_monomer_inference_rule_path: a path to 'potential' involved monomer inference rules

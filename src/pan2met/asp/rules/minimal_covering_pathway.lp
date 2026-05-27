@@ -1,5 +1,5 @@
 % Find a minimal set of pathways
-% given a reactome (i.e., a set of reactions)
+% given a catalyzed reactome (i.e., a set of reactions with identified associated enzyme)
 % such that all reactions of the reactome are covered
 % and such that a minimal set of reaction hole is selected.
 
