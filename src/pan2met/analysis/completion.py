@@ -115,6 +115,7 @@ def write_pathway_completion_by_strain(
         filename = prefix + "_pathway_completion_wo_orphan_by_strain.tsv"
 
     with open(filename, "w") as output_file:
+        logger.info(f"Writing completion values to {filename}.")
         header = "\t".join(
             [
                 "pathway",
@@ -131,7 +132,7 @@ def write_pathway_completion_by_strain(
             + [strain for strain in strain_to_families.keys()]
         )
         output_file.write(header + "\n")
-        for pathway, pathway_reactions in tqdm.tqdm(pathways_to_reactions.items()):
+        for pathway, pathway_reactions in pathways_to_reactions.items():
             if len(pathway_reactions) == 0:
                 continue
             global_completion = len(

@@ -21,7 +21,7 @@ def read_mapping(filename: str, sep="\t") -> Dict[str, Set[str]]:
     mapping: Dict[str, Set[str]] = defaultdict(set)
     with open(filename, "r") as f:
         for row in f:
-            parts = row.split("\t")
+            parts = row.strip().split("\t")
             if len(parts) == 2:
                 key, value = parts
                 mapping[key].add(value)
