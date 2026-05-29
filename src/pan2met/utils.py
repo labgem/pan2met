@@ -58,7 +58,7 @@ def static_vars(**kwargs):
     return decorate
 
 
-def set_logging_level(verbose_intensity: int):
+def set_logging_level(verbose_intensity: int, logger=None):
     """
     Set the logging level based on the number of -v flags provided to the CLI.
     The more -v flags, the more verbose the logging level (up to DEBUG).
@@ -76,6 +76,8 @@ def set_logging_level(verbose_intensity: int):
     logging_level_index = min(verbose_intensity, len(logging_levels) - 1)
     logging_level = logging_levels[logging_level_index]
     logging.getLogger().setLevel(logging_level)
+    if logger is not None:
+        logger.setLevel(logging_level)
 
 
 def unquote(text: str) -> str:

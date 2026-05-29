@@ -10,6 +10,7 @@ import importlib.resources
 import configparser
 import argparse
 import logging
+import io
 
 import clyngor
 
@@ -32,8 +33,9 @@ class AspicPathwayInference(PathwayInference):
         reactome: set[str],
         taxon_id: int,
         reference_kb_asp: Path,
+        config = None
     ):
-        super().__init__(kb, reactome, taxon_id)
+        super().__init__(kb, reactome, taxon_id=taxon_id, config=config)
         self.reference_kb_asp: Path = reference_kb_asp
 
     def prepare_clingo_inline_program(self) -> str:
@@ -173,6 +175,25 @@ def main():
 
     set_logging_level(args.verbose)
 
+    default_config: configparser.ConfigParser = configparser.ConfigParser()
+    default_config_str = importlib.resources.read_text(pan2met.conf, "default.ini")
+    default_config.read_string(default_config_str)
+
+    config = default_config
+
+    # Update config globally overriding default_config with keys from given config filename
+    if args.config:
+        logging.info(f"Overriding default configuration with {args.config}")
+        config_override = configparser.ConfigParser()
+        config_override.read([args.config])
+        config.update(config_override)
+
+    # Log the used config
+    with io.StringIO() as config_string_stream:
+        config.write(config_string_stream)
+        logger.info(f"Using config:\n{config_string_stream.getvalue()}")
+
+
     if args.config is not None:
         # Update config globally overriding default_config with keys from given config filename
         logging.info(f"Overriding default configuration with {args.config}")
@@ -184,7 +205,7 @@ def main():
     kb = select_kb(config["reference"]["source"])
     reactome = set(read_list(args.reactome))
     pathway_inference = AspicPathwayInference(
-        kb, reactome, taxon_id=int(args.taxon), reference_kb_asp=Path(args.kb_asp)
+        kb, reactome, taxon_id=int(args.taxon), reference_kb_asp=Path(args.kb_asp), config=config
     )
     logger.info("Inferring pathways with ASP")
     pathways = pathway_inference.infer_pathways()

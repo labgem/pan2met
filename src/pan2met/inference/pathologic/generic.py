@@ -3,61 +3,65 @@ from typing import Optional, Dict
 
 from ...io.knowledge_base import KnowledgeBase
 from ...taxonomy import NCBITaxonomyTree
-from ...config import config
 
 logger = logging.getLogger("pan2met:inference:pathologic")
 
 
 class PathwayInference:
-    PATHWAY_COMPLETION_THRESHOLD: float = float(
-        config["inference"]["pathway_completion_threshold"]
-    )
-    PATHWAY_SCORE_THRESHOLD: float = float(
-        config["inference"]["pathway_score_threshold"]
-    )
-    AVAILABLE_RULES = [
-        "taxonomic_range",
-        "pathway_species",
-        "pathway_uniqueness",
-        "pathway_key_reaction",
-        "pathway_ontology",
-        "pathway_variant",
-    ]
-    RULES: dict[str, bool] = {key: True for key in AVAILABLE_RULES}
-    RULES.update(
-        {
-            key: config["inference"]["rules"].getboolean(key)
-            for key in AVAILABLE_RULES
-            if (
-                "inference" in config
-                and "rules" in config["inference"]
-                and key in config["inference"]["rules"][key]
-            )
-        }
-    )
-    # FIXME: rule config does not seem to be correctly taken into account.
 
     def __init__(
         self,
         kb: KnowledgeBase,
         reactome: set[str],
-        taxon_id: int,
+        taxon_id: int = None,
         record_reason: bool = False,
+        config = None,
     ):
+        # Configure prediction algorithm
+        self.PATHWAY_COMPLETION_THRESHOLD: float = float(
+             config["inference"]["pathway_completion_threshold"]
+        )
+        self.PATHWAY_SCORE_THRESHOLD: float = float(
+            config["inference"]["pathway_score_threshold"]
+        )
+        AVAILABLE_RULES = [
+            "taxonomic_range",
+            "pathway_species",
+            "pathway_uniqueness",
+            "pathway_key_reaction",
+            "pathway_ontology",
+            "pathway_variant",
+        ]
+        self.RULES: dict[str, bool] = {key: True for key in AVAILABLE_RULES}
+        self.RULES.update(
+            {
+                key: config["inference.rules"].getboolean(key)
+                for key in AVAILABLE_RULES
+            }
+        )
+
+        logger.debug(f"Using taxonomic_range rule: {self.RULES["taxonomic_range"]}")
+        logger.debug(f"Use taxon id {taxon_id} as reference")
+
+
+        if (self.RULES["taxonomic_range"] or self.RULES["pathway_species"]) and taxon_id is None:
+            raise ValueError("taxon_id cannot be None when using the taxonomic range and species based heuristics")
+
         self.kb: KnowledgeBase = kb
         self.reactome: set[str] = reactome
         self.pathways: list[str] = self.kb.pathways()
-        # if PathwayInference.RULES["taxonomic_range"]: # TODO: re-enable the possibility to disable the taxonomic range rule, to support KEGG.
-        self.taxonomy: NCBITaxonomyTree = NCBITaxonomyTree(
-            config["reference"]["ncbi_taxonomy"]
-        )
-        self.taxon_id: int = taxon_id
-        self.pathway_in_taxonomic_range: dict[str, bool] = (
-            self.taxonomic_range_belonging_precompute(self.pathways)
-        )
+        if self.RULES["taxonomic_range"] or self.RULES["pathway_species"]:
+            self.taxonomy: NCBITaxonomyTree = NCBITaxonomyTree(
+                config["reference"]["ncbi_taxonomy"]
+            )
+            self.taxon_id: int = taxon_id
+            self.pathway_in_taxonomic_range: dict[str, bool] = (
+                self.taxonomic_range_belonging_precompute(self.pathways)
+            )
         # Trace the decision algorithm if `record_reason` option is set to true.
         self.decision_reason: dict[str, str] = {}
         self.record_reason = record_reason
+
 
     def reason(self, pathway_id: str) -> Optional[str]:
         """
@@ -126,14 +130,14 @@ class PathwayInference:
         score += presence_score
 
         # Add uniqueness score
-        if PathwayInference.RULES["pathway_uniqueness"]:
+        if self.RULES["pathway_uniqueness"]:
             uniqueness_score = self.uniqueness_score(reaction_id)
             score += uniqueness_score
         else:
             uniqueness_score = None
 
         # Add key reaction score
-        if PathwayInference.RULES["pathway_key_reaction"]:
+        if self.RULES["pathway_key_reaction"]:
             key_reaction_score = self.key_reaction_score(
                 reaction_id, pathway_key_reactions
             )
@@ -242,7 +246,7 @@ class PathwayInference:
             / n
         )
         # Species evidence neighborhood
-        if PathwayInference.RULES["pathway_species"]:
+        if self.RULES["pathway_species"]:
             pathway_neighbor_species_boost_score = self.taxonomic_neighborhood_boost(
                 pathway_id
             )  # T1
@@ -250,7 +254,7 @@ class PathwayInference:
         else:
             pathway_neighbor_species_boost_score = None
         # Taxonomic range boost
-        if PathwayInference.RULES["taxonomic_range"]:
+        if self.RULES["taxonomic_range"]:
             pathway_taxonomic_range_boost_score = self.taxonomic_range_boost(pathway_id)
             score *= pathway_taxonomic_range_boost_score
         else:

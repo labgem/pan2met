@@ -15,21 +15,23 @@ relying on an Answer Set Programming implementation of a PathoLogic-like inferen
 
 import logging
 import argparse
+import importlib.resources
 import configparser
 from typing import Optional
+import io
+
 
 import graph_tool as gt
 import graph_tool.topology
 
 from ...utils import set_logging_level
 from ...utils import read_list, write_output
-from ...config import config
 from ...io.knowledge_base import KnowledgeBase, select_kb
 from .generic import PathwayInference
+import pan2met.conf
 
 
 logger = logging.getLogger("pan2met:inference")
-logger.setLevel(logging.INFO)
 
 
 class PythonicPathwayInference(PathwayInference):
@@ -42,10 +44,11 @@ class PythonicPathwayInference(PathwayInference):
         self,
         kb: KnowledgeBase,
         reactome: set[str],
-        taxon_id: int,
+        taxon_id: Optional[int]=None,
         record_reason: bool = False,
+        config=None
     ):
-        super().__init__(kb, reactome, taxon_id)
+        super().__init__(kb, reactome, taxon_id=taxon_id, config=config)
         self.record_reason: bool = record_reason
         if self.record_reason:
             self.decision_reason: dict[str, str] = {}
@@ -108,7 +111,7 @@ class PythonicPathwayInference(PathwayInference):
 
         :return: True if the pathway is inferred present, False otherwise.
         """
-        if PathwayInference.RULES["pathway_ontology"]:
+        if self.RULES["pathway_ontology"]:
             pathway_ontology_parents: list[str] = (
                 self.kb.ontology_parent_class_of_pathway(pathway_id)
             )
@@ -139,18 +142,14 @@ class PythonicPathwayInference(PathwayInference):
             reaction not in self.reactome
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
-        if all_reactions_are_present:
-            if self.record_reason:
-                self.amend_reason(pathway_id, "ACCEPT: all reactions are present")
-            return True
-        elif all_reactions_absent:
+        if all_reactions_absent:
             if self.record_reason:
                 self.amend_reason(
                     pathway_id, "REJECT: no known catalyzis at all for this pathway."
                 )
             return False
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
-        if PathwayInference.RULES["pathway_ontology"]:
+        if self.RULES["pathway_ontology"]:
             if (
                 "Electron-Transfer" in pathway_ontology_parents
                 and not all_reactions_are_present
@@ -163,14 +162,13 @@ class PythonicPathwayInference(PathwayInference):
                 return False
 
         # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
-        if PathwayInference.RULES["taxonomic_range"]:
+        if self.RULES["taxonomic_range"]:
             in_taxonomic_range: bool = (
                 pathway_id in self.pathway_in_taxonomic_range is not None
                 and self.pathway_in_taxonomic_range[pathway_id]
             )
 
-        if all_reactions_are_present:
-            if PathwayInference.RULES["taxonomic_range"]:
+            if all_reactions_are_present:
                 if in_taxonomic_range:
                     if self.record_reason:
                         self.amend_reason(
@@ -192,17 +190,18 @@ class PythonicPathwayInference(PathwayInference):
                             pathway_id,
                             "REJECT: not in taxonomic range, and no more than 3 catalyzed reactions.",
                         )
-                        return False
-            else:
+                    return False
+        else:
+            if all_reactions_are_present:
                 if self.record_reason:
                     self.amend_reason(
                         pathway_id,
                         details="ACCEPT: all reactions are present and we don't care about the taxonomic range.",
                     )
-                return True
+            return True
 
         # REJECT P if P is missing enzymes for all key reactions of P
-        if PathwayInference.RULES["pathway_key_reaction"]:
+        if self.RULES["pathway_key_reaction"]:
             key_reactions = self.kb.key_reactions_of_pathway(pathway_id)
             for key_reaction in key_reactions:
                 if key_reaction not in self.reactome:
@@ -214,7 +213,7 @@ class PythonicPathwayInference(PathwayInference):
                     return False
 
         # REJECT P if the score of P is significantly less than the score of a variant pathway of P
-        if PathwayInference.RULES["pathway_variant"]:
+        if self.RULES["pathway_variant"]:
             variant_pathways = self.kb.variants_of_pathway(pathway_id)
             if variant_pathways is not None:
                 for variant_pathway in variant_pathways:
@@ -230,7 +229,7 @@ class PythonicPathwayInference(PathwayInference):
                             )
                         return False
 
-        if PathwayInference.RULES["pathway_ontology"]:
+        if self.RULES["pathway_ontology"]:
             one_reaction_graph_ordering = self.reaction_graph_topological_order(
                 pathway_id
             )
@@ -275,7 +274,7 @@ class PythonicPathwayInference(PathwayInference):
                         return False
 
         # INCLUDE P if the score of P exceeds the threshold PATHWAY-PREDICTION-CUTOFF
-        if pathway_scores[pathway_id] > PathwayInference.PATHWAY_SCORE_THRESHOLD:
+        if pathway_scores[pathway_id] > self.PATHWAY_SCORE_THRESHOLD:
             if self.record_reason:
                 self.amend_reason(
                     pathway_id, "ACCEPT: pathway score exceeds the minimum value."
@@ -379,11 +378,11 @@ class PythonicPathwayInference(PathwayInference):
 
 
 def infer_metabolome(
-    reactome: set[str], taxon: int, reason_filename: Optional[str] = None
+    reactome: set[str], taxon: int, reason_filename: Optional[str] = None, config=None
 ) -> set[str]:
     kb = select_kb(config["reference"]["source"])
     inference = PythonicPathwayInference(
-        kb, reactome, taxon, reason_filename is not None
+        kb, reactome, taxon, reason_filename is not None, config=config
     )
     metabolome: set[str] = inference.inferred_pathways()
     if reason_filename is not None:
@@ -393,7 +392,7 @@ def infer_metabolome(
 
 def main():
     logger.setLevel(logging.DEBUG)
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reactome", help="Input list of reaction identifiers.")
     parser.add_argument("-t", "--taxon", help="NCBI Taxonomy tax-id", type=int)
     parser.add_argument(
@@ -405,7 +404,7 @@ def main():
         required=False,
         default=None,
     )
-    parser.add_argument("-c", "--config", help="Path to the config file")
+    parser.add_argument("-c", "--config", help="Path to a config file")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -413,20 +412,31 @@ def main():
         default=0,
         help="Log level (-v: ERROR, -vv: WARNING, -vvv: INFO, -vvvv: DEBUG)",
     )
-    args = parser.parse_args()
+    args, remaining_argv = parser.parse_known_args()
 
     set_logging_level(args.verbose)
+
+    default_config: configparser.ConfigParser = configparser.ConfigParser()
+    default_config_str = importlib.resources.read_text(pan2met.conf, "default.ini")
+    default_config.read_string(default_config_str)
+
+    config = default_config
+
     # Update config globally overriding default_config with keys from given config filename
-    if args.config is not None:
+    if args.config:
         logging.info(f"Overriding default configuration with {args.config}")
-        global config
         config_override = configparser.ConfigParser()
         config_override.read([args.config])
         config.update(config_override)
-    logger.info(f"Using config: {(dict(config))}")
+
+    # Log the used config
+    with io.StringIO() as config_string_stream:
+        config.write(config_string_stream)
+        logger.info(f"Using config:\n{config_string_stream.getvalue()}")
+
     # Infer the metabolome
     reactome: set[str] = set(read_list(args.reactome))
-    metabolome: set[str] = infer_metabolome(reactome, args.taxon, args.reason)
+    metabolome: set[str] = infer_metabolome(reactome, args.taxon, args.reason, config=config)
     write_output(args.output, metabolome)
 
 
