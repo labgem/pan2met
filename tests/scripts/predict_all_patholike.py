@@ -5,7 +5,7 @@ Predict for all generated test cases and make a report
 import os
 
 from pan2met.utils import read_list, write_output
-from pan2met.inference.metabolome import infer_metabolome
+from pan2met.inference.metabolism import infer_metabolism
 
 
 TEST_CASES_FOLDER = "tests/cases/generated2/"
@@ -25,8 +25,8 @@ def main():
             reason_filename = os.path.join(
                 TEST_CASES_FOLDER, test_case, "reason.pan2met.log"
             )
-            metabolome = infer_metabolome(reactome, taxid, reason_filename)
-            write_output(output_filename, metabolome)
+            metabolism = infer_metabolism(reactome, taxid, reason_filename)
+            write_output(output_filename, metabolism)
     print("done.")
 
 

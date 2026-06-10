@@ -106,7 +106,6 @@ def main():
     gene_to_partition: Dict[str, str] = ppanggolin_extract_gene_to_partition_mapping(
         pangenome
     )
-    print(gene_to_partition)
 
     # Read the reference mapping of reaction to enzyme file
     with open(args.reaction_enzyme, "r") as reaction_enzyme_file:

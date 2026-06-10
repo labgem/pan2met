@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pan2met"
-description = "Reconstruct (pan)metabolome based on (pan)genome"
+description = "Reconstruct metabolic network from (pan)genome"
 dynamic = ["version"]
 authors = [
 	{ name = "Samuel Ortion" },
@@ -58,7 +58,7 @@ Repository = "https://github.com/labgem/pan2met"
 # Documentation = ""
 
 [project.scripts]
-pan2met = "pan2met.cli:main"
+pan2met = "pan2met.__main__:main"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
@@ -79,6 +79,8 @@ test = { features = ["test"], solve-group = "default" }
 
 [tool.pixi.dependencies]
 graph-tool = ">=2.98,<3"
-ppanggolin = { version = ">=2.2.6,<3", channel = "bioconda" }
+ppanggolin = ">=2.3.0,<3"
 python = "3.12.*"
 pip = ">=26.0.1,<27"
+python-blosc2 = ">=4.4.2,<5"
+c-blosc2 = { version = ">=3.1.3,<4", channel = "conda-forge" }

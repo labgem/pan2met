@@ -20,9 +20,9 @@ import configparser
 from typing import Optional
 import io
 
-
 import graph_tool as gt
 import graph_tool.topology
+
 
 from ...utils import set_logging_level
 from ...utils import read_list, write_output
@@ -50,8 +50,7 @@ class PythonicPathwayInference(PathwayInference):
     ):
         super().__init__(kb, reactome, taxon_id=taxon_id, config=config)
         self.record_reason: bool = record_reason
-        if self.record_reason:
-            self.decision_reason: dict[str, str] = {}
+        self.decision_reason: dict[str, str] = {}
 
     def pathway_presence_decision(
         self,
@@ -120,15 +119,13 @@ class PythonicPathwayInference(PathwayInference):
             # TODO deal with synthetic pathways
             for pathway_class in pathway_ontology_parents:
                 if pathway_class == "Transport-Pathways":
-                    if self.record_reason:
-                        self.amend_reason(pathway_id, "REJECT: is a transport pathway.")
-                        return False
+                    self.amend_reason(pathway_id, "REJECT: is a transport pathway.")
+                    return False
                 if (
                     pathway_class == "Signaling-Pathways"
                 ):  # INFO: it seems that in MetaCyc, no signaling pathway are reported though
-                    if self.record_reason:
-                        self.amend_reason(pathway_id, "REJECT: is a signaling pathway.")
-                        return False
+                    self.amend_reason(pathway_id, "REJECT: is a signaling pathway.")
+                    return False
 
         all_reactions_are_present: bool = len(
             non_orphan_non_spontaneous_pathway_reactions
@@ -143,10 +140,9 @@ class PythonicPathwayInference(PathwayInference):
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
         if all_reactions_absent:
-            if self.record_reason:
-                self.amend_reason(
-                    pathway_id, "REJECT: no known catalyzis at all for this pathway."
-                )
+            self.amend_reason(
+                pathway_id, "REJECT: no known catalyzis at all for this pathway."
+            )
             return False
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
         if self.RULES["pathway_ontology"]:
@@ -154,11 +150,10 @@ class PythonicPathwayInference(PathwayInference):
                 "Electron-Transfer" in pathway_ontology_parents
                 and not all_reactions_are_present
             ):
-                if self.record_reason:
-                    self.amend_reason(
-                        pathway_id,
-                        "REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
-                    )
+                self.amend_reason(
+                    pathway_id,
+                    "REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
+                )
                 return False
 
         # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
@@ -170,34 +165,30 @@ class PythonicPathwayInference(PathwayInference):
 
             if all_reactions_are_present:
                 if in_taxonomic_range:
-                    if self.record_reason:
-                        self.amend_reason(
-                            pathway_id,
-                            "ACCEPT: all reactions are present and in taxonomic range.",
-                        )
+                    self.amend_reason(
+                        pathway_id,
+                        "ACCEPT: all reactions are present and in taxonomic range.",
+                    )
                     return True
                 elif len(non_orphan_non_spontaneous_pathway_reactions) >= 3:
-                    if self.record_reason:
-                        self.amend_reason(
-                            pathway_id,
-                            details="ACCEPT: all reactions are present, not in taxonomic range, but at least three non-orphan, non-spontaneous reactions.",
-                        )
+                    self.amend_reason(
+                        pathway_id,
+                        details="ACCEPT: all reactions are present, not in taxonomic range, but at least three non-orphan, non-spontaneous reactions.",
+                    )
                     return True
                 else:
                     # REJECT, otherwise, when, P if P is outside its taxonomic range
-                    if self.record_reason:
-                        self.amend_reason(
-                            pathway_id,
-                            "REJECT: not in taxonomic range, and no more than 3 catalyzed reactions.",
-                        )
+                    self.amend_reason(
+                        pathway_id,
+                        "REJECT: not in taxonomic range, and no more than 3 catalyzed reactions.",
+                    )
                     return False
         else:
             if all_reactions_are_present:
-                if self.record_reason:
-                    self.amend_reason(
-                        pathway_id,
-                        details="ACCEPT: all reactions are present and we don't care about the taxonomic range.",
-                    )
+                self.amend_reason(
+                    pathway_id,
+                    details="ACCEPT: all reactions are present and we don't care about the taxonomic range.",
+                )
             return True
 
         # REJECT P if P is missing enzymes for all key reactions of P
@@ -205,11 +196,10 @@ class PythonicPathwayInference(PathwayInference):
             key_reactions = self.kb.key_reactions_of_pathway(pathway_id)
             for key_reaction in key_reactions:
                 if key_reaction not in self.reactome:
-                    if self.record_reason:
-                        self.amend_reason(
-                            pathway_id,
-                            f"REJECT: key reaction {key_reaction} not in reactome.",
-                        )
+                    self.amend_reason(
+                        pathway_id,
+                        f"REJECT: key reaction {key_reaction} not in reactome.",
+                    )
                     return False
 
         # REJECT P if the score of P is significantly less than the score of a variant pathway of P
@@ -222,11 +212,10 @@ class PythonicPathwayInference(PathwayInference):
                         pathway_scores[pathway_id],
                         list(pathway_scores.values()),
                     ):
-                        if self.record_reason:
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: variant pathway {pathway_id} has significantly higher pathway score.",
-                            )
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: variant pathway {pathway_id} has significantly higher pathway score.",
+                        )
                         return False
 
         if self.RULES["pathway_ontology"]:
@@ -240,20 +229,18 @@ class PythonicPathwayInference(PathwayInference):
                 # REJECT P if P is a biosynthetic pathway missing enzymes for its final step
                 if "Biosynthesis" in pathway_ontology_parents:
                     if last_reaction_id not in self.reactome:
-                        if self.record_reason:
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: biosynthesis pathway {pathway_id}'s last reaction is not present in known catalyzed reactome.",
-                            )
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: biosynthesis pathway {pathway_id}'s last reaction is not present in known catalyzed reactome.",
+                        )
                         return False
                 # REJECT P if P is a catabolic pathway missing enzymes for its initial step
                 elif "Degradation" in pathway_ontology_parents:
                     if first_reaction_id not in self.reactome:
-                        if self.record_reason:
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: catabolysis pathway {pathway_id}'s first reaction is not present in known catalyzed reactome.",
-                            )
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: catabolysis pathway {pathway_id}'s first reaction is not present in known catalyzed reactome.",
+                        )
                         return False
                 # REJECT P if P is an energy metabolism pathway and is missing more than half its catalyzed reactions (understood as both non orphan and non spontaneous reactions)
                 elif "Energy-Metabolism" in pathway_ontology_parents:
@@ -266,27 +253,24 @@ class PythonicPathwayInference(PathwayInference):
                         len(catalyzed_reactions)
                         < len(non_orphan_non_spontaneous_pathway_reactions) / 2
                     ):
-                        if self.record_reason:
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: energy metabolism pathway {pathway_id} is missing more than half its catalyzed reactions.",
-                            )
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: energy metabolism pathway {pathway_id} is missing more than half its catalyzed reactions.",
+                        )
                         return False
 
         # INCLUDE P if the score of P exceeds the threshold PATHWAY-PREDICTION-CUTOFF
         if pathway_scores[pathway_id] > self.PATHWAY_SCORE_THRESHOLD:
-            if self.record_reason:
-                self.amend_reason(
-                    pathway_id, "ACCEPT: pathway score exceeds the minimum value."
-                )
+            self.amend_reason(
+                pathway_id, "ACCEPT: pathway score exceeds the minimum value."
+            )
             return True
 
         # Otherwise, by default, reject the pathway.
-        if self.record_reason:
-            self.amend_reason(
-                pathway_id,
-                "REJECT: no applicable case to reject or accept the pathway, so reject by default.",
-            )
+        self.amend_reason(
+            pathway_id,
+            "REJECT: no applicable case to reject or accept the pathway, so reject by default.",
+        )
         return False
 
     def reaction_graph_topological_order(self, pathway):
@@ -377,17 +361,17 @@ class PythonicPathwayInference(PathwayInference):
                 f.writelines(["DECISION:" + pathway_id + "\n", decision_reason + "\n"])
 
 
-def infer_metabolome(
+def infer_metabolism(
     reactome: set[str], taxon: int, reason_filename: Optional[str] = None, config=None
 ) -> set[str]:
     kb = select_kb(config["reference"]["source"])
     inference = PythonicPathwayInference(
         kb, reactome, taxon, reason_filename is not None, config=config
     )
-    metabolome: set[str] = inference.inferred_pathways()
+    metabolism: set[str] = inference.inferred_pathways()
     if reason_filename is not None:
         inference.dump_reason(reason_filename)
-    return metabolome
+    return metabolism
 
 
 def main():
@@ -434,10 +418,10 @@ def main():
         config.write(config_string_stream)
         logger.info(f"Using config:\n{config_string_stream.getvalue()}")
 
-    # Infer the metabolome
+    # Infer the metabolism
     reactome: set[str] = set(read_list(args.reactome))
-    metabolome: set[str] = infer_metabolome(reactome, args.taxon, args.reason, config=config)
-    write_output(args.output, metabolome)
+    metabolism: set[str] = infer_metabolism(reactome, args.taxon, args.reason, config=config)
+    write_output(args.output, metabolism)
 
 
 if __name__ == "__main__":

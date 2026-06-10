@@ -1,11 +1,10 @@
 """
 An implementation of a PathoLogic-like pathway inference algorithm,
 relying on an Answer Set Programming approach with clingo.
-
 """
 
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Set, List, Optional
 import importlib.resources
 import configparser
 import argparse
@@ -19,18 +18,17 @@ from ...utils import unquote
 from ...utils import read_list, write_output, set_logging_level
 from ...io.knowledge_base import KnowledgeBase
 from ...io.knowledge_base import select_kb
-from ...config import config
 from ...asp import kb_as_asp as kb_as_asp
 from .generic import PathwayInference
+from ...config import override_config, default_config
 
 logger = logging.getLogger("pan2met:inference:pathologic:aspic")
-
 
 class AspicPathwayInference(PathwayInference):
     def __init__(
         self,
         kb: KnowledgeBase,
-        reactome: set[str],
+        reactome: Set[str],
         taxon_id: int,
         reference_kb_asp: Path,
         config = None
@@ -50,7 +48,7 @@ class AspicPathwayInference(PathwayInference):
 
     def solve_asp_problem(
         self, inline_program: str, reference_kb_asp: Path
-    ) -> Dict[str, list[str]]:
+    ) -> Dict[str, List[str]]:
         """
         Use clingo with clyngor to solve the Answer Set Programming problem to infer pathways.
 
@@ -80,7 +78,7 @@ class AspicPathwayInference(PathwayInference):
             ],
         }
 
-    def infer_pathways(self) -> list[str]:
+    def infer_pathways(self) -> List[str]:
         inline_program = self.prepare_clingo_inline_program()
         inferrence_results = self.solve_asp_problem(
             inline_program, self.reference_kb_asp
@@ -108,11 +106,10 @@ class AspicPathwayInference(PathwayInference):
                         f"Pathway {pathway} has no non-orphan non-spontaneous reaction, cannot compute pathway score, skipping pathway score heuristics decision rule, and accepting the pathway by default."
                     )
                     inferred_pathways.append(pathway)
-                    if self.record_reason:
-                        self.amend_reason(
-                            pathway,
-                            "ACCEPT: pathway has no non-orphan non-spontaneous reaction, cannot compute pathway score, accepting by default.",
-                        )
+                    self.amend_reason(
+                        pathway,
+                        "ACCEPT: pathway has no non-orphan non-spontaneous reaction, cannot compute pathway score, accepting by default.",
+                    )
                     continue
                 pathways_keys_reactions = self.kb.key_reactions_of_pathway(pathway)
                 pathway_score = self.pathway_score(
@@ -120,13 +117,12 @@ class AspicPathwayInference(PathwayInference):
                     non_orphan_non_spontaneous_reactions,
                     pathways_keys_reactions,
                 )
-                if pathway_score >= PathwayInference.PATHWAY_SCORE_THRESHOLD:
+                if pathway_score >= self.PATHWAY_COMPLETION_THRESHOLD:
                     inferred_pathways.append(pathway)
-                    if self.record_reason:
-                        self.amend_reason(
-                            pathway,
-                            f"ACCEPT: pathway score {pathway_score:.2f} exceeds the minimum value.",
-                        )
+                    self.amend_reason(
+                        pathway,
+                        f"ACCEPT: pathway score {pathway_score:.2f} exceeds the minimum value.",
+                    )
         return inferred_pathways
 
 
@@ -175,34 +171,14 @@ def main():
 
     set_logging_level(args.verbose)
 
-    default_config: configparser.ConfigParser = configparser.ConfigParser()
-    default_config_str = importlib.resources.read_text(pan2met.conf, "default.ini")
-    default_config.read_string(default_config_str)
-
-    config = default_config
-
-    # Update config globally overriding default_config with keys from given config filename
+    # Config
+    logging.info(f"Overriding default configuration with {args.config}")
     if args.config:
-        logging.info(f"Overriding default configuration with {args.config}")
-        config_override = configparser.ConfigParser()
-        config_override.read([args.config])
-        config.update(config_override)
+        config = override_config(args.config)
+    else:
+        config = default_config
 
-    # Log the used config
-    with io.StringIO() as config_string_stream:
-        config.write(config_string_stream)
-        logger.info(f"Using config:\n{config_string_stream.getvalue()}")
-
-
-    if args.config is not None:
-        # Update config globally overriding default_config with keys from given config filename
-        logging.info(f"Overriding default configuration with {args.config}")
-        global config
-        config_override = configparser.ConfigParser()
-        config_override.read([args.config])
-        config.update(config_override)
-    logger.info(f"Using config: {(dict(config))}")
-    kb = select_kb(config["reference"]["source"])
+    kb = select_kb(config["reference"]["source"], config)
     reactome = set(read_list(args.reactome))
     pathway_inference = AspicPathwayInference(
         kb, reactome, taxon_id=int(args.taxon), reference_kb_asp=Path(args.kb_asp), config=config

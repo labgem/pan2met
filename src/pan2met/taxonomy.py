@@ -1,9 +1,5 @@
 """
-In PathwayTools PathoLogic,
-expected Taxonomic range is a particularly important
-predictor used in reaction / pathway inference prediction.
-
-This module introduces some helper functions to deal with the taxonomic range.
+Some helper functions to deal with the taxonomic range.
 
 The taxonomic "ground truth" is taken from NCBI Taxonomy.
 """
@@ -150,7 +146,7 @@ class NCBITaxonomyTree:
         MAX_RECURSE: int = 5
         common_ancestor: int = self.last_common_ancestor(taxid_1, taxid_2)
         current = common_ancestor
-        depth = 0  # could be even already greater  than that
+        depth = 0  # could be even already greater than that
         while depth < MAX_RECURSE:
             if current in self.species_taxa:
                 return True

@@ -2,7 +2,7 @@
 A SQL backend using 'metabiantes' model for data imported from MetaCyc.
 """
 
-from typing import Iterable
+from typing import Iterable, Optional, List
 import importlib.resources
 
 import aiosql
@@ -12,11 +12,10 @@ import pan2met
 import pan2met.sql.metabiantes
 
 from ..knowledge_base import KnowledgeBase
-from ...config import config
 
 
 class MetabiantesKnowledgeBase(KnowledgeBase):
-    def __init__(self):
+    def __init__(self, config):
         self.queries = aiosql.from_str(
             importlib.resources.read_text(pan2met.sql.metabiantes, "queries.sql"),
             "psycopg2",
@@ -27,19 +26,23 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         if iterator is not None:
             return [item[0] for item in iterator]
 
-    def monomers(self) -> list[str]:
+    def monomers(self) -> List[str]:
         """
         List monomer polypeptides
         """
         return self._aiosql_to_list(self.queries.get_monomers(self.connection))
 
-    def pathways(self) -> list[str]:
+    def pathways(self) -> List[str]:
         """
         List the pathways referenced by the knowledge base
         """
         return self._aiosql_to_list(self.queries.get_pathways(self.connection))
 
-    def reactions_of_pathway(self, pathway_id: str) -> list[str]:
+    def pathway_name(self, pathway_id: str) -> str:
+        """Get the name of a pathway"""
+        return self.queries.get_pathway_name(self.connection, pathway_id=pathway_id)
+
+    def reactions_of_pathway(self, pathway_id: str) -> List[str]:
         """
         List reactions of a pathway
         """
@@ -49,19 +52,19 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def reactions(self) -> list[str]:
+    def reactions(self) -> List[str]:
         """
         List all reactions referenced in the knowledge base
         """
         return self._aiosql_to_list(self.queries.get_reactions(self.connection))
 
-    def orphan_reactions(self) -> list[str]:
+    def orphan_reactions(self) -> List[str]:
         """
         List orphan reactions
         """
         return self._aiosql_to_list(self.queries.get_orphan_reactions(self.connection))
 
-    def spontaneous_reactions(self) -> list[str]:
+    def spontaneous_reactions(self) -> List[str]:
         """
         List spontaneous reactions
         """
@@ -69,7 +72,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_spontaneous_reactions(self.connection)
         )
 
-    def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
+    def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> List[str]:
         """
         Non-spontaneous reactions of a pathway
         """
@@ -81,7 +84,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
 
     def non_orphan_non_spontaneous_reactions_of_pathway(
         self, pathway_id: str
-    ) -> list[str]:
+    ) -> List[str]:
         """
         Non-orphan and non-spontaneous reactions of a pathway
         """
@@ -91,7 +94,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def enzymes_of_reaction(self, reaction_id: str) -> list[str]:
+    def enzymes_of_reaction(self, reaction_id: str) -> List[str]:
         """
         List enzymes catalyzing a reaction
         """
@@ -101,7 +104,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def reactions_by_ec_number(self, ec_number: str) -> list[str]:
+    def reactions_by_ec_number(self, ec_number: str) -> List[str]:
         """
         List reactions annotated with given EC-number
         """
@@ -111,7 +114,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def pathway_taxonomic_range(self, pathway_id: str) -> int:
+    def pathway_taxonomic_range(self, pathway_id: str) -> Optional[int]:
         """
         Return a NCBI-Taxonomy Taxonomy Identifier number
         """
@@ -129,7 +132,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.connection, pathway_id=pathway_id, reaction_id=reaction_id
         )
 
-    def key_reactions_of_pathway(self, pathway_id: str) -> list[str]:
+    def key_reactions_of_pathway(self, pathway_id: str) -> List[str]:
         """
         List all key reactions of a pathway.
         """
@@ -139,7 +142,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def pathways_with_reaction(self, reaction_id) -> list[str]:
+    def pathways_with_reaction(self, reaction_id) -> List[str]:
         """
         List all pathways with the given reaction identifier.
         """
@@ -157,7 +160,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.connection, reaction_id=reaction_id
         )
 
-    def variants_of_pathway(self, pathway_id: str) -> list[str]:
+    def variants_of_pathway(self, pathway_id: str) -> List[str]:
         """
         List the variants of a pathway.
         """
@@ -165,7 +168,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_variants_of_pathway(self.connection, pathway_id=pathway_id)
         )
 
-    def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
+    def ontology_parent_class_of_pathway(self, pathway_id: str) -> List[str]:
         """
         List the parent class of a pathway in the ontology of pathway tools
         """
@@ -175,7 +178,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def pathway_reaction_order(self, pathway_id: str) -> list[tuple[str, str]]:
+    def pathway_reaction_order(self, pathway_id: str) -> List[tuple[str, str]]:
         """
         Return a list of pairs of reactions in the pathway, where the first reaction is a predecessor of the second reaction in the pathway.
         """
@@ -183,7 +186,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.connection, pathway_id=pathway_id
         )
 
-    def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
+    def species_evidence_of_pathway(self, pathway_id: str) -> List[int]:
         """
         List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
         """

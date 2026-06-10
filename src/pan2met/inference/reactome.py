@@ -14,7 +14,7 @@ import importlib.resources
 import clyngor
 
 import pan2met
-from ..config import config
+from ..config import default_config, override_config
 from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..utils import logger, write_output
 from ..asp import rules
@@ -199,8 +199,8 @@ def minimal_monomer_set(
     return selected_monomers
 
 
-def write_potential_monomers(filename: str):
-    kb = select_kb(config["reference"]["source"])
+def write_potential_monomers(filename: str, config):
+    kb = select_kb(config)
     write_output(
         "tmp/potential_monomers.lp",
         list(map(rules.potential_monomer_asp_rule, kb.monomers())),

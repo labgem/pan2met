@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import List, Set, Literal, Dict
 import logging
 import tqdm
+import csv
 
-from ..config import config
+from ..config import override_config, default_config
 from ..utils import read_mapping, reverse_mapping, read_list
 from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..io.pangenome import (
@@ -44,6 +45,7 @@ def write_reaction_presence_absence_by_strain(
     """
     logger.info(f"Computing reaction presence absence matrix for {len(reaction_to_families.keys())} reactions in {len(strain_to_families.keys())} strains.")
     with open(filename, "w") as output_file:
+        writer = csv.writer(output_file, delimiter="\t")
         # Write the file header
         header: List[str] = [
             "reaction",
@@ -53,7 +55,7 @@ def write_reaction_presence_absence_by_strain(
             "cloud %",
         ]
         header = header + [strain for strain in strain_to_families.keys()]
-        output_file.write("\t".join(header) + "\n")
+        writer.writerow(header)
         for reaction in tqdm.tqdm(reaction_to_families.keys()):
             for strain in strain_to_families.keys():
                 families: Set[str] = reaction_to_families[reaction]
@@ -86,14 +88,14 @@ def write_reaction_presence_absence_by_strain(
                         record.append("1")
                     else:
                         record.append("0")
-                output_file.write("\t".join(map(str, record)) + "\n")
+                writer.writerow(map(str, record))
 
 
 def write_pathway_completion_by_strain(
     prefix: str,
     pathways: List[str],
     strain_to_families: Dict[str, Set[str]],
-    partition_to_families: Dict[str, Set[str]],
+    partition_to_families: Dict[Literal["persistent", "shell", "cloud"], Set[str]],
     reaction_to_families: Dict[str, Set[str]],
     module_to_families: Dict[str, Set[str]],
     pangenome_reactions: Set[str],
@@ -115,9 +117,9 @@ def write_pathway_completion_by_strain(
         filename = prefix + "_pathway_completion_wo_orphan_by_strain.tsv"
 
     with open(filename, "w") as output_file:
-        logger.info(f"Writing completion values to {filename}.")
-        header = "\t".join(
-            [
+        logger.info(f"Writing completion values to {filename}")
+        writer = csv.writer(output_file, delimiter="\t")
+        header = [
                 "pathway",
                 "pathway name",
                 "nb reactions",
@@ -128,12 +130,11 @@ def write_pathway_completion_by_strain(
                 "modules (reaction cov.)",
                 "global completion",
                 "max completion",
-            ]
-            + [strain for strain in strain_to_families.keys()]
-        )
-        output_file.write(header + "\n")
+            ] + [strain for strain in strain_to_families.keys()]
+        writer.writerow(header)
         for pathway, pathway_reactions in pathways_to_reactions.items():
             if len(pathway_reactions) == 0:
+                logger.warning(f"{pathway} has no reactions")
                 continue
             global_completion = len(
                 pathway_reactions.intersection(pangenome_reactions)
@@ -144,6 +145,7 @@ def write_pathway_completion_by_strain(
                 if reaction in reaction_to_families:
                     families.update(reaction_to_families[reaction])
             if len(families) == 0:
+                logger.warning(f"{pathway} reactions are catalyzed by no enzymes in the pangenome.")
                 continue
             persistent_percentage = len(families.intersection(partition_to_families["persistent"])) * 100 / len(families)
             shell_percentage = len(families.intersection(partition_to_families["shell"])) * 100 / len(families)
@@ -168,8 +170,11 @@ def write_pathway_completion_by_strain(
                     )
             modules_to_str = modules_to_str.rstrip(" ,")
 
+            pathway_name = kb.name_of_pathway(pathway)
+
             record = [
                     pathway,
+                    pathway_name,
                     len(pathway_reactions),
                     ",".join(families),
                     persistent_percentage,
@@ -181,7 +186,7 @@ def write_pathway_completion_by_strain(
 
 
             strain_completion = dict()
-            for strain in strain_to_families:
+            for strain in strain_to_families.keys():
                 nbreactions_in_strain = 0
                 for reaction in pathway_reactions:
                     # Check if the reaction is catalyzed by a protein among the gene families of the strains
@@ -189,11 +194,12 @@ def write_pathway_completion_by_strain(
                         nbreactions_in_strain += 1
                 strain_completion[strain] = nbreactions_in_strain / len(pathway_reactions)
             max_completion = max(strain_completion.values())
+            if max_completion == 0:
+                logger.critical(f"pathway {pathway} has a null completion in all strains.")
             record.append(max_completion)
             for strain in strain_completion:
                 record.append(strain_completion[strain])
-            output_file.write("\t".join(list(map(str, record))) + "\n")
-
+            writer.writerow(record)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -216,8 +222,13 @@ def main():
     parser.add_argument(
         "-c", "--config", help="Path to a config file to override default configuration"
     )
-
     args = parser.parse_args()
+
+    if args.config:
+        config = override_config(args.config)
+    else:
+        config = default_config
+
     reaction_presence_absence_by_strain_filename: Path = Path(
         f"{args.prefix}_reaction_presence_absence.Rtab"
     )
@@ -242,14 +253,14 @@ def main():
     reaction_to_families: Dict[str, Set[str]] = reverse_mapping(families_to_reactions)
     pangenome_reactions: Set[str] = {reaction for reaction in reaction_to_families}
 
-    """write_reaction_presence_absence_by_strain(
+    write_reaction_presence_absence_by_strain(
         reaction_presence_absence_by_strain_filename,
         reaction_to_families,
         strain_to_families,
         partition_to_families,
-    )"""
+    )
     pathways: List[str] = read_list(args.pathways)
-    kb = select_kb(config["reference"]["source"])
+    kb = select_kb(config)
     write_pathway_completion_by_strain(
         args.prefix,
         pathways,

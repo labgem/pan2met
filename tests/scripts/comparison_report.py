@@ -1,5 +1,5 @@
 """
-Basic comparison report between PathoLogic metabolome output and the output of pan2met
+Basic comparison report between PathoLogic metabolism output and the output of pan2met
 """
 
 import datetime
@@ -21,19 +21,19 @@ git_revision = get_git_revision()
 
 TEST_CASES_FOLDER = "tests/cases/generated/"
 PATHOLOGIC_FILENAME = "pathologic.pathways.list"
-PANGENOME2PANMETABOLOME_FILENAME = "pan2met.pathways.list"
+PANGENOME2PANmetabolism_FILENAME = "pan2met.pathways.list"
 
 test_cases = os.listdir(TEST_CASES_FOLDER)
 
 
-def report(pathologic_metabolome: set[str], pan2met_metabolome: set[str]) -> list[int]:
-    union = pathologic_metabolome | pan2met_metabolome
-    unique_pathologic = pathologic_metabolome - pan2met_metabolome
-    unique_pan2met = pan2met_metabolome - pathologic_metabolome
-    intersection = pathologic_metabolome & pan2met_metabolome
+def report(pathologic_metabolism: set[str], pan2met_metabolism: set[str]) -> list[int]:
+    union = pathologic_metabolism | pan2met_metabolism
+    unique_pathologic = pathologic_metabolism - pan2met_metabolism
+    unique_pan2met = pan2met_metabolism - pathologic_metabolism
+    intersection = pathologic_metabolism & pan2met_metabolism
     return [
-        len(pathologic_metabolome),
-        len(pan2met_metabolome),
+        len(pathologic_metabolism),
+        len(pan2met_metabolism),
         len(union),
         len(intersection),
         len(unique_pathologic),
@@ -61,17 +61,17 @@ def main():
         )
         for test_case in test_cases:
             if os.path.isdir(os.path.join(TEST_CASES_FOLDER, test_case)):
-                pathologic_metabolome = set(
+                pathologic_metabolism = set(
                     read_list(
                         os.path.join(TEST_CASES_FOLDER, test_case, PATHOLOGIC_FILENAME)
                     )
                 )
-                pan2met_metabolome = set(
+                pan2met_metabolism = set(
                     read_list(
                         os.path.join(
                             TEST_CASES_FOLDER,
                             test_case,
-                            PANGENOME2PANMETABOLOME_FILENAME,
+                            PANGENOME2PANmetabolism_FILENAME,
                         )
                     )
                 )
@@ -82,8 +82,8 @@ def main():
                             map(
                                 str,
                                 report(
-                                    pathologic_metabolome,
-                                    pan2met_metabolome,
+                                    pathologic_metabolism,
+                                    pan2met_metabolism,
                                 ),
                             )
                         )

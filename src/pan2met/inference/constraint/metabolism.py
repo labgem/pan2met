@@ -1,5 +1,5 @@
 """
-Clingo Answer-Set Programming constraint-based metabolome inference from reactome
+Clingo Answer-Set Programming constraint-based metabolism inference from reactome
 """
 
 import logging
@@ -10,7 +10,7 @@ import clyngor
 
 import pan2met
 from ...utils import read_list, write_output
-from ...config import config
+from ...config import default_config, override_config
 from ...io.knowledge_base import KnowledgeBase, select_kb
 
 
@@ -19,11 +19,11 @@ logger = logging.getLogger("pan2met:inference:constraint")
 
 class ASPPathwayInference:
     """
-    Constraint based metabolome inference
+    Constraint based metabolism inference
     """
 
     def __init__(self, template: KnowledgeBase, reactome: set[str]):
-        self.template = template
+        self.kb = template
         self.reactome = reactome
 
     def dump_pathway_knowledge_to_asp(self):
@@ -33,14 +33,14 @@ class ASPPathwayInference:
         - reaction/1.
         - pathway_reaction/2. (pathway(Pathway, Reaction)).
         """
-        pathways: list[str] = self.template.pathways()
+        pathways: list[str] = self.kb.pathways()
         pathway_list_asp = self.dump_pathway_list_to_asp(pathways)
 
-        reactions: list[str] = self.template.reactions()
+        reactions: list[str] = self.kb.reactions()
         reaction_list_asp = self.dump_reaction_list_to_asp(reactions)
 
         pathway_reactions: list[str] = [
-            (pathway, self.template.reactions_of_pathway(pathway))
+            (pathway, self.kb.reactions_of_pathway(pathway))
             for pathway in pathways
         ]
 
@@ -139,17 +139,21 @@ def main():
             assert len(kb_asp_file.read()) > 1, (
                 "Please provide a non-empty knowledge base ASP input, or use --dump option."
             )
+    if args.config:
+        config = override_config(args.config)
+    else:
+        config = default_config
     if args.reactome:
         reactome = set(read_list(args.reactome))
-        kb = select_kb(config["reference"]["source"])
+        kb = select_kb(config)
         inference = ASPPathwayInference(kb, reactome)
         # Write reactome as ASP atoms if --reactome-asp <path> is set
         if args.reactome_asp is not None:
             with open(args.reactome_asp, "w") as reactome_asp_file:
                 reactome_asp_file.write(inference.reactome_to_asp())
-        # Infer the metabolome and write to output if -o/--output <path> is set
+        # Infer the metabolism and write to output if -o/--output <path> is set
         if args.output is not None:
-            inferred_pathways: list[str] = inference.inferred_pathways(args.kb_asp)
+            inferred_pathways: set[str] = inference.inferred_pathways(args.kb_asp)
             write_output(args.output, inferred_pathways)
 
 

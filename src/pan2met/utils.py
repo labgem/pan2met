@@ -5,7 +5,6 @@ import logging
 
 logger = logging.getLogger("pan2met")
 
-
 def read_list(filename: str) -> List[str]:
     """
     Read a list of strings from a file, one per line

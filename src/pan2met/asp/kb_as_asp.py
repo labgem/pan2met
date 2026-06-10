@@ -19,6 +19,7 @@ import argparse
 
 from ..io.knowledge_base import KnowledgeBase
 from ..io.knowledge_base import select_kb
+from ..config import default_config, override_config
 
 
 def pathway_asp_atom(pathway: str) -> str:
@@ -114,21 +115,25 @@ def main():
         description="Output a metabolic knowledge base to ASP atoms"
     )
     parser.add_argument(
-        "--kb",
-        type=str,
-        required=True,
-        help="The knowledge base type among {metabiantes, padmet}",
-        choices=["metabiantes", "padmet"],
-    )
-    parser.add_argument(
         "-o",
         "--output",
         type=str,
         required=True,
         help="The output file to write the ASP atoms to",
     )
+    parser.add_argument(
+        "-c",
+        "--config",
+        help="Config override",
+        required=False,
+        default=None
+    )
     args = parser.parse_args()
-    kb = select_kb(args.kb)
+    if args.config:
+        config = override_config()
+    else:
+        config = default_config
+    kb = select_kb(config)
     write_kb_as_asp(kb, args.output)
 
 
