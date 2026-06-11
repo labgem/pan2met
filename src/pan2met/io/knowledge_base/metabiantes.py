@@ -110,7 +110,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         return self._aiosql_to_list(
             self.queries.get_reactions_by_ec_number(
-                self.connection, ec_number=ec_number
+                self.connection, ec_number=f"EC-{ec_number}"
             )
         )
 

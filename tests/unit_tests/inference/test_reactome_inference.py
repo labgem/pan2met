@@ -4,13 +4,14 @@ import pytest
 import pythoncyc
 
 from pan2met.utils import read_list
-from pan2met.io.knowledge_base import KnowledgeBase
-from pan2met.io.sparql import SPARQLBackendKnowledgeBase
+from pan2met.io.knowledge_base import KnowledgeBase, select_kb
 from pan2met.inference.reactome import (
     infer_reactome_from_ec_numbers,
     infer_reactome_from_monomers,
     infer_reactome_from_monomers_asp,
 )
+
+from pan2met.config import default_config
 
 
 REACTIONS = """RXN-5424
@@ -48,38 +49,10 @@ To retrieve the list of reactions:
 
 @pytest.fixture
 def kb():
-    kb: KnowledgeBase = SPARQLBackendKnowledgeBase()
+    kb: KnowledgeBase = select_kb(default_config)
     return kb
 
 
 def test_infer_reactions_from_ec_number(kb):
     reactions = infer_reactome_from_ec_numbers(EC_NUMBERS, kb)
     assert sorted(reactions) == sorted(REACTIONS)
-
-
-def test_reactome_inference_from_monomers_sanity_check():
-    """
-    Ensure the results provided by a ASP Clingo based reactome inference approach (from monomers),
-    provides the same results than a direct python approach using the same deduction rule,
-    """
-
-    _reactions_test1 = ["RXN-20928", "RXN-20930"]
-
-    _monomer_test1 = []
-
-
-def test_reactome_inference_from_monomers_compare_asp_and_straightforward():
-    """
-    Compare the results of reactome given by straightforward python reactome inference
-    from the set of monomers, compared with the ASP approach.
-
-    To pass, this test requires a file containing a list of monomers, an active PathwayTools API instance
-    and a SPARQL Endpoint instance, as well as the GPR rules.
-    """
-    monomers = read_list("./tmp/potential_monomers_sample100.list")
-    pgdb = pythoncyc.select_organism("meta")
-    reactions_from_pythoncyc = infer_reactome_from_monomers(monomers, pgdb)
-    reactions_from_asp = infer_reactome_from_monomers_asp(
-        monomers, "./tmp/metacyc29.5_gpr.lp"
-    )
-    assert reactions_from_pythoncyc == reactions_from_asp

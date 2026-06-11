@@ -215,7 +215,7 @@ is_catabolysis_pathway(Pathway) :- pathway_ontology_expanded(Pathway, "Degradati
 
 first_reaction(Pathway, FirstReaction) :- pathway_reaction_order(Pathway, FirstReaction, _) , is_in_pathway(OtherReaction, Pathway) , not pathway_reaction_order(Pathway, OtherReaction, FirstReaction).
 % A first reaction is a reaction with no predecessor
-last_reaction(Pathway, FirstReaction) :- pathway_reaction_order(Pathway, _, LastReaction) , is_in_pathway(OtherReaction, Pathway) , not pathway_reaction_order(Pathway, LastReaction, OtherReaction).
+last_reaction(Pathway, LastReaction) :- pathway_reaction_order(Pathway, _, LastReaction) , is_in_pathway(OtherReaction, Pathway) , not pathway_reaction_order(Pathway, LastReaction, OtherReaction).
 % A last reaction is a reaction with no successor
 % FIXME: check if a pathway could have multiple extremities, in which case, identifying the reaction of interest for anabolism or catabolism could be not that easy.
 

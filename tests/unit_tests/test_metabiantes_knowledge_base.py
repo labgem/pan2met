@@ -5,7 +5,7 @@ from pan2met.config import default_config
 
 @pytest.fixture
 def kb() -> KnowledgeBase:
-    select_kb(default_config)
+    return select_kb(default_config)
 
 def test_list_pathways(kb):
     assert len(kb.pathways()) > 100

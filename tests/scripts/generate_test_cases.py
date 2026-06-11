@@ -2,11 +2,11 @@ import random
 import os
 import shutil
 
-import pan2met.io.metabiantes_kb.kb
+import pan2met.io.knowledge_base.metabiantes
 
 TEST_FOLDER = "./tests/cases/generated2/"
 
-kb = pan2met.io.metabiantes_kb.kb.MetabiantesKnowledgeBase()
+kb = pan2met.io.knowledge_base.metabiantes.MetabiantesKnowledgeBase()
 
 pathways = kb.pathways()
 

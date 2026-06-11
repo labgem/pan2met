@@ -364,7 +364,7 @@ class PythonicPathwayInference(PathwayInference):
 def infer_metabolism(
     reactome: set[str], taxon: int, reason_filename: Optional[str] = None, config=None
 ) -> set[str]:
-    kb = select_kb(config["reference"]["source"])
+    kb = select_kb(config)
     inference = PythonicPathwayInference(
         kb, reactome, taxon, reason_filename is not None, config=config
     )

@@ -126,17 +126,17 @@ class KnowledgeBase(ABC):
 
 
 def select_kb(config) -> KnowledgeBase:
-    match config["reference"]["source"]:
+    match config["reference"]["knowledge_base"]:
         case "metabiantes":
-            from .metabiantes_kb.kb import MetabiantesKnowledgeBase
+            from .metabiantes import MetabiantesKnowledgeBase
 
             return MetabiantesKnowledgeBase(config)
         case "pythoncyc":
-            from .pythoncyc_kb.kb import PythonCycKnowledgeBase
+            from .pythoncyc import PythonCycKnowledgeBase
 
             return PythonCycKnowledgeBase()
         case "padmet":
-            from .padmet_kb.kb import PADMetKnowledgeBase
+            from .padmet import PADMetKnowledgeBase
 
             return PADMetKnowledgeBase(config)
         case _:

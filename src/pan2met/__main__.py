@@ -11,12 +11,13 @@ import sys
 from .utils import read_list, write_output, set_logging_level
 from .inference import reactome
 from .inference.pathologic.pythonic import infer_metabolism
+from .config import default_config, override_config
 # from .inference.pathologic.aspic import
 
 import pan2met
 
 
-def reactome_command(args):
+def reactome_command(args, config=default_config):
     """
     `pan2met reactome` subcommand
     """
@@ -27,7 +28,7 @@ def reactome_command(args):
     write_output(args.output, reactions)
 
 
-def reverse_reactome_command(args):
+def reverse_reactome_command(args, config=default_config):
     """
     `pan2met reverse_reactome` subcommand
     """
@@ -38,14 +39,14 @@ def reverse_reactome_command(args):
     write_output(args.output, monomers)
 
 
-def metabolism_command(args):
+def metabolism_command(args, config=default_config):
     """
     `pan2met metabolism` subcommand
     """
-    reactome: set[str] = set(read_list(args.input))
-    taxon_id: int = int(args.taxon)
+    reactome: set[str] = set(read_list(args.reactions))
+    taxon_id: int = int(args.taxon_id)
     reason_filename = args.reason
-    pathways = infer_metabolism(reactome, taxon_id, reason_filename)
+    pathways = infer_metabolism(reactome, taxon_id, reason_filename, config=config)
     write_output(args.output, pathways)
 
 
@@ -94,8 +95,8 @@ def parse_arguments():
         help="infer the (pan)metabolism",
     )
     parser_metabolism.add_argument(
-        "-i",
-        "--input",
+        "-r",
+        "--reactions",
         help="A file listing the reactions found in the (pan)-reactome",
         required=True,
     )
@@ -155,8 +156,14 @@ def parse_arguments():
 def main():
     parser, args = parse_arguments()
     set_logging_level(args.verbose)
+
+    if args.config:
+        config = override_config(args.config)
+    else:
+        config = default_config
+
     if hasattr(args, "func"):
-        args.func(args)
+        args.func(args, config=config)
     else:
         parser.print_help()
         sys.exit(1)

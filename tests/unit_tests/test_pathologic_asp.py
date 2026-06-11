@@ -197,7 +197,6 @@ def test_asp_pathologic_rule_9():
     % Case 2.
     % a biosynthesis pathway with a missing last reaction
     pathway("PWY-2").
-    pathway_reaction_order("PWY-2", "MISSING-RXN-0", 0).
     pathway_reaction_order("PWY-2", "RXN-1", 1).
     pathway_reaction_order("PWY-2", "RXN-2", 2).
     pathway_reaction_order("PWY-2", "RXN-3", 3).
@@ -227,7 +226,7 @@ def test_asp_pathologic_rule_9():
     % expect rule 9, alternative 2, to reject the pathway.
 
     % Case 4
-    % a pathway with a missing first reaction, but not a catalysis
+    % a pathway with a missing first reaction, but not a catabolysis
     pathway("PWY-4").
 
     pathway_reaction_order("PWY-4", "MISSING-RXN-0", 0).
@@ -249,7 +248,7 @@ def test_asp_pathologic_rule_9():
         ).by_predicate
     )
     assert len(answers) == 1
-    # TODO: assert first and last reactions.
+    print(answers)
     assert_reject(9, "PWY-2", answers)
     assert_reject(9, "PWY-3", answers)
     assert_pass(9, "PWY-4", answers)

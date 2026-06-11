@@ -178,7 +178,7 @@ def main():
     else:
         config = default_config
 
-    kb = select_kb(config["reference"]["source"], config)
+    kb = select_kb(config)
     reactome = set(read_list(args.reactome))
     pathway_inference = AspicPathwayInference(
         kb, reactome, taxon_id=int(args.taxon), reference_kb_asp=Path(args.kb_asp), config=config
