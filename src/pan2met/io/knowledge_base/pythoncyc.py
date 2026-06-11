@@ -1,12 +1,12 @@
 import pythoncyc
 
 from ...utils import logger
-from ..knowledge_base import KnowledgeBase
+from . import KnowledgeBase
 
 
 class PythonCycKnowledgeBase(KnowledgeBase):
     """
-    PythonCyc - based source of knowledge on pathways.
+    PythonCyc-based source of knowledge on pathways.
     """
 
     def __init__(self):

@@ -11,7 +11,7 @@ import psycopg
 import pan2met
 import pan2met.sql.metabiantes
 
-from ..knowledge_base import KnowledgeBase
+from . import KnowledgeBase
 
 
 class MetabiantesKnowledgeBase(KnowledgeBase):

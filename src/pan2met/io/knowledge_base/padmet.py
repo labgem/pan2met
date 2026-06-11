@@ -19,7 +19,7 @@ from queue import Queue
 from padmet.classes import PadmetSpec
 
 
-from ..knowledge_base import KnowledgeBase
+from . import KnowledgeBase
 
 
 class PADMetKnowledgeBase(KnowledgeBase):

@@ -8,7 +8,6 @@ Before running this script, launch pathway-tools python API with
 
 """
 
-import os
 import logging
 import argparse
 from typing import Iterable
@@ -20,13 +19,6 @@ logger = logging.getLogger("pan2met:io:metacyc")
 logger.setLevel(logging.DEBUG)
 
 PGDB_ID: str = "META"
-METACYC_SQL_QUERIES_PATH: str = os.path.join(
-    os.path.dirname(__file__), "../../sql/kb/insert_data.sql"
-)
-METACYC_SQL_CREATE_PATH: str = os.path.join(
-    os.path.dirname(__file__), "../../sql/kb/create_schema.sql"
-)
-
 
 def is_spontaneous(pgdb, reaction: str) -> bool:
     """
