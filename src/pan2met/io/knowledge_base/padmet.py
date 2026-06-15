@@ -58,9 +58,9 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         return [
             reaction
-            for reaction in self.padmet_object.getReactions()
-            if "SPONTANEOUS" not in reaction.misc
-            or reaction["SPONTANEOUS"][0] == "T"
+            for reaction in self.pathways_to_reactions_dict[pathway_id]
+            if "SPONTANEOUS" not in self.dicOfNode[reaction].misc
+            or self.dicOfNode[reaction]["SPONTANEOUS"][0] == "T"
         ]
 
     def non_orphan_non_spontaneous_reactions_of_pathway(

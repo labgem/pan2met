@@ -169,8 +169,11 @@ def write_pathway_completion_by_strain(
                         + ") ,"
                     )
             modules_to_str = modules_to_str.rstrip(" ,")
-
-            pathway_name = kb.name_of_pathway(pathway)
+            pathway_name = ""
+            try:
+                pathway_name = kb.name_of_pathway(pathway)
+            except NotImplementedError as e:
+                pass
 
             record = [
                     pathway,
@@ -253,12 +256,12 @@ def main():
     reaction_to_families: Dict[str, Set[str]] = reverse_mapping(families_to_reactions)
     pangenome_reactions: Set[str] = {reaction for reaction in reaction_to_families}
 
-    write_reaction_presence_absence_by_strain(
-        reaction_presence_absence_by_strain_filename,
-        reaction_to_families,
-        strain_to_families,
-        partition_to_families,
-    )
+    # write_reaction_presence_absence_by_strain(
+    #     reaction_presence_absence_by_strain_filename,
+    #     reaction_to_families,
+    #     strain_to_families,
+    #     partition_to_families,
+    # )
     pathways: List[str] = read_list(args.pathways)
     kb = select_kb(config)
     write_pathway_completion_by_strain(
