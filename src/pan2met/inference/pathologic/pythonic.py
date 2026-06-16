@@ -141,7 +141,7 @@ class PythonicPathwayInference(PathwayInference):
         )
         if all_reactions_absent:
             self.amend_reason(
-                pathway_id, "REJECT: no known catalyzis at all for this pathway."
+                pathway_id, details="REJECT: no known catalyzis at all for this pathway."
             )
             return False
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
@@ -152,7 +152,7 @@ class PythonicPathwayInference(PathwayInference):
             ):
                 self.amend_reason(
                     pathway_id,
-                    "REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
+                    details="REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
                 )
                 return False
 
@@ -167,7 +167,7 @@ class PythonicPathwayInference(PathwayInference):
                 if in_taxonomic_range:
                     self.amend_reason(
                         pathway_id,
-                        "ACCEPT: all reactions are present and in taxonomic range.",
+                        details="ACCEPT: all reactions are present and in taxonomic range.",
                     )
                     return True
                 elif len(non_orphan_non_spontaneous_pathway_reactions) >= 3:
@@ -189,7 +189,7 @@ class PythonicPathwayInference(PathwayInference):
                     pathway_id,
                     details="ACCEPT: all reactions are present and we don't care about the taxonomic range.",
                 )
-            return True
+                return True
 
         # REJECT P if P is missing enzymes for all key reactions of P
         if self.RULES["pathway_key_reaction"]:
@@ -214,7 +214,7 @@ class PythonicPathwayInference(PathwayInference):
                     ):
                         self.amend_reason(
                             pathway_id,
-                            f"REJECT: variant pathway {pathway_id} has significantly higher pathway score.",
+                            f"REJECT: variant pathway {variant_pathway} has significantly higher pathway score.",
                         )
                         return False
 
