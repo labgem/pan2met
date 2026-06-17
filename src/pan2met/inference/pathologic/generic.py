@@ -40,11 +40,11 @@ class PathwayInference:
             }
         )
 
-        logger.debug(f"Using taxonomic_range rule: {self.RULES["taxonomic_range"]}")
+        logger.debug(f"Using taxonomic_range rule: {self.RULES['taxonomic_range']}")
         logger.debug(f"Use taxon id {taxon_id} as reference")
 
 
-        if (self.RULES["taxonomic_range"] or self.RULES["pathway_species"]) and taxon_id is None:
+        if (self.RULES["taxonomic_range"] or self.RULES['pathway_species']) and taxon_id is None:
             raise ValueError("taxon_id cannot be None when using the taxonomic range and species based heuristics")
 
         self.kb: KnowledgeBase = kb

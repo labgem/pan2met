@@ -141,5 +141,5 @@ def select_kb(config) -> KnowledgeBase:
             return PADMetKnowledgeBase(config)
         case _:
             raise ValueError(
-                f"Cannot load kb for choice {config["reference"]["source"]}. Not in {set(['metabiantes', 'pythoncyc', 'padmet'])}"
+                f"Cannot load kb for choice {config['reference']['source']}. Not in {set(['metabiantes', 'pythoncyc', 'padmet'])}"
             )
