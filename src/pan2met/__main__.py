@@ -9,7 +9,7 @@ import argparse
 import sys
 
 from .utils import read_list, write_output, set_logging_level
-from .inference import reactome
+# from .inference import reactome
 from .inference.pathologic.pythonic import infer_metabolism
 from .config import default_config, override_config
 # from .inference.pathologic.aspic import
@@ -17,26 +17,26 @@ from .config import default_config, override_config
 import pan2met
 
 
-def reactome_command(args, config=default_config):
-    """
-    `pan2met reactome` subcommand
-    """
-    monomers: List[str] = read_list(args.input)
-    reactions = reactome.infer_reactome_from_monomers_asp(
-        monomers, inference_rules_path=args.gpr
-    )
-    write_output(args.output, reactions)
+# def reactome_command(args, config=default_config):
+#     """
+#     `pan2met reactome` subcommand
+#     """
+#     monomers: List[str] = read_list(args.input)
+#     reactions = reactome.infer_reactome_from_monomers_asp(
+#         monomers, inference_rules_path=args.gpr
+#     )
+#     write_output(args.output, reactions)
 
 
-def reverse_reactome_command(args, config=default_config):
-    """
-    `pan2met reverse_reactome` subcommand
-    """
-    reactions: List[str] = read_list(args.reactions)
-    monomers: set[str] = reactome.minimal_monomer_set(
-        reactions, args.reverse_gpr, args.gpr
-    )
-    write_output(args.output, monomers)
+# def reverse_reactome_command(args, config=default_config):
+#     """
+#     `pan2met reverse_reactome` subcommand
+#     """
+#     reactions: List[str] = read_list(args.reactions)
+#     monomers: set[str] = reactome.minimal_monomer_set(
+#         reactions, args.reverse_gpr, args.gpr
+#     )
+#     write_output(args.output, monomers)
 
 
 def metabolism_command(args, config=default_config):
@@ -75,21 +75,21 @@ def parse_arguments():
     )
     # Define subcommands
     subparsers = parser.add_subparsers(help="commands", dest="command")
-    parser_reactome = subparsers.add_parser(
-        "reactome",
-        help="infer the (pan)reactome from the list of ortholog monomer identifiers",
-    )
-    parser_reactome.add_argument("--monomers", help="A file listing found monomers")
-    parser_reactome.add_argument(
-        "-o",
-        "--output",
-        help="The path of the output file listing the reaction identifiers infered",
-        required=True,
-    )
-    parser_reactome.add_argument(
-        "--gpr",
-        help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
-    )
+    # parser_reactome = subparsers.add_parser(
+    #     "reactome",
+    #     help="infer the (pan)reactome from the list of ortholog monomer identifiers",
+    # )
+    # parser_reactome.add_argument("--monomers", help="A file listing found monomers")
+    # parser_reactome.add_argument(
+    #     "-o",
+    #     "--output",
+    #     help="The path of the output file listing the reaction identifiers infered",
+    #     required=True,
+    # )
+    # parser_reactome.add_argument(
+    #     "--gpr",
+    #     help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
+    # )
     parser_metabolism = subparsers.add_parser(
         "metabolism",
         help="infer the (pan)metabolism",
@@ -119,37 +119,37 @@ def parse_arguments():
         help="The NCBI-Taxonomy tax id of the target organism.",
         required=False,
     )
-    # Reverse reactome problem
-    parser_reverse_reactome = subparsers.add_parser(
-        "reverse_reactome",
-        help="Infer a minimal set of monomers required to catalyze a set of reactions",
-    )
-    parser_reverse_reactome.add_argument(
-        "-r",
-        "--reactions",
-        help="A file containing a list of reaction identifiers",
-        required=True,
-    )
-    parser_reverse_reactome.add_argument(
-        "-o",
-        "--output",
-        help="The path of the output file containing monomer identifiers",
-        required=True,
-    )
-    parser_reverse_reactome.add_argument(
-        "--gpr",
-        help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
-        required=True,
-    )
-    parser_reverse_reactome.add_argument(
-        "--reverse-gpr",
-        help="An AnsProlog 'reverse' Gene-Protein-Reaction (GPR) rules reference file",
-        required=True,
-    )
+    # # Reverse reactome problem
+    # parser_reverse_reactome = subparsers.add_parser(
+    #     "reverse_reactome",
+    #     help="Infer a minimal set of monomers required to catalyze a set of reactions",
+    # )
+    # parser_reverse_reactome.add_argument(
+    #     "-r",
+    #     "--reactions",
+    #     help="A file containing a list of reaction identifiers",
+    #     required=True,
+    # )
+    # parser_reverse_reactome.add_argument(
+    #     "-o",
+    #     "--output",
+    #     help="The path of the output file containing monomer identifiers",
+    #     required=True,
+    # )
+    # parser_reverse_reactome.add_argument(
+    #     "--gpr",
+    #     help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
+    #     required=True,
+    # )
+    # parser_reverse_reactome.add_argument(
+    #     "--reverse-gpr",
+    #     help="An AnsProlog 'reverse' Gene-Protein-Reaction (GPR) rules reference file",
+    #     required=True,
+    # )
     # Parser metabolism
-    parser_reactome.set_defaults(func=reactome_command)
+    # parser_reactome.set_defaults(func=reactome_command)
     parser_metabolism.set_defaults(func=metabolism_command)
-    parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
+    # parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
     return parser, parser.parse_args()
 
 
