@@ -13,7 +13,7 @@ EC(1): (create-flat-files-for-current-kb)
 Then, run padmet's pgdb_to_padmet:
 $ padmet pgdb_to_padmet --pgdb=~/.local/share/pathway-tools/aic-export/pgdbs/biocyc/metacyc/29.5/data --output=metacyc.padmet --no-orphan --extract-gene
 """
-from typing import List
+from typing import List, Optional
 from queue import Queue
 
 from padmet.classes import PadmetSpec
@@ -172,3 +172,17 @@ class PADMetKnowledgeBase(KnowledgeBase):
                     queue.put(parent)
                     visited.add(parent)
         return parent_classes
+
+    def species_evidence_of_pathway(self, pathway_id: str) -> List[int]:
+        """
+        List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
+        """
+        return self.padmet_object.dicOfNode[pathway_id].misc["SPECIES"] if pathway_id in self.padmet_object.dicOfNode and "SPECIES" in self.padmet_object.dicOfNode[pathway_id].misc else []
+
+    def reaction_graph_topological_order(self, pathway_id) -> Optional[List[str]]:
+        """
+        Return the topological ordering of a pathway reaction graph.
+
+        Assume that the pathway reaction graph is a directed acyclic graph.
+        """
+        return self.padmet_object.dicOfNode[pathway_id].misc["REACTION-ORDER"] if "REACTION-ORDER" in self.padmet_object.dicOfNode[pathway_id].misc else None

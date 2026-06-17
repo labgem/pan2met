@@ -2,11 +2,12 @@
 A SQL backend using 'metabiantes' model for data imported from MetaCyc.
 """
 
-from typing import Iterable, Optional, List
+from typing import Iterable, Optional, List, Tuple
 import importlib.resources
 
 import aiosql
 import psycopg
+import networkx as nx
 
 import pan2met
 import pan2met.sql.metabiantes
@@ -193,3 +194,16 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         return self._aiosql_to_list(
             self.queries.get_pathway_species(self.connection, pathway_id=pathway_id)
         )
+
+    def reaction_graph_topological_order(self, pathway) -> List[str]:
+        """
+        Return the topological ordering of a pathway reaction graph.
+
+        Assume that the pathway reaction graph is a directed acyclic graph.
+        """
+        reaction_order: List[Tuple[str, str]] = self.pathway_reaction_order(pathway)
+        graph = nx.DiGraph(
+            reaction_order
+        )
+        sort = list(next(nx.all_topological_sorts(graph)))
+        return sort
