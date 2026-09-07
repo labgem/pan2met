@@ -131,10 +131,6 @@ def select_kb(config) -> KnowledgeBase:
             from .metabiantes import MetabiantesKnowledgeBase
 
             return MetabiantesKnowledgeBase(config)
-        case "pythoncyc":
-            from .pythoncyc import PythonCycKnowledgeBase
-
-            return PythonCycKnowledgeBase()
         case "padmet":
             from .padmet import PADMetKnowledgeBase
 
