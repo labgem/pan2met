@@ -1,43 +1,41 @@
 -- name: get_pathways()
 -- Get all pathway in the database
-SELECT name FROM pathway;
+SELECT id FROM pathway;
 
 -- name: get_reactions()
 -- Get all reactions in the database
-SELECT name FROM reaction;
+SELECT id FROM reaction;
 
 -- name: get_orphan_reactions()
 -- Get all orphan reactions in the database
-SELECT name FROM reaction
+SELECT id FROM reaction
 WHERE NOT EXISTS (
     SELECT 1
     FROM reaction_enzyme
     WHERE reaction_enzyme.reaction_id = reaction.id
 );
 
-
 -- name: get_spontaneous_reactions()
 -- Get all spontaneous reactions in the database
-SELECT name FROM reaction
-WHERE spontaneous = TRUE;
-
+SELECT id FROM reaction
+WHERE spontaneous;
 
 -- name: get_reactions_of_pathway(pathway_id)
 -- Get all reactions of a pathway
-SELECT reaction.name
+SELECT reaction.id
 FROM pathway
 INNER JOIN pathway_reaction
 ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
-WHERE pathway.name = :pathway_id;
+WHERE pathway.id = :pathway_id;
 
 -- name: get_key_reactions_of_pathway(pathway_id)
 -- Get all reactions of a pathway
-SELECT reaction.name
-FROM (SELECT pathway.id, pathway.name
+SELECT reaction.id
+FROM (SELECT pathway.id
         FROM pathway
-        WHERE name = :pathway_id)
+        WHERE pathway.id = :pathway_id)
         pathway
 INNER JOIN pathway_key_reaction
 ON pathway_key_reaction.pathway_id = pathway.id
@@ -46,24 +44,24 @@ ON reaction.id = pathway_key_reaction.reaction_id;
 
 -- name: get_non_spontaneous_reactions_of_pathway(pathway_id)
 -- Get all non-spontaneous reactions of a pathway
-SELECT reaction.name
+SELECT reaction.id
 FROM pathway
 INNER JOIN pathway_reaction
 ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
-WHERE pathway.name = :pathway_id
+WHERE pathway.id = :pathway_id
 AND reaction.spontaneous IS DISTINCT FROM TRUE;
 
 -- name: get_non_orphan_non_spontaneous_reactions_of_pathway(pathway_id)
 -- Get all non-spontaneous and non-orphan reactions of a pathway
-SELECT reaction.name
+SELECT reaction.id
 FROM pathway
 INNER JOIN pathway_reaction
 ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
-WHERE pathway.name = :pathway_id
+WHERE pathway.id = :pathway_id
 AND (reaction.spontaneous IS DISTINCT FROM TRUE
 OR NOT EXISTS (
     SELECT 1
@@ -73,17 +71,17 @@ OR NOT EXISTS (
 
 -- name: get_enzymes_of_reaction(reaction_id)
 -- List the enzymes catalyzing a reaction
-SELECT polypeptide.name
+SELECT polypeptide.id
 FROM reaction
 INNER JOIN reaction_enzyme
 ON reaction_enzyme.reaction_id = reaction.reaction_id
 INNER JOIN polypeptide
 ON polypeptide.id = reaction_enzyme.enzyme_id
-WHERE reaction.name = :reaction_id;
+WHERE reaction.id = :reaction_id;
 
 -- name: get_reactions_by_ec_number(ec_number)
 -- List the reactions having the given EC number
-SELECT reaction.name
+SELECT reaction.id
 FROM reaction
 WHERE reaction.ec_number = :ec_number;
 
@@ -93,7 +91,7 @@ SELECT pathway_taxonomic_range.taxon_id
 FROM pathway
 INNER JOIN pathway_taxonomic_range
 ON pathway_taxonomic_range.pathway_id = pathway.id
-WHERE pathway.name = :pathway_id;
+WHERE pathway.id = :pathway_id;
 
 -- name: get_pathway_species(pathway_id)
 -- Get the species evidence of a pathway
@@ -101,7 +99,7 @@ SELECT pathway_species.species_id
 FROM pathway
 INNER JOIN pathway_species
 ON pathway.id = pathway_species.pathway_id
-WHERE pathway.name = :pathway_id;
+WHERE pathway.id = :pathway_id;
 
 -- name: reaction_is_key(pathway_id, reaction_id)^
 -- Check if the reaction is a key for the pathway
@@ -111,36 +109,36 @@ INNER JOIN pathway_reaction
 ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
-WHERE pathway.name = :pathway_id
-AND reaction.name = :reaction_id;
+WHERE pathway.id = :pathway_id
+AND reaction.id = :reaction_id;
 
 -- name: get_pathways_with_reaction(reaction_id)
 -- List all pathways
-SELECT pathway.name
+SELECT pathway.id
 FROM pathway
 INNER JOIN pathway_reaction
 ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
-WHERE reaction.name = :reaction_id;
+WHERE reaction.id = :reaction_id;
 
 -- name: count_pathways_with_reaction(reaction_id)^
 -- List all pathways
-SELECT count(pathway.name)
+SELECT count(pathway.id)
 FROM pathway
 INNER JOIN pathway_reaction
 ON pathway_reaction.pathway_id = pathway.id
 INNER JOIN reaction
 ON reaction.id = pathway_reaction.reaction_id
-WHERE reaction.name = :reaction_id;
+WHERE reaction.id = :reaction_id;
 
 -- name: get_variants_of_pathway(pathway_id)
 -- List all variants of a pathway
-SELECT variant.name
+SELECT variant.id
 FROM pathway, pathway variant, pathway_variant
 WHERE pathway_variant.pathway_id = pathway.id
 AND pathway_variant.variant_id = variant.id
-AND pathway.name = :pathway_id;
+AND pathway.id = :pathway_id;
 
 -- name: get_ontology_parent_class_of_pathway(pathway_id)
 -- List all ontology parent class of a pathway
@@ -148,13 +146,13 @@ SELECT pathway_ontology.pathway_class
 FROM pathway_ontology
 INNER JOIN pathway
 ON pathway.id = pathway_ontology.pathway_id
-WHERE pathway.name = :pathway_id;
+WHERE pathway.id = :pathway_id;
 
 
 -- name: get_pathway_reaction_order(pathway_id)
 -- List all pairs of reactions in the pathway, where the first reaction is a predecessor of the
 -- second reaction in the pathway.
-SELECT predecessor_reaction.name, successor_reaction.name
+SELECT predecessor_reaction.id, successor_reaction.id
 FROM pathway
 INNER JOIN pathway_reaction_graph
 ON pathway_reaction_graph.pathway_id = pathway.id
@@ -162,4 +160,22 @@ INNER JOIN reaction AS predecessor_reaction
 ON predecessor_reaction.id = pathway_reaction_graph.predecessor_reaction_id
 INNER JOIN reaction AS successor_reaction
 ON successor_reaction.id = pathway_reaction_graph.successor_reaction_id
-WHERE pathway.name = :pathway_id;
+WHERE pathway.id = :pathway_id;
+
+-- name: get_monomers()
+-- List the protein monomers
+SELECT monomer.id
+FROM polypeptide monomer
+WHERE monomer.type = 'monomer';
+
+-- name: get_complex()
+-- List the protein complex
+SELECT complex.id
+FROM polypeptide complex
+WHERE complex.type = 'complex';
+
+-- name: get_proteic_complex_components(complex_id)
+-- Get the list of proteic complex components
+SELECT protein_complex_component.component_id
+FROM protein_complex_component
+WHERE protein_complex_component.complex_id = :complex_id;
