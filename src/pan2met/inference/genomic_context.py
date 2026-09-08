@@ -1,10 +1,12 @@
 """
 Identify a (pan)-genome genomic context of a pathway
 """
-from typing import Set, List, Tuple, Dict, Optional, Iterable
+
 import queue
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import graph_tool as gt
+
 
 def local_edge_jaccard(
     pangenome_graph: gt.Graph, edge: gt.Edge, genomes: Set[str]
@@ -33,7 +35,7 @@ def local_edge_jaccard(
     edge_genomes: List[str] = pangenome_graph.ep["strains"][edge]
     edge_genomes_pathway: Set[str] = set(edge_genomes).intersection(genomes)
 
-    union_vertices_genomes = set(genomes_u).intersection(set(genomes_v))
+    union_vertices_genomes = set(genomes_u).union(set(genomes_v))
     union_vertices_genomes_pathway = union_vertices_genomes.intersection(genomes)
 
     if len(edge_genomes_pathway) == 0:
@@ -44,7 +46,12 @@ def local_edge_jaccard(
     return jaccard_index
 
 
-def list_genomes_linked_to_the_pathway(pathway_reactions: List[str], reaction_to_gene_families: Dict[str, List[str]], gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]], pangenome_graph: gt.Graph) -> Set[str]:
+def list_genomes_linked_to_the_pathway(
+    pathway_reactions: List[str],
+    reaction_to_gene_families: Dict[str, List[str]],
+    gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
+    pangenome_graph: gt.Graph,
+) -> Set[str]:
     """
     List the genomes where at least one reaction of a pathway have at least one enzyme that catalyzes it.
     :param pathway_id: a pathway identifier
@@ -80,13 +87,21 @@ def pathway_transitive_closure_connected_components(
     :param local_edge_jaccard_threshold: the minimum threshold value for the Jaccard index of a edge we will consider
     :return: an iterable of lists of tuple with a Boolean flag stating whether the pangenome graph gene family vertex belongs to the pathway known enzymes, listing the pangenome graph vertices belonging to each of the transitive closures.
     """
-    pathway_genomes = list_genomes_linked_to_the_pathway(pathway_reactions, reaction_to_gene_families, gene_family_to_pangenome_graph_nodes, pangenome_graph)
+    pathway_genomes = list_genomes_linked_to_the_pathway(
+        pathway_reactions,
+        reaction_to_gene_families,
+        gene_family_to_pangenome_graph_nodes,
+        pangenome_graph,
+    )
 
     def filter_edge_test(edge: gt.Edge) -> bool:
         """
         Check whether a edge pass the local Jaccard index criterion.
         """
-        return local_edge_jaccard(pangenome_graph, edge, pathway_genomes) > local_edge_jaccard_threshold
+        return (
+            local_edge_jaccard(pangenome_graph, edge, pathway_genomes)
+            > local_edge_jaccard_threshold
+        )
 
     def reset_depth(successor_node: gt.Vertex) -> bool:
         """
@@ -100,12 +115,14 @@ def pathway_transitive_closure_connected_components(
                     return True
         return False
 
-    def transitive_closure(seed_node: gt.Vertex, visited: Set[gt.Vertex]) -> Optional[List[gt.Vertex]]:
+    def transitive_closure(
+        seed_node: gt.Vertex, visited: Set[gt.Vertex]
+    ) -> Optional[List[gt.Vertex]]:
         if seed_node in visited:
             return None
         closure = [(True, seed_node)]
         q: queue.PriorityQueue[Tuple[int, gt.Vertex]] = queue.PriorityQueue()
-        depth = 0 # We start with a gene family node belonging to the set of enzyme catalyzing a reaction of the pathway
+        depth = 0  # We start with a gene family node belonging to the set of enzyme catalyzing a reaction of the pathway
         q.put((depth, seed_node))
         while not q.empty():
             depth, node = q.get()
@@ -133,8 +150,6 @@ def pathway_transitive_closure_connected_components(
                 if gene_family in gene_family_to_pangenome_graph_nodes:
                     for seed_node in gene_family_to_pangenome_graph_nodes[gene_family]:
                         if seed_node not in visited:
-                            closure = transitive_closure(
-                                seed_node, visited
-                            )
+                            closure = transitive_closure(seed_node, visited)
                             if closure:
                                 yield closure
