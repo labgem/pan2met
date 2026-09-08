@@ -71,13 +71,9 @@ OR NOT EXISTS (
 
 -- name: get_enzymes_of_reaction(reaction_id)
 -- List the enzymes catalyzing a reaction
-SELECT polypeptide.id
-FROM reaction
-INNER JOIN reaction_enzyme
-ON reaction_enzyme.reaction_id = reaction.reaction_id
-INNER JOIN polypeptide
-ON polypeptide.id = reaction_enzyme.enzyme_id
-WHERE reaction.id = :reaction_id;
+SELECT reaction_enzyme.enzyme_id
+FROM reaction_enzyme
+WHERE reaction_enzyme.reaction_id = :reaction_id;
 
 -- name: get_reactions_by_ec_number(ec_number)
 -- List the reactions having the given EC number
@@ -96,10 +92,8 @@ WHERE pathway.id = :pathway_id;
 -- name: get_pathway_species(pathway_id)
 -- Get the species evidence of a pathway
 SELECT pathway_species.species_id
-FROM pathway
-INNER JOIN pathway_species
-ON pathway.id = pathway_species.pathway_id
-WHERE pathway.id = :pathway_id;
+FROM pathway_species
+WHERE pathway_species.pathway_id = :pathway_id;
 
 -- name: reaction_is_key(pathway_id, reaction_id)^
 -- Check if the reaction is a key for the pathway
@@ -174,8 +168,8 @@ SELECT complex.id
 FROM polypeptide complex
 WHERE complex.type = 'complex';
 
--- name: get_proteic_complex_components(complex_id)
+-- name: get_polypeptide_complex_components(complex_id)
 -- Get the list of proteic complex components
-SELECT protein_complex_component.component_id
-FROM protein_complex_component
-WHERE protein_complex_component.complex_id = :complex_id;
+SELECT polypeptide_complex_component.component_id
+FROM polypeptide_complex_component
+WHERE polypeptide_complex_component.complex_id = :complex_id;

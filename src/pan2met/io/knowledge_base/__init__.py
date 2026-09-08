@@ -3,8 +3,9 @@ Define an asbtract interface to the knowledge base.
 Knowledge base backends should implement all the methods of the KnowledgeBase abstract class.
 """
 
-from typing import List, Optional
 from abc import ABC
+from typing import List, Optional
+
 
 class KnowledgeBase(ABC):
     """
@@ -38,13 +39,13 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
-    def spontaneous_reactions(self):
+    def spontaneous_reactions(self) -> List[str]:
         """
         List spontaneous reactions
         """
         raise NotImplementedError()
 
-    def orphan_reactions(self):
+    def orphan_reactions(self) -> List[str]:
         """
         List orphan reactions
         """
@@ -64,7 +65,7 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
-    def reaction_enzymes(self, reaction_id: str) -> List[str]:
+    def enzymes_of_reaction(self, reaction_id: str) -> List[str]:
         """
         List enzymes catalyzing a reaction
         """
@@ -94,9 +95,9 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
-    def pathway_reaction_order(self, pathway_id: str) -> List[str]:
+    def pathway_reaction_order(self, pathway_id: str) -> List[tuple[str, str]]:
         """
-        Return an ordered list of reactions of a pathway.
+        Return a list of (predecessor, successor) reactions of a pathway.
         """
         raise NotImplementedError()
 
@@ -121,6 +122,18 @@ class KnowledgeBase(ABC):
     def ontology_parent_class_of_pathway(self, pathway_id: str) -> List[str]:
         """
         List the pathway ontology parents of a pathway
+        """
+        raise NotImplementedError()
+
+    def complex(self) -> List[str]:
+        """
+        List the protein complex
+        """
+        raise NotImplementedError()
+
+    def components_of_complex(self, complex_id: str) -> List[str]:
+        """
+        List the components of a complex
         """
         raise NotImplementedError()
 

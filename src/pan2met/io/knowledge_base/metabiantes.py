@@ -2,11 +2,11 @@
 A SQL backend using 'metabiantes' model for data imported from MetaCyc.
 """
 
-from typing import Iterable, Optional, List, Tuple
 import importlib.resources
+import sqlite3
+from typing import Iterable, List, Optional, Tuple
 
 import aiosql
-import psycopg
 import networkx as nx
 
 import pan2met
@@ -19,9 +19,9 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
     def __init__(self, config):
         self.queries = aiosql.from_str(
             importlib.resources.read_text(pan2met.sql.metabiantes, "queries.sql"),
-            "psycopg2",
+            "sqlite3",
         )
-        self.connection = psycopg.connect(f"dbname={config['metabiantes']['database']}")
+        self.connection = sqlite3.connect(config["metabiantes"]["database"])
 
     def _aiosql_to_list(self, iterator: Iterable[tuple]):
         if iterator is not None:
@@ -191,8 +191,15 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
         """
-        return self._aiosql_to_list(
-            self.queries.get_pathway_species(self.connection, pathway_id=pathway_id)
+        return list(
+            map(
+                int,
+                self._aiosql_to_list(
+                    self.queries.get_pathway_species(
+                        self.connection, pathway_id=pathway_id
+                    )
+                ),
+            )
         )
 
     def reaction_graph_topological_order(self, pathway) -> List[str]:
@@ -202,8 +209,22 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         Assume that the pathway reaction graph is a directed acyclic graph.
         """
         reaction_order: List[Tuple[str, str]] = self.pathway_reaction_order(pathway)
-        graph = nx.DiGraph(
-            reaction_order
-        )
+        graph = nx.DiGraph(reaction_order)
         sort = list(next(nx.all_topological_sorts(graph)))
         return sort
+
+    def complex(self) -> List[str]:
+        """
+        List the protein complex
+        """
+        return self._aiosql_to_list(self.queries.get_complex(self.connection))
+
+    def components_of_complex(self, complex_id: str) -> List[str]:
+        """
+        List the components of a complex
+        """
+        return self._aiosql_to_list(
+            self.queries.get_polypeptide_complex_components(
+                self.connection, complex_id=complex_id
+            )
+        )

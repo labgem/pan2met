@@ -2,15 +2,13 @@
 Default configuration
 """
 
-
 import configparser
 import importlib.resources
-from pathlib import Path
-import logging
 import io
+import logging
+from pathlib import Path
 
 import pan2met.conf
-
 
 logger = logging.getLogger("pan2met:config")
 
@@ -18,6 +16,7 @@ logger = logging.getLogger("pan2met:config")
 default_config: configparser.ConfigParser = configparser.ConfigParser()
 default_config_str = importlib.resources.read_text(pan2met.conf, "default.ini")
 default_config.read_string(default_config_str)
+
 
 def override_config(filename: Path) -> configparser.ConfigParser:
     """
