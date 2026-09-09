@@ -1,8 +1,7 @@
--- name: mock_dump#
 -- Mock (synthetic) data dump compatible with the `metabiantes` schema
 -- (see metabiantes/sql/create_schema.sql)
 --
--- All identifiers and values are SYNTHETIC. No real MetaCyc/BioCyc data is
+-- All identifiers and values are synthetic. No real MetaCyc/BioCyc data is
 -- included. Use for tests and local development only.
 
 -- substrate
@@ -40,10 +39,12 @@ VALUES
 -- reaction
 INSERT INTO reaction (id, type, comment, ec_number, spontaneous, gibbs_free_energy, physiologically_relevant, reaction_balance_status, reaction_physiological_direction)
 VALUES
- ('RXN-0', 'Biochemical-Reaction', 'First step, substrate A -> substrate B', '1.1.1.1', TRUE, -160.0, TRUE, TRUE, 'left-to-right'),
- ('RXN-1', 'Biochemical-Reaction', 'Second step, substrate B -> product C', '1.1.1.2', FALSE, 25.0, TRUE, TRUE, 'right-to-left'),
+ ('RXN-0', 'Biochemical-Reaction', 'First step, substrate A -> substrate B', 'EC-1.1.1.1', TRUE, -160.0, TRUE, TRUE, 'left-to-right'),
+ ('RXN-1', 'Biochemical-Reaction', 'Second step, substrate B -> product C', 'EC-1.1.1.2', FALSE, 25.0, TRUE, TRUE, 'right-to-left'),
  ('RXN-2', 'Chemical-Reaction', 'Synthetic coupling reaction', NULL, TRUE, -45.0, FALSE, TRUE, 'left-to-right'),
- ('RXN-3', 'Biochemical-Reaction', 'Single substrate reaction', '2.7.1.1', FALSE, -12.5, TRUE, TRUE, 'left-to-right');
+ ('RXN-3', 'Biochemical-Reaction', 'Single substrate reaction', 'EC-2.7.1.1', FALSE, -12.5, TRUE, TRUE, 'left-to-right'),
+ ('RXN-4', 'Biochemical-Reaction', 'An example of orphan reaction', 'EC-0.1.2.3', TRUE, -12.5, TRUE, TRUE, 'left-to-right')
+ ;
 
 -- reaction_name
 INSERT INTO reaction_name (reaction_id, name)
@@ -124,7 +125,9 @@ VALUES
  ('PWY-0', 'RXN-0', 'left-to-right'),
  ('PWY-0', 'RXN-1', 'right-to-left'),
  ('PWY-0', 'RXN-2', 'left-to-right'),
- ('PWY-1', 'RXN-3', 'left-to-right');
+ ('PWY-1', 'RXN-3', 'left-to-right'),
+ ('PWY-1', 'RXN-0', 'left-to-right')
+ ;
 
 -- pathway_key_reaction
 INSERT INTO pathway_key_reaction (pathway_id, reaction_id)
@@ -136,7 +139,7 @@ VALUES
 INSERT INTO pathway_species (pathway_id, species_id)
 VALUES
  ('PWY-0', 1234),
- ('PWY-1', 1234);
+ ('PWY-1', 12345);
 
 -- pathway_taxonomic_range
 INSERT INTO pathway_taxonomic_range (pathway_id, taxon_id)

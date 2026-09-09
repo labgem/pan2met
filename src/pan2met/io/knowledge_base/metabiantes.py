@@ -129,9 +129,10 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         Return True if the reaction is a key reaction of the pathway
         """
-        return self.queries.reaction_is_key(
+        res = self.queries.reaction_is_key(
             self.connection, pathway_id=pathway_id, reaction_id=reaction_id
         )
+        return res is not None
 
     def key_reactions_of_pathway(self, pathway_id: str) -> List[str]:
         """
