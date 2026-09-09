@@ -98,13 +98,9 @@ WHERE pathway_species.pathway_id = :pathway_id;
 -- name: reaction_is_key(pathway_id, reaction_id)^
 -- Check if the reaction is a key for the pathway
 SELECT 1
-FROM pathway
-INNER JOIN pathway_reaction
-ON pathway_reaction.pathway_id = pathway.id
-INNER JOIN reaction
-ON reaction.id = pathway_reaction.reaction_id
-WHERE pathway.id = :pathway_id
-AND reaction.id = :reaction_id;
+FROM pathway_key_reaction
+WHERE pathway_key_reaction.reaction_id = :reaction_id
+AND pathway_key_reaction.pathway_id = :pathway_id;
 
 -- name: get_pathways_with_reaction(reaction_id)
 -- List all pathways
