@@ -3,40 +3,41 @@
 """
 Command line interface of pangenome2metabolism
 """
-from typing import List
 
 import argparse
 import sys
-
-from .utils import read_list, write_output, set_logging_level
-# from .inference import reactome
-from .inference.pathologic.pythonic import infer_metabolism
-from .config import default_config, override_config
-# from .inference.pathologic.aspic import
+from typing import List
 
 import pan2met
 
-
-# def reactome_command(args, config=default_config):
-#     """
-#     `pan2met reactome` subcommand
-#     """
-#     monomers: List[str] = read_list(args.input)
-#     reactions = reactome.infer_reactome_from_monomers_asp(
-#         monomers, inference_rules_path=args.gpr
-#     )
-#     write_output(args.output, reactions)
+from .config import default_config, override_config
+from .inference import reactome
+from .inference.pathologic.pythonic import infer_metabolism
+from .inference.proteic_complex import infer_complex
+from .io.knowledge_base import KnowledgeBase, select_kb
+from .utils import read_list, set_logging_level, write_output
 
 
-# def reverse_reactome_command(args, config=default_config):
-#     """
-#     `pan2met reverse_reactome` subcommand
-#     """
-#     reactions: List[str] = read_list(args.reactions)
-#     monomers: set[str] = reactome.minimal_monomer_set(
-#         reactions, args.reverse_gpr, args.gpr
-#     )
-#     write_output(args.output, monomers)
+def reactome_command(args, config=default_config):
+    """
+    `pan2met reactome` subcommand
+    """
+    monomers: List[str] = read_list(args.input)
+    reactions = reactome.infer_reactome_from_monomers_asp(
+        monomers, inference_rules_path=args.gpr
+    )
+    write_output(args.output, reactions)
+
+
+def reverse_reactome_command(args, config=default_config):
+    """
+    `pan2met reverse-reactome` subcommand
+    """
+    reactions: List[str] = read_list(args.reactions)
+    monomers: set[str] = reactome.minimal_monomer_set(
+        reactions, args.reverse_gpr, args.gpr
+    )
+    write_output(args.output, monomers)
 
 
 def metabolism_command(args, config=default_config):
@@ -50,106 +51,127 @@ def metabolism_command(args, config=default_config):
     write_output(args.output, pathways)
 
 
+def proteic_complex_command(args, config=default_config):
+    """
+    `pan2met protein-complex` subcommand
+    """
+    monomers: list[str] = read_list(args.monomers)
+    kb: KnowledgeBase = select_kb(config)
+    complex = infer_complex(kb, monomers)
+    write_output(args.output, complex)
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         prog="pan2met",
-        description="Reconstruction metabolic network at (pan)-genome scale.",
+        description="""Reconstruct metabolic networks at (pan)-genome scale.""",
+        epilog=f"""%(prog)s ({pan2met.__version__}) is an open-source bioinformatics tool developed by the LABGeM team, and distributed under the CeCILL Free Sofware License Agreement.""",
     )
+
     # Base options
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {pan2met.__version__}", help="Display the version of pan2met"
+        "--version",
+        action="version",
+        version=f"%(prog)s {pan2met.__version__}",
+        help="display the version of pan2met",
     )
     parser.add_argument(
         "-v",
         "--verbose",
         action="count",
         default=0,
-        help="Set log level (-v: ERROR, -vv: WARNING, -vvv: INFO, -vvvv: DEBUG)",
+        help="set log level (-v: ERROR, -vv: WARNING, -vvv: INFO, -vvvv: DEBUG)",
     )
     parser.add_argument(
         "-c",
         "--config",
-        help="Override the default configuration with a custom configuration file.",
+        help="override the default configuration with a custom configuration file.",
         default=None,
-        required=False
+        required=False,
     )
     # Define subcommands
     subparsers = parser.add_subparsers(help="commands", dest="command")
-    # parser_reactome = subparsers.add_parser(
-    #     "reactome",
-    #     help="infer the (pan)reactome from the list of ortholog monomer identifiers",
-    # )
-    # parser_reactome.add_argument("--monomers", help="A file listing found monomers")
-    # parser_reactome.add_argument(
-    #     "-o",
-    #     "--output",
-    #     help="The path of the output file listing the reaction identifiers infered",
-    #     required=True,
-    # )
-    # parser_reactome.add_argument(
-    #     "--gpr",
-    #     help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
-    # )
     parser_metabolism = subparsers.add_parser(
         "metabolism",
-        help="infer the (pan)metabolism",
+        description="infer the (pan)metabolism (i.e., a set of expected metabolic pathways)",
     )
     parser_metabolism.add_argument(
         "-r",
         "--reactions",
-        help="A file listing the reactions found in the (pan)-reactome",
+        help="a file listing the reactions found in the (pan)-reactome",
         required=True,
     )
     parser_metabolism.add_argument(
         "-o",
         "--output",
-        help="The path of the output file "
+        help="the path of the output file "
         "listing all identifiers of pathway infered to be present",
         required=True,
     )
     parser_metabolism.add_argument(
         "--reason",
-        help="The path to an output file with a reason log.",
+        help="the path to an output file with a reason log.",
         default=None,
         required=False,
     )
     parser_metabolism.add_argument(
         "-t",
         "--taxon-id",
-        help="The NCBI-Taxonomy tax id of the target organism.",
+        help="the NCBI-Taxonomy tax id of the target organism.",
         required=False,
     )
-    # # Reverse reactome problem
-    # parser_reverse_reactome = subparsers.add_parser(
-    #     "reverse_reactome",
-    #     help="Infer a minimal set of monomers required to catalyze a set of reactions",
-    # )
-    # parser_reverse_reactome.add_argument(
-    #     "-r",
-    #     "--reactions",
-    #     help="A file containing a list of reaction identifiers",
-    #     required=True,
-    # )
-    # parser_reverse_reactome.add_argument(
-    #     "-o",
-    #     "--output",
-    #     help="The path of the output file containing monomer identifiers",
-    #     required=True,
-    # )
-    # parser_reverse_reactome.add_argument(
-    #     "--gpr",
-    #     help="An AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
-    #     required=True,
-    # )
-    # parser_reverse_reactome.add_argument(
-    #     "--reverse-gpr",
-    #     help="An AnsProlog 'reverse' Gene-Protein-Reaction (GPR) rules reference file",
-    #     required=True,
-    # )
+    # Reverse reactome problem
+    parser_reverse_reactome = subparsers.add_parser(
+        "reverse-reactome",
+        help="infer a minimal set of monomers required to catalyze a set of reactions",
+    )
+    parser_reverse_reactome.add_argument(
+        "-r",
+        "--reactions",
+        help="a file containing a list of reaction identifiers",
+        required=True,
+    )
+    parser_reverse_reactome.add_argument(
+        "-o",
+        "--output",
+        help="the path of the output file containing monomer identifiers",
+        required=True,
+    )
+    parser_reverse_reactome.add_argument(
+        "--gpr",
+        help="an AnsProlog Gene-Protein-Reaction (GPR) rules reference file",
+        required=False,
+    )
+    parser_reverse_reactome.add_argument(
+        "--reverse-gpr",
+        help="an AnsProlog 'reverse' Gene-Protein-Reaction (GPR) rules reference file",
+        required=False,
+    )
     # Parser metabolism
+
+    # Parser proteic complex
+    parser_proteic_complex = subparsers.add_parser(
+        "proteic-complex",
+        description="infer the list of proteic complex constructible from a list of protein monomers",
+    )
+    parser_proteic_complex.add_argument(
+        "-m",
+        "--monomers",
+        help="input path to a list of protein monomer identifiers",
+        required=True,
+    )
+    parser_proteic_complex.add_argument(
+        "-o",
+        "--output",
+        help="output path to a list of constructible proteic complex",
+        required=True,
+    )
+
+    # Set default function command function handler
     # parser_reactome.set_defaults(func=reactome_command)
     parser_metabolism.set_defaults(func=metabolism_command)
-    # parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
+    parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
+    parser_proteic_complex.set_defaults(func=proteic_complex_command)
     return parser, parser.parse_args()
 
 

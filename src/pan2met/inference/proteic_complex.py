@@ -16,13 +16,13 @@ def is_constructible(complex_id: str, monomers: Set[str], kb: KnowledgeBase) -> 
     :param: a metabolic pathway knowledgebase
     :return: True if the complex is constructible
     """
-    for component in kb.complex_components(complex_id):
+    for component in kb.components_of_complex(complex_id):
         if component not in monomers and not is_constructible(component, monomers, kb):
             return False
     return True
 
 
-def list_complex(kb: KnowledgeBase, monomers: Set[str]) -> Iterable[str]:
+def infer_complex(kb: KnowledgeBase, monomers: Set[str]) -> Iterable[str]:
     """
     List the set of protein complex that are constructible based on a set of protein monomers.
     """

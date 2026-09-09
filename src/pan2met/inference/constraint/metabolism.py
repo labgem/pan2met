@@ -2,17 +2,15 @@
 Clingo Answer-Set Programming constraint-based metabolism inference from reactome
 """
 
-import logging
 import argparse
 import importlib
-
-import clyngor
+import logging
 
 import pan2met
-from ...utils import read_list, write_output
+
 from ...config import default_config, override_config
 from ...io.knowledge_base import KnowledgeBase, select_kb
-
+from ...utils import read_list, write_output
 
 logger = logging.getLogger("pan2met:inference:constraint")
 
@@ -40,8 +38,7 @@ class ASPPathwayInference:
         reaction_list_asp = self.dump_reaction_list_to_asp(reactions)
 
         pathway_reactions: list[str] = [
-            (pathway, self.kb.reactions_of_pathway(pathway))
-            for pathway in pathways
+            (pathway, self.kb.reactions_of_pathway(pathway)) for pathway in pathways
         ]
 
         pathway_reaction_list_asp = self.dump_pathway_reaction_list_to_asp(
@@ -87,6 +84,9 @@ class ASPPathwayInference:
         -------
             the set of inferred metabolic pathways
         """
+
+        # We keep clyngor as an optional dependency
+        import clyngor
 
         with importlib.resources.path(
             pan2met, "asp/rules/minimal_covering_pathway.lp"

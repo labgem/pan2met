@@ -10,14 +10,11 @@ Simple inference rules:
 
 import importlib.resources
 
-
-import clyngor
-
 import pan2met
-from ..config import default_config, override_config
+
+from ..asp import rules
 from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..utils import logger, write_output
-from ..asp import rules
 
 
 def check_complex_from_monomers(
@@ -107,6 +104,10 @@ def infer_reactome_from_monomers_asp(
     for reaction identifier "RXN-1", when such a reaction is infered to be present in the reactome.
 
     """
+    # We keep clyngor as an optional dependency
+
+    import clyngor
+
     SHOW_REACTION_DIRECTIVE = "#show reaction/1."
     monomer_asp_rules = "\n".join(map(rules.monomer_asp_rule, monomers))
     monomer_asp_rules += "\n" + SHOW_REACTION_DIRECTIVE
@@ -154,6 +155,10 @@ def minimal_monomer_set(
 
     :return:  A 'minimal' set of monomer id sufficient to catalyze the given set of reactions
     """
+    # We keep clyngor as an optional dependency
+
+    import clyngor
+
     with importlib.resources.path(
         pan2met, "asp/rules/required_monomer_given_reactions.lp"
     ) as minimal_set_asp_rule_path:
