@@ -29,8 +29,8 @@ classifiers = [
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
-	"pyyaml"
-, "aiosql>=15.0,<16", "padmet>=5.0.3,<6", "pytest-cov"]
+	"aiosql>=15.0,<16",
+]
 [project.optional-dependencies]
 doc = [
 	"sphinx",
@@ -40,16 +40,15 @@ doc = [
 ]
 test = [
 	"pytest>=9.0.2",
+	"pytest-cov",
 ]
 viz = [
 	"bokeh"
 ]
 padmet = [
-	"padmet"
+	"padmet>=5.0.3,<6",
 ]
-metabiantes = [
-	"aiosql"
-]
+
 [project.urls]
 # Homepage = ""
 Repository = "https://github.com/labgem/pan2met"
@@ -77,10 +76,7 @@ viz = { features = ["viz"], solve-group = "default" }
 [tool.pixi.tasks]
 
 [tool.pixi.dependencies]
-ppanggolin = ">=2.3.0,<3"
-python = "3.12.*"
+python = "3.14.*"
 pip = ">=26.0.1,<27"
-python-blosc2 = ">=4.4.2,<5"
-c-blosc2 = { version = ">=3.1.3,<4", channel = "conda-forge" }
 graph-tool = ">=3"
 pytest = ">=9.1.1,<10"
