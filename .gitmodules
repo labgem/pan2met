@@ -1,0 +1,3 @@
+[submodule "submodules/metabiantes"]
+	path = submodules/metabiantes
+	url = https://github.com/labgem/metabiantes.git
