@@ -7,7 +7,7 @@ from pan2met.io.knowledge_base import KnowledgeBase, select_kb
 @pytest.fixture
 def kb() -> KnowledgeBase:
     # Force the reference source to use metabiantes sql
-    default_config["reference"]["knowledge_base"] = "metabiantes"
+    default_config["reference"]["knowledge_base"] = "padmet"
     return select_kb(default_config)
 
 

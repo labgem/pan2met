@@ -55,10 +55,10 @@ pathway_score_threshold = 0.35
 
 [reference]
 ncbi_taxonomy = /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01
-source = metabiantes
+knowledge_base = metabiantes
 
 [metabiantes]
-database = metabiantes
+database = /mnt/shared/bank/
 ```
 You will most probably need to adapt the `[reference]` section.
 1. Update `ncbi_taxonomy` directory path, with the path to the directory with a dump of the NCBI-Taxonomy.

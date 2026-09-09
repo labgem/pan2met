@@ -14,42 +14,8 @@ import pan2met
 
 from ..asp import rules
 from ..io.knowledge_base import KnowledgeBase, select_kb
-from ..utils import logger, write_output
-
-
-def check_complex_from_monomers(
-    monomers: list[str], complex: str, kb: KnowledgeBase
-) -> bool:
-    """
-    Check whether the given complex can be formed by the given set of protein monomers.
-
-    :param monomers: a list of protein monomers
-    :param complex: an identifier of a complex
-    :param kb: a knowledge base adapter
-    """
-    components = kb.proteic_complex_subunits(complex)
-    if components is None or len(list(components)) == 0:
-        logger.error(f"{complex} complex has no components")
-        return False
-    for component in components:
-        if component not in monomers:
-            return False
-    return True
-
-
-def infer_complexes_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
-    """
-    Infer a set of proteic complex from the set of protein monomers.
-
-    :param monomers: a list of monomer identifiers
-    :param kb: a knowledge base adapter
-    :return: a set of proteic complex identifiers, whose monomer protein components are
-    """
-    complexes: set[str] = set()
-    for complex in kb.all_protein_complexes():
-        if check_complex_from_monomers(monomers, complex, kb):
-            complexes.add(complex)
-    return complexes
+from ..utils import write_output
+from .proteic_complex import infer_complex
 
 
 def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
@@ -62,7 +28,7 @@ def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[
     """
 
     # Start by infering all reachable complex
-    complexes: set[str] = infer_complexes_from_monomers(monomers, kb)
+    complexes: set[str] = infer_complex(kb, monomers)
     # Continue, by infering the possible reactions
     reactions: set[str] = set()
     for reaction in kb.reactions():

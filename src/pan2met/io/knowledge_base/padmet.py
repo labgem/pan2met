@@ -13,11 +13,11 @@ EC(1): (create-flat-files-for-current-kb)
 Then, run padmet's pgdb_to_padmet:
 $ padmet pgdb_to_padmet --pgdb=~/.local/share/pathway-tools/aic-export/pgdbs/biocyc/metacyc/29.5/data --output=metacyc.padmet --no-orphan --extract-gene
 """
-from typing import List, Optional
+
 from queue import Queue
+from typing import List, Optional
 
 from padmet.classes import PadmetSpec
-
 
 from . import KnowledgeBase
 
@@ -84,9 +84,13 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         List enzymes catalyzing a reaction
         """
-        raise NotImplementedError(
-            "no enzymes_of_reaction() method implemented for PADMet format yet"
-        )
+        enzymes = [
+            relation.id_in
+            for relation in self.padmet_object.dicOfRelationsIn[reaction_id]
+            if reaction_id in self.padmet_object.dicOfRelationsIn
+            and relation.type == "catalyses"
+        ]
+        return enzymes
 
     def ec_number_of_reaction(self, reaction_id: str) -> str:
         """
@@ -125,6 +129,12 @@ class PADMetKnowledgeBase(KnowledgeBase):
         else:
             return []
 
+    def reaction_is_key(self, pathway_id: str, reaction_id: str) -> bool:
+        """
+        Check whether a reaction is a key reaction of the pathway
+        """
+        return reaction_id in self.key_reactions_of_pathway(pathway_id)
+
     def pathways_with_reaction(self, reaction_id: str) -> List[str]:
         """
         List all pathways with the given reaction identifier.
@@ -145,8 +155,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         List the variants of a pathway.
         """
-        return []
-        # raise NotImplementedError("For PADMet: variants of pathway is not implemented.")
+        raise NotImplementedError("For PADMet: variants of pathway is not implemented.")
 
     def ontology_parent_class_of_pathway(self, pathway_id: str) -> List[str]:
         """
@@ -177,7 +186,12 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
         """
-        return self.padmet_object.dicOfNode[pathway_id].misc["SPECIES"] if pathway_id in self.padmet_object.dicOfNode and "SPECIES" in self.padmet_object.dicOfNode[pathway_id].misc else []
+        return (
+            self.padmet_object.dicOfNode[pathway_id].misc["SPECIES"]
+            if pathway_id in self.padmet_object.dicOfNode
+            and "SPECIES" in self.padmet_object.dicOfNode[pathway_id].misc
+            else []
+        )
 
     def reaction_graph_topological_order(self, pathway_id) -> Optional[List[str]]:
         """
@@ -185,4 +199,8 @@ class PADMetKnowledgeBase(KnowledgeBase):
 
         Assume that the pathway reaction graph is a directed acyclic graph.
         """
-        return self.padmet_object.dicOfNode[pathway_id].misc["REACTION-ORDER"] if "REACTION-ORDER" in self.padmet_object.dicOfNode[pathway_id].misc else None
+        return (
+            self.padmet_object.dicOfNode[pathway_id].misc["REACTION-ORDER"]
+            if "REACTION-ORDER" in self.padmet_object.dicOfNode[pathway_id].misc
+            else None
+        )
