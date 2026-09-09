@@ -1,9 +1,9 @@
-from typing import Iterable, List, Dict, Set
-from collections import defaultdict
-
 import logging
+from collections import defaultdict
+from typing import Dict, Iterable, List, Set
 
 logger = logging.getLogger("pan2met")
+
 
 def read_list(filename: str) -> List[str]:
     """
@@ -23,7 +23,8 @@ def read_mapping(filename: str, sep="\t") -> Dict[str, Set[str]]:
             parts = row.strip().split("\t")
             if len(parts) == 2:
                 key, value = parts
-                mapping[key].add(value)
+                for item in value.split(","):
+                    mapping[key].add(item)
     return dict(mapping)
 
 
