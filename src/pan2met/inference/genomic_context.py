@@ -2,10 +2,27 @@
 Identify a (pan)-genome genomic context of a pathway
 """
 
+import logging
 import queue
+from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import graph_tool as gt
+
+logger = logging.getLogger()
+
+
+def get_pangenome_graph_nid_to_vertex_mapping(
+    pangenome_graph: gt.Graph,
+) -> Dict[str, List[gt.Vertex]]:
+    """
+    Get a mapping from a gene family to the list of pangenome graph vertex associated with this gene family.
+    """
+    mapping = defaultdict(list)
+    for v in pangenome_graph.vertices():
+        family_id = pangenome_graph.vp["nid"][v]
+        mapping[family_id].append(v)
+    return dict(mapping)
 
 
 def local_edge_jaccard(
@@ -26,7 +43,6 @@ def local_edge_jaccard(
                     for a reaction of the pathway of interest is found.
     :return: the Jaccard index
     """
-
     u = edge.source()
     v = edge.target()
     genomes_u: List[str] = pangenome_graph.vp["strains"][u]
@@ -43,12 +59,15 @@ def local_edge_jaccard(
     if len(union_vertices_genomes_pathway) == 0:
         return 0
     jaccard_index = len(edge_genomes_pathway) / len(union_vertices_genomes_pathway)
+    # logger.debug(
+    #     f"Local Edge Jaccard index J({edge}) = {len(edge_genomes_pathway)} / {len(union_vertices_genomes)} = {jaccard_index}"
+    # )
     return jaccard_index
 
 
 def list_genomes_linked_to_the_pathway(
     pathway_reactions: List[str],
-    reaction_to_gene_families: Dict[str, List[str]],
+    reaction_to_gene_families: Dict[str, Set[str]],
     gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
     pangenome_graph: gt.Graph,
 ) -> Set[str]:
@@ -61,20 +80,32 @@ def list_genomes_linked_to_the_pathway(
     :return: a set of such genomes
     """
     genomes: Set[str] = set()
+    genome_reactions: Dict[str, Set[str]] = {}
     for reaction in pathway_reactions:
+        genome_reactions[reaction] = set()
         if reaction in reaction_to_gene_families:
             for gene_family in reaction_to_gene_families[reaction]:
                 if gene_family in gene_family_to_pangenome_graph_nodes:
                     for node in gene_family_to_pangenome_graph_nodes[gene_family]:
                         for strain in pangenome_graph.vp["strains"][node]:
-                            genomes.add(strain)
+                            genome_reactions[reaction].add(strain)
+        genomes = genomes.union(genome_reactions[reaction])
+    # for reaction in pathway_reactions:
+    #     if len(genome_reactions[reaction]) > 0:
+    #         genome_reactions_reaction_only = genome_reactions[reaction].copy()
+    #         for other_reaction in pathway_reactions:
+    #             genome_reactions_reaction_only.difference(genome_reactions[other_reaction])
+
+    #         genome_reaction_contribution_percentage = len(genome_reactions_reaction_only) / len(genomes) * 100
+    # logger.info(f"Reaction {reaction} contributed {genome_reaction_contribution_percentage}% of the total listed genomes for the pathway, among {len(pathway_reactions)} reactions in the pathway.")
     return genomes
 
 
 def pathway_transitive_closure_connected_components(
+    pathway: str,
     pangenome_graph: gt.Graph,
     pathway_reactions: List[str],
-    reaction_to_gene_families: Dict[str, List[str]],
+    reaction_to_gene_families: Dict[str, Set[str]],
     gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
     distance: int,
     local_edge_jaccard_threshold: float,
@@ -92,6 +123,9 @@ def pathway_transitive_closure_connected_components(
         reaction_to_gene_families,
         gene_family_to_pangenome_graph_nodes,
         pangenome_graph,
+    )
+    logger.info(
+        f"We consider only {len(pathway_genomes)} genomes for the edge local Jaccard index for this pathway"
     )
 
     def filter_edge_test(edge: gt.Edge) -> bool:

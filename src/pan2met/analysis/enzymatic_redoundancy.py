@@ -2,13 +2,13 @@
 We want to identify reactions that are catalyzed by multiple different enzymes.
 """
 
-from typing import Dict, Set
-from collections import defaultdict
 import argparse
+from collections import defaultdict
 from pathlib import Path
+from typing import Dict, Set
 
-from ppanggolin.pangenome import Pangenome
 from ppanggolin.formats.readBinaries import check_pangenome_info
+from ppanggolin.pangenome import Pangenome
 
 
 def ppanggolin_gene_families_strain_count(
@@ -126,7 +126,6 @@ def main():
             pangenome, need_families=True, need_annotations=True, disable_bar=True
         )  # do not forget the call to this function, otherwise the generator of contigs and genes will be empty as the pangenome would not be loaded.
         gene_family_strain_count = ppanggolin_gene_families_strain_count(pangenome)
-        print(gene_family_strain_count)
         reaction_enzyme_count_by_strain = count_enzymes_per_reaction_within_strain(
             enzyme_reaction_mapping, gene_family_strain_count
         )

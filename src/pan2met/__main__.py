@@ -5,17 +5,24 @@ Command line interface of pangenome2metabolism
 """
 
 import argparse
+import csv
+import logging
 import sys
 from typing import List
+
+import graph_tool as gt
 
 import pan2met
 
 from .config import default_config, override_config
 from .inference import reactome
 from .inference.pathologic.pythonic import infer_metabolism
+from .inference.pathway_operon_filler import pathway_operon_filler
 from .inference.proteic_complex import infer_complex
 from .io.knowledge_base import KnowledgeBase, select_kb
-from .utils import read_list, set_logging_level, write_output
+from .utils import read_list, read_mapping, set_logging_level, write_output
+
+logger = logging.getLogger()
 
 
 def reactome_command(args, config=default_config):
@@ -57,8 +64,51 @@ def proteic_complex_command(args, config=default_config):
     """
     monomers: list[str] = read_list(args.monomers)
     kb: KnowledgeBase = select_kb(config)
-    complex = infer_complex(kb, monomers)
+    complex = infer_complex(kb, set(monomers))
     write_output(args.output, complex)
+
+
+def pathway_operon_filler_command(args, config=default_config):
+    """
+    `pan2met pathway-operon-filler` subcommand
+    """
+    confident_enzyme_catalyzis = read_mapping(args.confident_enzyme_catalyzis)
+    less_confident_enzyme_catalyzis = read_mapping(args.less_confident_enzyme_catalyzis)
+
+    kb: KnowledgeBase = select_kb(config)
+
+    logger.info("Loading the pangenome graph")
+    pangenome_graph: gt.Graph = gt.load_graph(args.pangenome_graph)
+    logger.info("Pangenome graph loaded.")
+
+    distance = int(config["genomic_context"]["transitive_distance"])
+    local_edge_jaccard_threshold = float(
+        config["genomic_context"]["local_edge_jaccard_threshold"]
+    )
+    logger.info(f"Using a gap distance of {distance}")
+    logger.info(
+        f"Filtering edges with a minimum local Jaccard index of {local_edge_jaccard_threshold}"
+    )
+    logger.info("Compute pathway operon filler")
+
+    result = pathway_operon_filler(
+        pangenome_graph,
+        kb,
+        confident_enzyme_catalyzis,
+        less_confident_enzyme_catalyzis,
+        distance,
+        local_edge_jaccard_threshold,
+    )
+
+    logger.info(f"Writing result to {args.output}")
+
+    with open(args.output, "w") as output_file:
+        writer = csv.writer(output_file, delimiter="\t")
+        writer.writerow(["gene_family", "reaction", "pathway"])
+        for gene_family, reaction_dict in result.items():
+            for reaction, assignations in reaction_dict.items():
+                for assignation in assignations:
+                    writer.writerow([gene_family, reaction, assignation.pathway])
 
 
 def parse_arguments():
@@ -94,6 +144,7 @@ def parse_arguments():
     parser_metabolism = subparsers.add_parser(
         "metabolism",
         description="infer the (pan)metabolism (i.e., a set of expected metabolic pathways)",
+        help="infer the (pan)metabolism (i.e., a set of expected metabolic pathways)",
     )
     parser_metabolism.add_argument(
         "-r",
@@ -123,6 +174,7 @@ def parse_arguments():
     # Reverse reactome problem
     parser_reverse_reactome = subparsers.add_parser(
         "reverse-reactome",
+        description="infer a minimal set of monomers required to catalyze a set of reactions",
         help="infer a minimal set of monomers required to catalyze a set of reactions",
     )
     parser_reverse_reactome.add_argument(
@@ -147,12 +199,12 @@ def parse_arguments():
         help="an AnsProlog 'reverse' Gene-Protein-Reaction (GPR) rules reference file",
         required=False,
     )
-    # Parser metabolism
 
     # Parser proteic complex
     parser_proteic_complex = subparsers.add_parser(
         "proteic-complex",
         description="infer the list of proteic complex constructible from a list of protein monomers",
+        help="infer the list of proteic complex constructible from a list of protein monomers",
     )
     parser_proteic_complex.add_argument(
         "-m",
@@ -166,12 +218,40 @@ def parse_arguments():
         help="output path to a list of constructible proteic complex",
         required=True,
     )
+    # Add a parser the for pathway-operon-filler subcommand
+    parser_pathway_operon_filler = subparsers.add_parser(
+        "pathway-operon-filler",
+        description="identify potential reaction catalyzis of gene families with uncertain catalyzis based on (pan)-genome genomic context",
+        help="identify potential reaction catalyzis of gene families with uncertain catalyzis based on (pan)-genome genomic context",
+    )
+    parser_pathway_operon_filler.add_argument(
+        "--confident-enzyme-catalyzis",
+        help="a two-column TSV with confident gene family / catalyzed reaction mapping; serves as anchor for less confident annotations in operonic structures",
+        required=True,
+    )
+    parser_pathway_operon_filler.add_argument(
+        "--less-confident-enzyme-catalyzis",
+        help="a two-column TSV with less confident gene family / catalyzed reaction mapping: the enzyme we want to assign a reaction with more confidence, using the surrounding pathway reactions to get an hint",
+        required=True,
+    )
+    parser_pathway_operon_filler.add_argument(
+        "--pangenome-graph",
+        help="a pangenome graph in graph-tool gt format",
+        required=True,
+    )
+    parser_pathway_operon_filler.add_argument(
+        "-o",
+        "--output",
+        help="output file path with a mapping from gene family identifier to pathway, catalyzed reaction and surrounding pathway reaction in the transitive closure",
+        required=True,
+    )
 
     # Set default function command function handler
     # parser_reactome.set_defaults(func=reactome_command)
     parser_metabolism.set_defaults(func=metabolism_command)
     parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
     parser_proteic_complex.set_defaults(func=proteic_complex_command)
+    parser_pathway_operon_filler.set_defaults(func=pathway_operon_filler_command)
     return parser, parser.parse_args()
 
 

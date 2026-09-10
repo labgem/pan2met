@@ -59,8 +59,8 @@ class PADMetKnowledgeBase(KnowledgeBase):
         return [
             reaction
             for reaction in self.pathways_to_reactions_dict[pathway_id]
-            if "SPONTANEOUS" not in self.dicOfNode[reaction].misc
-            or self.dicOfNode[reaction]["SPONTANEOUS"][0] == "T"
+            if "SPONTANEOUS" not in self.padmet_object.dicOfNode[reaction].misc
+            or self.padmet_object.dicOfNode[reaction].misc["SPONTANEOUS"][0] == "T"
         ]
 
     def non_orphan_non_spontaneous_reactions_of_pathway(
@@ -86,8 +86,8 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         enzymes = [
             relation.id_in
-            for relation in self.padmet_object.dicOfRelationsIn[reaction_id]
-            if reaction_id in self.padmet_object.dicOfRelationsIn
+            for relation in self.padmet_object.dicOfRelationIn[reaction_id]
+            if reaction_id in self.padmet_object.dicOfRelationIn
             and relation.type == "catalyses"
         ]
         return enzymes
@@ -109,7 +109,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         ]
         return reactions
 
-    def pathway_taxonomic_range(self, pathway_id: str) -> int:
+    def pathway_taxonomic_range(self, pathway_id: str) -> Optional[int]:
         """
         Return a NCBI-Taxonomy taxonomy identifier number
         """
