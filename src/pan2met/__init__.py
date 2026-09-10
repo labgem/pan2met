@@ -1,5 +1,5 @@
 """
-(pan)genome to (pan)metabolome
+(pan)genome to (pan)metabolism
 """
 
 from . import config

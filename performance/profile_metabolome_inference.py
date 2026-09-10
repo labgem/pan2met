@@ -1,5 +1,5 @@
 import pan2met.io.metabiantes.kb
-import pan2met.inference.metabolome
+import pan2met.inference.metabolism
 from pan2met.utils import read_list, write_output
 
 
@@ -8,7 +8,7 @@ def main():
     reactome: set[str] = set(read_list("tests/cases/test0/reactome"))
     expected_pathway_set: set[str] = set(read_list("tests/cases/test0/pathways"))
     ecoli_tax_id: int = 562
-    inference = pan2met.inference.metabolome.PathwayInference(
+    inference = pan2met.inference.metabolism.PathwayInference(
         kb, reactome, ecoli_tax_id
     )
     infered_pathway_set: set[str] = inference.inferred_pathways()

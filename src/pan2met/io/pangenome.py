@@ -1,3 +1,7 @@
+"""
+Some helper functions to deal with pangenome related input files.
+"""
+
 from typing import Dict, Set, Literal
 from pathlib import Path
 from collections import defaultdict
@@ -11,18 +15,16 @@ def read_pangenome_rtab(rtab_filename: Path) -> Dict[str, Set[str]]:
     """
     with open(rtab_filename, "r") as rtab_file:
         header = rtab_file.readline().rstrip()
-        strains = header.split()[1:]
+        strains = header.split("\t")[1:]
         strain_to_families = defaultdict(set)
-        for strain in strains:
-            strain_to_families[strain] = set()
-            for line in rtab_file:
-                i = 0
-                for field in line.rstrip().split("\t"):
-                    if i == 0:
-                        family_id = field
-                    elif field == "1":
-                        strain_to_families[strains[i - 1]].add(family_id)
-                    i += 1
+        for line in rtab_file:
+            i = 0
+            for field in line.rstrip().split("\t"):
+                if i == 0:
+                    family_id = field
+                elif field == "1":
+                    strain_to_families[strains[i - 1]].add(family_id)
+                i += 1
     return dict(strain_to_families)
 
 

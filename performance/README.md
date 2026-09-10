@@ -1,10 +1,10 @@
-# Basic profiling of metabolome inference
+# Basic profiling of metabolism inference
 
 Install [SnakeViz](https://jiffyclub.github.io/snakeviz/).
 
 Run cProfile
 ```bash
-python3 -m cProfile -o program.prof performance/profile_metabolome_inference.py
+python3 -m cProfile -o program.prof performance/profile_metabolism_inference.py
 ```
 
 Launch SnakeViz

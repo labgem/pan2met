@@ -3,7 +3,7 @@ Generate the AnsProlog rules for the inference of pathway presence based solely 
 
 To do so, the chosen heuristic is both simple and naive:
  If all reactions in a pathway is present in a reactome,
- then, the pathway is infered to be present in the metabolome.
+ then, the pathway is infered to be present in the metabolism.
 
 Hence, no consideration is done, for the moment for pathways that are incomplete.
 If a reaction is "orphan", that is to say, if no known enzyme catalyzes it,

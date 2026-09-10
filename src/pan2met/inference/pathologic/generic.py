@@ -40,11 +40,11 @@ class PathwayInference:
             }
         )
 
-        logger.debug(f"Using taxonomic_range rule: {self.RULES["taxonomic_range"]}")
+        logger.debug(f"Using taxonomic_range rule: {self.RULES['taxonomic_range']}")
         logger.debug(f"Use taxon id {taxon_id} as reference")
 
 
-        if (self.RULES["taxonomic_range"] or self.RULES["pathway_species"]) and taxon_id is None:
+        if (self.RULES["taxonomic_range"] or self.RULES['pathway_species']) and taxon_id is None:
             raise ValueError("taxon_id cannot be None when using the taxonomic range and species based heuristics")
 
         self.kb: KnowledgeBase = kb
@@ -145,11 +145,10 @@ class PathwayInference:
         else:
             key_reaction_score = None
 
-        if self.record_reason:
-            self.amend_reason(
-                pathway_id,
-                f"- with reaction {reaction_id}: PresenceScore = {presence_score}, UniquenessScore = {uniqueness_score}, KeyReactionScore = {key_reaction_score}\n",
-            )
+        self.amend_reason(
+            pathway_id,
+            f"- with reaction {reaction_id}: PresenceScore = {presence_score}, UniquenessScore = {uniqueness_score}, KeyReactionScore = {key_reaction_score}\n",
+        )
         return score
 
     def presence_score(self, reaction_id: str) -> float:
@@ -260,11 +259,10 @@ class PathwayInference:
         else:
             pathway_taxonomic_range_boost_score = None
 
-        if self.record_reason:
-            self.amend_reason(
-                pathway_id,
-                f"PathwayScore = {score} for n = {n} non-spontaneous, non-orphan reactions with taxonomic range boost T1 = {pathway_taxonomic_range_boost_score} and neighbor species boost T2 = {pathway_neighbor_species_boost_score}.\n",
-            )
+        self.amend_reason(
+            pathway_id,
+            f"PathwayScore = {score} for n = {n} non-spontaneous, non-orphan reactions with taxonomic range boost T1 = {pathway_taxonomic_range_boost_score} and neighbor species boost T2 = {pathway_neighbor_species_boost_score}.\n",
+        )
         return score
 
     def taxonomic_neighborhood_boost(self, pathway_id: str) -> float:

@@ -5,14 +5,14 @@ Predict for all generated test cases and make a report
 import os
 
 from pan2met.utils import read_list, write_output
-from pan2met.inference.constraint.metabolome import ASPPathwayInference
+from pan2met.inference.constraint.metabolism import ASPPathwayInference
 from pan2met.io.knowledge_base import select_kb
 
 TEST_CASES_FOLDER = "tests/cases/generated/"
 KB_ASP = "tmp/metabiantes_pathway_asp.lp"
 
 
-def infer_metabolome(reactome: set[str]) -> list[str]:
+def infer_metabolism(reactome: set[str]) -> list[str]:
     kb = select_kb("metabiantes")
     inference = ASPPathwayInference(kb, reactome)
     inferred_pathways: list[str] = inference.inferred_pathways(KB_ASP)
@@ -31,8 +31,8 @@ def main():
                 test_case,
                 "pan2met-asp.pathways.list",
             )
-            metabolome = infer_metabolome(reactome)
-            write_output(output_filename, metabolome)
+            metabolism = infer_metabolism(reactome)
+            write_output(output_filename, metabolism)
     print("done.")
 
 

@@ -5,7 +5,7 @@ Using an Answer-Set-Programming approach to identify pathway, from Monomers to p
 
 The rule is simple: when a protein monomer catalysing a reaction, is found to have an homologous protein in the target organism proteome: infer the reaction to be present. When every monomer component of a protein complex is present in an cell, infer the presence of the protein complex. Further populate the set of potential enzymes and reactions with this proteins.
 
-Finally, given the set of inferred reactions, simply infer all metabolic pathway with all reactions present in the reactome to be also present in the metabolome of the target organism.
+Finally, given the set of inferred reactions, simply infer all metabolic pathway with all reactions present in the reactome to be also present in the metabolism of the target organism.
 
 
 Preparation step

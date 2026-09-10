@@ -10,49 +10,12 @@ Simple inference rules:
 
 import importlib.resources
 
-
-import clyngor
-
 import pan2met
-from ..config import config
-from ..io.knowledge_base import KnowledgeBase, select_kb
-from ..utils import logger, write_output
+
 from ..asp import rules
-
-
-def check_complex_from_monomers(
-    monomers: list[str], complex: str, kb: KnowledgeBase
-) -> bool:
-    """
-    Check whether the given complex can be formed by the given set of protein monomers.
-
-    :param monomers: a list of protein monomers
-    :param complex: an identifier of a complex
-    :param kb: a knowledge base adapter
-    """
-    components = kb.proteic_complex_subunits(complex)
-    if components is None or len(list(components)) == 0:
-        logger.error(f"{complex} complex has no components")
-        return False
-    for component in components:
-        if component not in monomers:
-            return False
-    return True
-
-
-def infer_complexes_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
-    """
-    Infer a set of proteic complex from the set of protein monomers.
-
-    :param monomers: a list of monomer identifiers
-    :param kb: a knowledge base adapter
-    :return: a set of proteic complex identifiers, whose monomer protein components are
-    """
-    complexes: set[str] = set()
-    for complex in kb.all_protein_complexes():
-        if check_complex_from_monomers(monomers, complex, kb):
-            complexes.add(complex)
-    return complexes
+from ..io.knowledge_base import KnowledgeBase, select_kb
+from ..utils import write_output
+from .proteic_complex import infer_complex
 
 
 def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[str]:
@@ -65,7 +28,7 @@ def infer_reactome_from_monomers(monomers: list[str], kb: KnowledgeBase) -> set[
     """
 
     # Start by infering all reachable complex
-    complexes: set[str] = infer_complexes_from_monomers(monomers, kb)
+    complexes: set[str] = infer_complex(kb, monomers)
     # Continue, by infering the possible reactions
     reactions: set[str] = set()
     for reaction in kb.reactions():
@@ -107,6 +70,10 @@ def infer_reactome_from_monomers_asp(
     for reaction identifier "RXN-1", when such a reaction is infered to be present in the reactome.
 
     """
+    # We keep clyngor as an optional dependency
+
+    import clyngor
+
     SHOW_REACTION_DIRECTIVE = "#show reaction/1."
     monomer_asp_rules = "\n".join(map(rules.monomer_asp_rule, monomers))
     monomer_asp_rules += "\n" + SHOW_REACTION_DIRECTIVE
@@ -154,6 +121,10 @@ def minimal_monomer_set(
 
     :return:  A 'minimal' set of monomer id sufficient to catalyze the given set of reactions
     """
+    # We keep clyngor as an optional dependency
+
+    import clyngor
+
     with importlib.resources.path(
         pan2met, "asp/rules/required_monomer_given_reactions.lp"
     ) as minimal_set_asp_rule_path:
@@ -199,8 +170,8 @@ def minimal_monomer_set(
     return selected_monomers
 
 
-def write_potential_monomers(filename: str):
-    kb = select_kb(config["reference"]["source"])
+def write_potential_monomers(filename: str, config):
+    kb = select_kb(config)
     write_output(
         "tmp/potential_monomers.lp",
         list(map(rules.potential_monomer_asp_rule, kb.monomers())),

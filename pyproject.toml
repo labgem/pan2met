@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pan2met"
-description = "Reconstruct (pan)metabolome based on (pan)genome"
+description = "Reconstruct metabolic network from (pan)genome"
 dynamic = ["version"]
 authors = [
 	{ name = "Samuel Ortion" },
@@ -26,21 +26,11 @@ classifiers = [
 	"Programming Language :: Python :: 3",
 	"Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
-# requires-python = ">=3.9" # ?
-
-dependencies = [
-	"numpy",
-	"python-dotenv",
-	"pythoncyc",
-	# "clyngor", # "pip install git+https://github.com/Aluriak/clyngor@master",
-	"ouisparql",
-	"padmet",
-	"psycopg>=3.3.2",
-	"aiosql",
-]
-
 license = { file = "LICENSE" }
-
+requires-python = ">=3.11"
+dependencies = [
+	"aiosql>=15.0,<16",
+]
 [project.optional-dependencies]
 doc = [
 	"sphinx",
@@ -50,6 +40,13 @@ doc = [
 ]
 test = [
 	"pytest>=9.0.2",
+	"pytest-cov",
+]
+viz = [
+	"bokeh"
+]
+padmet = [
+	"padmet>=5.0.3,<6",
 ]
 
 [project.urls]
@@ -58,7 +55,7 @@ Repository = "https://github.com/labgem/pan2met"
 # Documentation = ""
 
 [project.scripts]
-pan2met = "pan2met.cli:main"
+pan2met = "pan2met.__main__:main"
 
 [tool.setuptools.dynamic]
 version = { file = "VERSION" }
@@ -74,11 +71,12 @@ pan2met = { path = ".", editable = true }
 default = { solve-group = "default" }
 doc = { features = ["doc"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
+viz = { features = ["viz"], solve-group = "default" }
 
 [tool.pixi.tasks]
 
 [tool.pixi.dependencies]
-graph-tool = ">=2.98,<3"
-ppanggolin = { version = ">=2.2.6,<3", channel = "bioconda" }
-python = "3.12.*"
+python = "3.14.*"
 pip = ">=26.0.1,<27"
+graph-tool = ">=3"
+pytest = ">=9.1.1,<10"

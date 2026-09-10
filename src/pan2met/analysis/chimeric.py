@@ -17,7 +17,7 @@ import configparser
 from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..io.pangenome import read_pangenome_rtab
 from ..utils import read_list, read_mapping, reverse_mapping
-from ..config import config
+from ..config import default_config, override_config
 
 
 def strain_with_reaction(
@@ -33,7 +33,7 @@ def strain_with_reaction(
     :return: a set of pangenome strain identifiers.
     """
     if reaction not in reaction_to_genes:
-        return []
+        return set()
     genes = reaction_to_genes[reaction]
     return {strain for gene in genes for strain in gene_to_strains[gene]}
 
@@ -103,14 +103,12 @@ def main():
     gene_to_strains: Dict[str, Set[str]] = reverse_mapping(strain_to_genes)
 
     # Update config globally overriding default_config with keys from given config filename
-    if args.config is not None:
-        logging.info(f"Overriding default configuration with {args.config}")
-        global config
-        config_override = configparser.ConfigParser()
-        config_override.read([args.config])
-        config.update(config_override)
+    if args.config:
+        config = override_config(args.config)
+    else:
+        config = default_config
 
-    kb = select_kb(config["reference"]["source"])
+    kb = select_kb(config)
 
     with open(args.output, "w") as output_file:
         for pathway in pathways:
