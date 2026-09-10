@@ -9,5 +9,5 @@ dependencies:
 - graph-tool >=3
 - pip
 - pip:
-  - -e ../
+  - -e ..[doc]
   - aiosql>=15.0, <16
