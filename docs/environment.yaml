@@ -1,0 +1,13 @@
+name: default
+channels:
+- conda-forge
+- https://conda.anaconda.org/bioconda
+- nodefaults
+dependencies:
+- python 3.14.*
+- pip >=26.0.1,<27
+- graph-tool >=3
+- pip
+- pip:
+  - -e .
+  - aiosql>=15.0, <16
