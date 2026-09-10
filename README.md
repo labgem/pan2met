@@ -33,7 +33,7 @@ options:
                         the NCBI-Taxonomy tax id of the target organism.
 ```
 
-For more information on how to use `pan2met`, please refer to the [`pan2met` documentation]()
+For more information on how to use `pan2met`, please refer to the [`pan2met` documentation](https://pan2met.readthedocs.io/en/latest/index.html)
 
 ## Installation
 
