@@ -1,0 +1,63 @@
+genomic_context:
+    type: dict
+    schema:
+        transitive_distance:
+            type: integer
+            min: 1
+            meta:
+                label: The number of allowed gaps between two gene families in the transitive closure on the (pan)-genome graph
+        local_edge_jaccard_threshold:
+            type: float
+            min: 0
+            max: 1
+            meta:
+                label: The threshold of the local edge Jaccard index below which the edge is not used in the transitive closure of the (pan)-genome graph
+
+inference:
+    type: dict
+    schema:
+        rules:
+            type: list
+            allowed:
+                - taxonomic_range
+                - pathway_species
+                - pathway_uniqueness
+                - pathway_key_reaction
+                - pathway_ontology
+                - pathway_variant
+                - pathway_score
+        pathway_score:
+            type: dict
+            schema:
+                # this value must be > 1 to be effective.
+                taxonomic_range_boost:
+                    type: float
+                    min: 1
+                # must be above 1 too.
+                neighbor_species_boost:
+                    type: float
+                    min: 1
+                threshold:
+                    type: float
+                    min: 0
+
+reference:
+    type: dict
+    schema:
+        ncbi_taxonomy:
+            type: string
+        knowledge_base:
+            type: string
+            allowed:
+                - metabiantes
+                - biopax
+                - padmet
+        padmet:
+            type: dict
+            schema:
+                file:
+                    type: string
+        metabiantes:
+            schema:
+                database:
+                    type: string

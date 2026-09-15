@@ -1,0 +1,26 @@
+genomic_context:
+    transitive_distance: 3
+    local_edge_jaccard_threshold: 0.8
+
+inference:
+    rules:
+        - taxonomic_range
+        - pathway_species
+        - pathway_uniqueness
+        - pathway_key_reaction
+        - pathway_ontology
+        - pathway_variant
+    pathway_score:
+        threshold: 0.15
+        # this value must be > 1 to be effective.
+        taxonomic_range_boost: 1.2
+        # must be above 1 too.
+        neighbor_species_boost: 1.2
+
+reference:
+    ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01
+    knowledge_base: metabiantes
+    padmet:
+        file: /mnt/shared/bank/metacyc.padmet
+    metabiantes:
+        database: /mnt/shared/bank/metabiantes_metacyc_29.5.db

@@ -2,23 +2,24 @@
 Default configuration
 """
 
-import configparser
 import importlib.resources
 import io
 import logging
 from pathlib import Path
 
+import yaml
+
 import pan2met.conf
+import pan2met.conf.schema
 
 logger = logging.getLogger("pan2met:config")
 
 # Load default config
-default_config: configparser.ConfigParser = configparser.ConfigParser()
-default_config_str = importlib.resources.read_text(pan2met.conf, "default.ini")
-default_config.read_string(default_config_str)
+default_config_str = importlib.resources.read_text(pan2met.conf, "default.yaml")
+default_config = yaml.safe_load(default_config_str)
 
 
-def override_config(filename: Path) -> configparser.ConfigParser:
+def override_config(filename: Path) -> dict:
     """
     Read default config and override it with values from config of a file
 
@@ -29,9 +30,14 @@ def override_config(filename: Path) -> configparser.ConfigParser:
     config = default_config
 
     # Update config globally overriding default_config with keys from given config filename
-    config_override = configparser.ConfigParser()
-    config_override.read([filename])
-    config.update(config_override)
+    with open(filename, "r") as file:
+        config_override = yaml.safe_load(file)
+        if pan2met.conf.schema.validate(config_override):
+            config.update(config_override)
+        else:
+            raise ValueError(
+                "The provided configuration does not match the expected schema."
+            )
 
     # Log the used config
     with io.StringIO() as config_string_stream:
