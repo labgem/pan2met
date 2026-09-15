@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 pan2met: Predicting metabolic networks of procaryotes at pangenome scale
-=======================================================================
+========================================================================
 
 **pan2met** is a software suite aiming to predict metabolic network of procaryotes, bacteria and archaea, at the pangenome scale.
 
@@ -19,6 +19,8 @@ User guide
 .. toctree::
 
    Tutorials <tutorial/index>
+   Reference <reference/index>
+
 
 Developper guide
 ----------------

@@ -57,7 +57,7 @@ Then, on another shell:
 
   python3 -m src.pan2met.asp.gpr_rules -o ./tmp/metacyc_gpr.lp
 
-  python3 -m src.pan2met.asp.reverse_gpr_rules -i ./tmp/metacyc_gpr_rules -o ./tmp/metacyc_reverse_gpr.lp
+  python3 -m src.pan2met.asp.reverse_gpr_rules -i ./tmp/metacyc_gpr.lp -o ./tmp/metacyc_reverse_gpr.lp
 
 Application on an example
 -------------------------
@@ -68,7 +68,7 @@ First, generate the list of potential monomer, namely, monomer that can contribu
 
 Construct a file with some atoms `reactions/1` `reactions.lp`:
 
-.. literalinclude:: ../../../tests/test-data/reactome_inference/reactions.lp
+.. literalinclude:: ../../../tests/test_data/reactome_inference/reactions.lp
 
 Call clingo to infer the set of potential monomers:
 
@@ -80,11 +80,11 @@ The command `clingo -V0 --out-atomf=%s.` ensures that only the atoms are outpute
 
 The output file will look like:
 
-.. literalinclude:: ../../../tests/test-data/reactome_inference/potential_monomers.lp
+.. literalinclude:: ../../../tests/test_data/reactome_inference/potential_monomers.lp
 
 Then, construct a file `target_reactions.lp`, with the same reactions identifiers as in `reactions.lp`, except the predicate `target_reaction` is used instead of `reaction`:
 
-.. literalinclude:: ../../../tests/test-data/reactome_inference/target_reactions.lp
+.. literalinclude:: ../../../tests/test_data/reactome_inference/target_reactions.lp
 
 Finally, run clingo once more:
 

@@ -30,8 +30,8 @@ Then, launch the export to flat file command:
 
 .. code:: lisp
 
-    EC(0): (select-organism :org-id 'meta)
-    EC(1): (create-flat-files-for-current-kb)
+    (select-organism :org-id 'meta)
+    (create-flat-files-for-current-kb)
 
 Secondly, use `padmet pgdb_to_padmet` command to create the padmet file:
 

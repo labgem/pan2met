@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "pan2met"
-copyright = "2025, Samuel Ortion"
+copyright = "2025-2026, LABGeM"
 author = "Samuel Ortion"
 
 # -- General configuration ---------------------------------------------------
@@ -30,3 +30,5 @@ exclude_patterns = []
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+
+suppress_warnings = ["autosectionlabel.*"]
