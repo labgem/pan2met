@@ -1,9 +1,3 @@
-import pytest
-
-from pan2met.io.knowledge_base import select_kb
-from pan2met.utils import read_list, write_output
-from pan2met.config import default_config as config
-
 # @pytest.fixture
 # def kb():
 #     return select_kb(config)

@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
-
 from pan2met import taxonomy
 from pan2met.config import default_config as config
+
 
 def test_taxonomy_parent_tax_id():
     tree = taxonomy.NCBITaxonomyTree(config["reference"]["ncbi_taxonomy"])

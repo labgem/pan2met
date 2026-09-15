@@ -1,8 +1,7 @@
 from collections import defaultdict
-from typing import List, Tuple, Iterable
 
-import pytest
 import graph_tool as gt
+import pytest
 
 import pan2met.inference.genomic_context
 
@@ -60,12 +59,13 @@ def test_genomic_context(pangenome_graph, gene_family_to_pangenome_graph_nodes):
     pathway_reactions = [reaction1, reaction2, reaction3]
 
     reaction_to_gene_families = {
-        "rxn-1": ["gene1"],
-        "rxn-2": ["gene2"],
-        "rxn-3": ["gene3"],
+        "rxn-1": {"gene1"},
+        "rxn-2": {"gene2"},
+        "rxn-3": {"gene3"},
     }
 
     closures = pan2met.inference.genomic_context.pathway_transitive_closure_connected_components(
+        "PWY-1",
         pangenome_graph,
         pathway_reactions,
         reaction_to_gene_families,
@@ -78,45 +78,42 @@ def test_genomic_context(pangenome_graph, gene_family_to_pangenome_graph_nodes):
 
 
 def closure_to_gene_list(
-    pangenome_graph, closure: List[Tuple[bool, str]]
-) -> Iterable[str]:
-    for _flag, node in closure:
-        yield pangenome_graph.vp["nid"][node]
+    pangenome_graph, closures: list[list[tuple[bool, str]]]
+) -> list[list[str]]:
+    return [
+        [pangenome_graph.vp["nid"][node] for _flag, node in closure]
+        for closure in closures
+    ]
 
 
 def test_unreachable_reaction_genomic_context(
     pangenome_graph, gene_family_to_pangenome_graph_nodes
 ):
     reaction1 = "rxn-1"
-    reaction2 = "rxn-2"
+    reaction2 = "rxn-999"
     reaction3 = "rxn-3"
 
     pathway_reactions = [reaction1, reaction2, reaction3]
 
     reaction_to_gene_families = {
-        "rxn-1": ["gene1"],
-        "rxn-2": ["gene2"],
-        "rxn-3": ["gene5"],
+        "rxn-1": {"gene1"},
+        # "rxn-2": {"gene2"},
+        "rxn-3": {"gene5"},
     }
 
     closures = pan2met.inference.genomic_context.pathway_transitive_closure_connected_components(
+        "PWY-1",
         pangenome_graph,
         pathway_reactions,
         reaction_to_gene_families,
         gene_family_to_pangenome_graph_nodes,
-        distance=1,
+        distance=2,
         local_edge_jaccard_threshold=0.8,
     )
     closures = list(closures)
-
     assert len(closures) == 2
 
-    closures_genes = list(
-        map(
-            lambda closure: list(closure_to_gene_list(pangenome_graph, closure)),
-            closures,
-        )
-    )
+    closures_genes = closure_to_gene_list(pangenome_graph, closures)
 
     assert closures_genes == [["gene1", "gene2", "gene3"], ["gene5", "gene4"]]
 
@@ -131,12 +128,13 @@ def test_transitively_reachable_reaction_genomic_context(
     pathway_reactions = [reaction1, reaction2, reaction3]
 
     reaction_to_gene_families = {
-        "rxn-1": ["gene1"],
-        "rxn-2": ["gene2"],
-        "rxn-3": ["gene5"],
+        "rxn-1": {"gene1"},
+        "rxn-2": {"gene2"},
+        "rxn-3": {"gene5"},
     }
 
     closures = pan2met.inference.genomic_context.pathway_transitive_closure_connected_components(
+        "PWY-1",
         pangenome_graph,
         pathway_reactions,
         reaction_to_gene_families,
@@ -148,11 +146,6 @@ def test_transitively_reachable_reaction_genomic_context(
 
     assert len(closures) == 1
 
-    closures_genes = list(
-        map(
-            lambda closure: list(closure_to_gene_list(pangenome_graph, closure)),
-            closures,
-        )
-    )
+    closures_genes = closure_to_gene_list(pangenome_graph, closures)
 
     assert closures_genes == [["gene1", "gene2", "gene3", "gene4", "gene5"]]
