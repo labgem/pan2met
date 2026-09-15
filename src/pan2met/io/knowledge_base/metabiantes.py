@@ -4,10 +4,11 @@ A SQL backend using 'metabiantes' model for data imported from MetaCyc.
 
 import importlib.resources
 import sqlite3
-from typing import Iterable, List, Optional, Tuple
+from collections.abc import Iterable
 
 import aiosql
-import networkx as nx
+import graph_tool as gt
+import graph_tool.topology
 
 import pan2met
 import pan2met.sql.metabiantes
@@ -27,13 +28,13 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         if iterator is not None:
             return [item[0] for item in iterator]
 
-    def monomers(self) -> List[str]:
+    def monomers(self) -> list[str]:
         """
         List monomer polypeptides
         """
         return self._aiosql_to_list(self.queries.get_monomers(self.connection))
 
-    def pathways(self) -> List[str]:
+    def pathways(self) -> list[str]:
         """
         List the pathways referenced by the knowledge base
         """
@@ -43,7 +44,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """Get the name of a pathway"""
         return self.queries.get_pathway_name(self.connection, pathway_id=pathway_id)
 
-    def reactions_of_pathway(self, pathway_id: str) -> List[str]:
+    def reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List reactions of a pathway
         """
@@ -53,19 +54,19 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def reactions(self) -> List[str]:
+    def reactions(self) -> list[str]:
         """
         List all reactions referenced in the knowledge base
         """
         return self._aiosql_to_list(self.queries.get_reactions(self.connection))
 
-    def orphan_reactions(self) -> List[str]:
+    def orphan_reactions(self) -> list[str]:
         """
         List orphan reactions
         """
         return self._aiosql_to_list(self.queries.get_orphan_reactions(self.connection))
 
-    def spontaneous_reactions(self) -> List[str]:
+    def spontaneous_reactions(self) -> list[str]:
         """
         List spontaneous reactions
         """
@@ -73,7 +74,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_spontaneous_reactions(self.connection)
         )
 
-    def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> List[str]:
+    def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway
         """
@@ -85,7 +86,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
 
     def non_orphan_non_spontaneous_reactions_of_pathway(
         self, pathway_id: str
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Non-orphan and non-spontaneous reactions of a pathway
         """
@@ -95,7 +96,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def enzymes_of_reaction(self, reaction_id: str) -> List[str]:
+    def enzymes_of_reaction(self, reaction_id: str) -> list[str]:
         """
         List enzymes catalyzing a reaction
         """
@@ -105,7 +106,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def reactions_by_ec_number(self, ec_number: str) -> List[str]:
+    def reactions_by_ec_number(self, ec_number: str) -> list[str]:
         """
         List reactions annotated with given EC-number
         """
@@ -115,7 +116,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def pathway_taxonomic_range(self, pathway_id: str) -> Optional[int]:
+    def pathway_taxonomic_range(self, pathway_id: str) -> int | None:
         """
         Return a NCBI-Taxonomy Taxonomy Identifier number
         """
@@ -134,7 +135,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         )
         return res is not None
 
-    def key_reactions_of_pathway(self, pathway_id: str) -> List[str]:
+    def key_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List all key reactions of a pathway.
         """
@@ -144,7 +145,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def pathways_with_reaction(self, reaction_id) -> List[str]:
+    def pathways_with_reaction(self, reaction_id) -> list[str]:
         """
         List all pathways with the given reaction identifier.
         """
@@ -162,7 +163,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.connection, reaction_id=reaction_id
         )
 
-    def variants_of_pathway(self, pathway_id: str) -> List[str]:
+    def variants_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the variants of a pathway.
         """
@@ -170,7 +171,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_variants_of_pathway(self.connection, pathway_id=pathway_id)
         )
 
-    def ontology_parent_class_of_pathway(self, pathway_id: str) -> List[str]:
+    def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the parent class of a pathway in the ontology of pathway tools
         """
@@ -180,7 +181,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def pathway_reaction_order(self, pathway_id: str) -> List[tuple[str, str]]:
+    def pathway_reaction_order(self, pathway_id: str) -> list[tuple[str, str]]:
         """
         Return a list of pairs of reactions in the pathway, where the first reaction is a predecessor of the second reaction in the pathway.
         """
@@ -188,7 +189,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.connection, pathway_id=pathway_id
         )
 
-    def species_evidence_of_pathway(self, pathway_id: str) -> List[int]:
+    def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
         """
         List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
         """
@@ -203,24 +204,33 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def reaction_graph_topological_order(self, pathway) -> List[str]:
+    def reaction_graph_topological_order(self, pathway) -> list[str]:
         """
         Return the topological ordering of a pathway reaction graph.
 
         Assume that the pathway reaction graph is a directed acyclic graph.
         """
-        reaction_order: List[Tuple[str, str]] = self.pathway_reaction_order(pathway)
-        graph = nx.DiGraph(reaction_order)
-        sort = list(next(nx.all_topological_sorts(graph)))
-        return sort
+        reaction_order: list[tuple[str, str]] = self.pathway_reaction_order(pathway)
+        graph = gt.Graph(directed=True)
+        vmap = {}
+        for reaction_1, reaction_2 in reaction_order:
+            if reaction_1 not in vmap:
+                vmap[reaction_1] = graph.add_vertex()
+            if reaction_2 not in vmap:
+                vmap[reaction_2] = graph.add_vertex()
+            graph.add_edge(vmap[reaction_1], vmap[reaction_2])
+        sort = gt.topology.topological_sort(graph)
+        reverse_vmap = {value: key for key, value in vmap.items()}
+        sort_reactions = [reverse_vmap[vertex] for vertex in sort]
+        return sort_reactions
 
-    def complex(self) -> List[str]:
+    def complex(self) -> list[str]:
         """
         List the protein complex
         """
         return self._aiosql_to_list(self.queries.get_complex(self.connection))
 
-    def components_of_complex(self, complex_id: str) -> List[str]:
+    def components_of_complex(self, complex_id: str) -> list[str]:
         """
         List the components of a complex
         """
