@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # If any of this files or directory changed, trigger the CI
+      # The only case where it is not triggerd is when docs/ is modified
+      - 'tests/**'
+      - '.github/**'
+      - 'src/pan2met/**'
+      - 'MANIFEST.in'
+      - 'VERSION'
+      - 'pyproject.toml'
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      # If any of this files or directory changed, trigger the CI
+      # The only case where it is not triggerd is when docs/ is modified
+      - 'tests/**'
+      - '.github/**'
+      - 'src/pan2met/**'
+      - 'MANIFEST.in'
+      - 'VERSION'
+      - 'pyproject.toml'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NUM_CPUS: 1
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test:
+    name: test pan2met on ${{ matrix.os }} with python ${{ matrix.python-version }}
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        python-version: ['3.9', '3.12', '3.14']
+    defaults:
+      run:
+        shell: conda run --no-capture-output -n ppanggolin bash -e {0}
+    steps:
+
+    # Get number of cpu available on the current runner
+    - name: Get core number on linux
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        nb_cpu_linux=`nproc`
+        echo "Number of cores avalaible on the current linux runner $nb_cpu_linux"
+        echo "NUM_CPUS=$nb_cpu_linux" >> "$GITHUB_ENV"
+
+    - name: Get core number on macos
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        nb_cpu_macos=`sysctl -n hw.ncpu`
+        echo "Number of cores avalaible on the current macos runner $nb_cpu_macos"
+        echo "NUM_CPUS=$nb_cpu_macos" >> "$GITHUB_ENV"
+
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v7
+    # Install requirements with miniconda
+    - uses: conda-incubator/setup-miniconda@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge,bioconda
+        environment-file: ppanggolin_env.yaml
+        activate-environment: pan2met
+        conda-remove-defaults: "true"
+
+    - name: Install pan2met
+      run: |
+        python -m pip install .[test]
+
+    # Check that it is installed and displays help without error
+    - name: Check that pan2met is installed
+      run: |
+        pan2met --version
+        pan2met --help
+        python --version
+
+    # Check that unit tests are all passing
+    - name: Unit and functional tests
+      run: python -m pytest --cov=pan2met --cov-report=term --cpu $NUM_CPUS --full

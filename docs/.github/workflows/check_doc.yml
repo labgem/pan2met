@@ -1,0 +1,32 @@
+name: Check documentation
+
+on:
+  push:
+    paths:
+      - "docs/**"
+      - ".readthedocs.yaml"
+      - ".github/workflows/check_doc.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: install pan2met with doc dependencies
+        run: pip install .[doc]
+
+      - name: Documentation build
+        shell: bash -l {0}
+        run: |
+          cd docs/
+          sphinx-build -b html . build/
+      # Great extra actions to compose with:
+      # Create an artifact of the html output.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Documentation HTML
+          path: docs/build/
