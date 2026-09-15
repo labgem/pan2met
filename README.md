@@ -63,15 +63,15 @@ For more information on how to use `pan2met`, please refer to the [`pan2met` doc
 
 ## Setup
 
-Create a configuration file, in e.g. `conf/configuration.ini`, from [provided example configuration file](./src/pan2met/conf/default.ini).
+Create a configuration file, in e.g. `configuration.yaml`, from [provided example configuration file](./src/pan2met/conf/default.yaml). You can consult [the configuration yaml schema](./src/pan2met/conf/schema.yaml) the configuration must stick to.
 
-You will most probably need to adapt the `[reference]` section.
+You will most probably need to adapt the `reference` section.
 1. Update `ncbi_taxonomy` directory path, with the path to the directory with a dump of the NCBI-Taxonomy.
-2. Update the `source` key, to either `metabiantes` or `padmet` depending of the format of metabolism knowledge base to use.
+2. Update the `knowledge_base` key, to either `metabiantes` or `padmet` depending of the format of metabolism knowledge base to use.
 
 If you use `metabiantes` as the reference knowledge base for metabolism, please refer to the [metabiantes git repository](https://github.com/labgem/metabiantes/) for instructions on how to setup a `metabiantes` SQL database.
 
-### How to download support materials
+### Download the reference material
 
 #### Reference taxonomy from the NCBI Taxonomy database
 
