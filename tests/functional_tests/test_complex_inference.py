@@ -18,6 +18,7 @@ MONOMERS = [
 
 
 def run(cmd):
+    print(f"Running {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
 

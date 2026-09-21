@@ -3,8 +3,8 @@ Basic comparison report between PathoLogic metabolism output and the output of p
 """
 
 import datetime
-import subprocess
 import os
+import subprocess
 
 from pan2met.utils import read_list
 
@@ -43,21 +43,11 @@ def report(pathologic_metabolism: set[str], pan2met_metabolism: set[str]) -> lis
 
 def main():
     with open(
-        f"./tmp/report_{datetime.datetime.today().strftime('%Y-%m-%d_%H-%M')}_gitrev:{git_revision}.tsv",
+        f"./tmp/report_{datetime.datetime.now(tz=datetime.UTC).strftime('%Y-%m-%d_%H-%M')}_gitrev:{git_revision}.tsv",
         "w",
     ) as report_file:
         report_file.write(
-            "\t".join(
-                [
-                    "test_case",
-                    "pathologic",
-                    "pan2met",
-                    "union",
-                    "intersection",
-                    "unique_pathologic",
-                    "unique_pan2met",
-                ]
-            )
+            "test_case\tpathologic\tpan2met\tunion\tintersection\tunique_pathologic\tunique_pan2met"
         )
         for test_case in test_cases:
             if os.path.isdir(os.path.join(TEST_CASES_FOLDER, test_case)):

@@ -4,9 +4,9 @@ Predict for all generated test cases and make a report
 
 import os
 
-from pan2met.utils import read_list, write_output
 from pan2met.inference.constraint.metabolism import ASPPathwayInference
 from pan2met.io.knowledge_base import select_kb
+from pan2met.utils import read_list, write_output
 
 TEST_CASES_FOLDER = "tests/cases/generated/"
 KB_ASP = "tmp/metabiantes_pathway_asp.lp"

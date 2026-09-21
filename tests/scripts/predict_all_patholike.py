@@ -4,9 +4,9 @@ Predict for all generated test cases and make a report
 
 import os
 
-from pan2met.utils import read_list, write_output
 from pan2met.inference.metabolism import infer_metabolism
 
+from pan2met.utils import read_list, write_output
 
 TEST_CASES_FOLDER = "tests/cases/generated2/"
 

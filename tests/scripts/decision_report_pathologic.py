@@ -6,8 +6,7 @@ when testcyc is the name of the generated PGDB.
 """
 
 import sys
-from typing import Iterable
-from typing import Optional
+from collections.abc import Iterable
 
 
 def parse_lisp_token(lisp: str) -> Iterable[str]:
@@ -61,26 +60,26 @@ def report(filename: str, output_filename):
 def direct_report_inference_description(
     inference_description_file: str, output_filename: str
 ):
-    with open(inference_description_file, "r") as input_file:
-        with open(output_filename, "w") as output_file:
-            lisp_code = input_file.read().replace("\n", " ")
-            for lisp_object in first_order_lisp_objects(lisp_code):
-                pathway: Optional[str] = None
-                explanation: Optional[str] = None
-                keep: Optional[bool] = None
-                i = 0
-                while i < len(lisp_object):
-                    if lisp_object[i] == ":PATHWAY":
-                        pathway = lisp_object[i + 1]
-                    elif lisp_object[i] == ":EXPLANATION-CODE":
-                        explanation = lisp_object[i + 2]
-                    elif lisp_object[i] == ":KEEP?":
-                        keep = True if lisp_object[i + 1] == "T" else False
-                    i += 1
-                if pathway is not None and explanation is not None and keep is not None:
-                    output_file.write(
-                        "\t".join([pathway, str(keep), explanation]) + "\n"
-                    )
+    with (
+        open(inference_description_file, "r") as input_file,
+        open(output_filename, "w") as output_file,
+    ):
+        lisp_code = input_file.read().replace("\n", " ")
+        for lisp_object in first_order_lisp_objects(lisp_code):
+            pathway: str | None = None
+            explanation: str | None = None
+            keep: bool | None = None
+            i = 0
+            while i < len(lisp_object):
+                if lisp_object[i] == ":PATHWAY":
+                    pathway = lisp_object[i + 1]
+                elif lisp_object[i] == ":EXPLANATION-CODE":
+                    explanation = lisp_object[i + 2]
+                elif lisp_object[i] == ":KEEP?":
+                    keep = lisp_object[i + 1] == "T"
+                i += 1
+            if pathway is not None and explanation is not None and keep is not None:
+                output_file.write("\t".join([pathway, str(keep), explanation]) + "\n")
 
 
 def main():

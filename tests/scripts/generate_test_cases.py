@@ -1,5 +1,5 @@
-import random
 import os
+import random
 import shutil
 
 import pan2met.io.knowledge_base.metabiantes
@@ -21,9 +21,7 @@ seeds = list(range(5))
 
 
 def random_protein_id() -> str:
-    return "RAND_" + "".join(
-        map(str, list(map(lambda _: random.randint(0, 10), range(10))))
-    )
+    return "RAND_" + "".join(map(str, [random.randint(0, 10) for _ in range(10)]))
 
 
 def write_pathologic_file(file, reactions: list[str]):
@@ -84,19 +82,17 @@ with open(os.path.join(TEST_FOLDER, "taxon_id.tsv"), "w") as taxon_id_file:
                         "tests/pathologic/pathologic_template/test.fasta", test_folder
                     )
                     test_pathways = random.choices(pathways, k=test_case_size)
-                    with open(
-                        os.path.join(test_folder, "reactome"), "w"
-                    ) as reactome_file:
-                        with open(os.path.join(test_folder, "test.pf"), "w") as file:
-                            for pathway in test_pathways:
-                                reactions = kb.reactions_of_pathway(pathway)
-                                n_reactions: int = int(
-                                    len(reactions) * pathway_fraction
-                                )
-                                test_reactions = random.choices(
-                                    reactions, k=n_reactions
-                                )
-                                write_pathologic_file(file, test_reactions)
-                                reactome_file.writelines(
-                                    reaction + "\n" for reaction in test_reactions
-                                )
+                    with (
+                        open(
+                            os.path.join(test_folder, "reactome"), "w"
+                        ) as reactome_file,
+                        open(os.path.join(test_folder, "test.pf"), "w") as file,
+                    ):
+                        for pathway in test_pathways:
+                            reactions = kb.reactions_of_pathway(pathway)
+                            n_reactions: int = int(len(reactions) * pathway_fraction)
+                            test_reactions = random.choices(reactions, k=n_reactions)
+                            write_pathologic_file(file, test_reactions)
+                            reactome_file.writelines(
+                                reaction + "\n" for reaction in test_reactions
+                            )
