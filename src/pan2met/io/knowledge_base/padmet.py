@@ -15,7 +15,6 @@ $ padmet pgdb_to_padmet --pgdb=~/.local/share/pathway-tools/aic-export/pgdbs/bio
 """
 
 from queue import Queue
-from typing import List, Optional
 
 from padmet.classes import PadmetSpec
 
@@ -24,35 +23,35 @@ from . import KnowledgeBase
 
 class PADMetKnowledgeBase(KnowledgeBase):
     def __init__(self, config):
-        padmet_filename = config["reference"]["padmet_file"]
+        padmet_filename = config["reference"]["padmet"]["file"]
         self.padmet_object = PadmetSpec(padmet_filename)
         self.pathways_to_reactions_dict = self.padmet_object.getPathwaysReactions()
 
-    def monomers(self) -> List[str]:
+    def monomers(self) -> list[str]:
         """
         List monomer polypeptides
         """
         raise NotImplementedError("monomer listing not implemented for PADMet.")
 
-    def pathways(self) -> List[str]:
+    def pathways(self) -> list[str]:
         """
         List the pathways referenced by the knowledge base
         """
         return self.pathways_to_reactions_dict.keys()
 
-    def reactions_of_pathway(self, pathway_id: str) -> List[str]:
+    def reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List reactions of a pathway
         """
         return self.pathways_to_reactions_dict[pathway_id]
 
-    def reactions(self) -> List[str]:
+    def reactions(self) -> list[str]:
         """
         List all reactions referenced in the knowledge base
         """
         return self.padmet_object.getReactions()
 
-    def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> List[str]:
+    def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway
         """
@@ -65,7 +64,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
 
     def non_orphan_non_spontaneous_reactions_of_pathway(
         self, pathway_id: str
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Non-orphan and non-spontaneous reactions of a pathway
         """
@@ -80,7 +79,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         ]
         return reactions
 
-    def enzymes_of_reaction(self, reaction_id: str) -> List[str]:
+    def enzymes_of_reaction(self, reaction_id: str) -> list[str]:
         """
         List enzymes catalyzing a reaction
         """
@@ -98,7 +97,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         return self.padmet_object.dicOfNode[reaction_id].misc["EC-NUMBER"]
 
-    def reactions_by_ec_number(self, ec_number: str) -> List[str]:
+    def reactions_by_ec_number(self, ec_number: str) -> list[str]:
         """
         List reactions annotated with given EC-number
         """
@@ -109,7 +108,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         ]
         return reactions
 
-    def pathway_taxonomic_range(self, pathway_id: str) -> Optional[int]:
+    def pathway_taxonomic_range(self, pathway_id: str) -> int | None:
         """
         Return a NCBI-Taxonomy taxonomy identifier number
         """
@@ -120,7 +119,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         else:
             return None
 
-    def key_reactions_of_pathway(self, pathway_id: str) -> List[str]:
+    def key_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List all key reactions of a pathway.
         """
@@ -135,7 +134,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         return reaction_id in self.key_reactions_of_pathway(pathway_id)
 
-    def pathways_with_reaction(self, reaction_id: str) -> List[str]:
+    def pathways_with_reaction(self, reaction_id: str) -> list[str]:
         """
         List all pathways with the given reaction identifier.
         """
@@ -151,18 +150,18 @@ class PADMetKnowledgeBase(KnowledgeBase):
         """
         return len(self.pathways_with_reaction(reaction_id))
 
-    def variants_of_pathway(self, pathway_id: str) -> List[str]:
+    def variants_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the variants of a pathway.
         """
         raise NotImplementedError("For PADMet: variants of pathway is not implemented.")
 
-    def ontology_parent_class_of_pathway(self, pathway_id: str) -> List[str]:
+    def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the parent class of a pathway in the ontology of pathway tools
         """
         # Trace back the ontology tree
-        parent_classes: List[str] = []
+        parent_classes: list[str] = []
         current_class = pathway_id
         queue = Queue()
         queue.put(current_class)
@@ -182,7 +181,7 @@ class PADMetKnowledgeBase(KnowledgeBase):
                     visited.add(parent)
         return parent_classes
 
-    def species_evidence_of_pathway(self, pathway_id: str) -> List[int]:
+    def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
         """
         List NCBI Taxonomy identifiers of species where the pathway presence evidence was found in the literature, according to the knowledge base.
         """
@@ -193,14 +192,10 @@ class PADMetKnowledgeBase(KnowledgeBase):
             else []
         )
 
-    def reaction_graph_topological_order(self, pathway_id) -> Optional[List[str]]:
+    def reaction_graph_topological_order(self, pathway_id) -> list[str] | None:
         """
         Return the topological ordering of a pathway reaction graph.
 
         Assume that the pathway reaction graph is a directed acyclic graph.
         """
-        return (
-            self.padmet_object.dicOfNode[pathway_id].misc["REACTION-ORDER"]
-            if "REACTION-ORDER" in self.padmet_object.dicOfNode[pathway_id].misc
-            else None
-        )
+        return self.padmet_object.dicOfNode[pathway_id].misc.get("REACTION-ORDER", None)

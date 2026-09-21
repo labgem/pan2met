@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Command line interface of pangenome2metabolism
 """
@@ -8,7 +6,6 @@ import argparse
 import csv
 import logging
 import sys
-from typing import List
 
 import graph_tool as gt
 
@@ -29,7 +26,7 @@ def reactome_command(args, config=default_config):
     """
     `pan2met reactome` subcommand
     """
-    monomers: List[str] = read_list(args.input)
+    monomers: list[str] = read_list(args.input)
     reactions = reactome.infer_reactome_from_monomers_asp(
         monomers, inference_rules_path=args.gpr
     )
@@ -40,7 +37,7 @@ def reverse_reactome_command(args, config=default_config):
     """
     `pan2met reverse-reactome` subcommand
     """
-    reactions: List[str] = read_list(args.reactions)
+    reactions: list[str] = read_list(args.reactions)
     monomers: set[str] = reactome.minimal_monomer_set(
         reactions, args.reverse_gpr, args.gpr
     )

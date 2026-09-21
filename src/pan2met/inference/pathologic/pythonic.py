@@ -13,22 +13,17 @@ Refer to the `pan2met.inference.pathologic.aspic` module for an alternative impl
 relying on an Answer Set Programming implementation of a PathoLogic-like inference algorithm.
 """
 
-import logging
 import argparse
-import importlib.resources
 import configparser
-from typing import Optional, List, Tuple
-import io
+import importlib.resources
+import logging
 
-import networkx as nx
-
-
-from ...utils import set_logging_level
-from ...utils import read_list, write_output
-from ...io.knowledge_base import KnowledgeBase, select_kb
-from .generic import PathwayInference
 import pan2met.conf
+from pan2met.config import override_config
 
+from ...io.knowledge_base import KnowledgeBase, select_kb
+from ...utils import read_list, set_logging_level, write_output
+from .generic import PathwayInference
 
 logger = logging.getLogger("pan2met:inference")
 
@@ -41,13 +36,13 @@ class PythonicPathwayInference(PathwayInference):
 
     def __init__(
         self,
+        config,
         kb: KnowledgeBase,
         reactome: set[str],
-        taxon_id: Optional[int]=None,
+        taxon_id: int | None = None,
         record_reason: bool = False,
-        config=None
     ):
-        super().__init__(kb, reactome, taxon_id=taxon_id, config=config)
+        super().__init__(config, kb, reactome, taxon_id=taxon_id)
         self.record_reason: bool = record_reason
         self.decision_reason: dict[str, str] = {}
 
@@ -140,20 +135,21 @@ class PythonicPathwayInference(PathwayInference):
         )
         if all_reactions_absent:
             self.amend_reason(
-                pathway_id, details="REJECT: no known catalyzis at all for this pathway."
+                pathway_id,
+                details="REJECT: no known catalyzis at all for this pathway.",
             )
             return False
         # REJECT P if P is an electron transport pathway AND P lacks enzymes for any reaction
-        if self.RULES["pathway_ontology"]:
-            if (
-                "Electron-Transfer" in pathway_ontology_parents
-                and not all_reactions_are_present
-            ):
-                self.amend_reason(
-                    pathway_id,
-                    details="REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
-                )
-                return False
+        if (
+            self.RULES["pathway_ontology"]
+            and "Electron-Transfer" in pathway_ontology_parents
+            and not all_reactions_are_present
+        ):
+            self.amend_reason(
+                pathway_id,
+                details="REJECT: is an electron transport pathway and lacks an enzyme for a reaction.",
+            )
+            return False
 
         # INCLUDE P if P has all reactions present (meaning an enzyme is present for each reaction) AND if P is outside its taxonomic range, P contains more than 3 reactions
         if self.RULES["taxonomic_range"]:
@@ -218,47 +214,48 @@ class PythonicPathwayInference(PathwayInference):
                         return False
 
         if self.RULES["pathway_ontology"]:
-            one_reaction_graph_ordering = self.kb.reaction_graph_topological_order(
-                pathway_id
+            one_reaction_graph_ordering: list[str] | None = (
+                self.kb.reaction_graph_topological_order(pathway_id)
             )
-            if one_reaction_graph_ordering is not None:
-
-                if len(one_reaction_graph_ordering) > 2:
-                    first_reaction_id = one_reaction_graph_ordering[0]
-                    last_reaction_id = one_reaction_graph_ordering[-1]
-                    # FIXME: It is possible that a pathway reaction graph has multiple dead ends, so we might miss the correct last reaction id.
-                    # REJECT P if P is a biosynthetic pathway missing enzymes for its final step
-                    if "Biosynthesis" in pathway_ontology_parents:
-                        if last_reaction_id not in self.reactome:
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: biosynthesis pathway {pathway_id}'s last reaction is not present in known catalyzed reactome.",
-                            )
-                            return False
-                    # REJECT P if P is a catabolic pathway missing enzymes for its initial step
-                    elif "Degradation" in pathway_ontology_parents:
-                        if first_reaction_id not in self.reactome:
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: catabolysis pathway {pathway_id}'s first reaction is not present in known catalyzed reactome.",
-                            )
-                            return False
-                    # REJECT P if P is an energy metabolism pathway and is missing more than half its catalyzed reactions (understood as both non orphan and non spontaneous reactions)
-                    elif "Energy-Metabolism" in pathway_ontology_parents:
-                        catalyzed_reactions = [
-                            reaction
-                            for reaction in non_orphan_non_spontaneous_pathway_reactions
-                            if reaction in self.reactome
-                        ]
-                        if (
-                            len(catalyzed_reactions)
-                            < len(non_orphan_non_spontaneous_pathway_reactions) / 2
-                        ):
-                            self.amend_reason(
-                                pathway_id,
-                                f"REJECT: energy metabolism pathway {pathway_id} is missing more than half its catalyzed reactions.",
-                            )
-                            return False
+            if (
+                one_reaction_graph_ordering is not None
+                and len(one_reaction_graph_ordering) > 2
+            ):
+                first_reaction_id = one_reaction_graph_ordering[0]
+                last_reaction_id = one_reaction_graph_ordering[-1]
+                # FIXME: It is possible that a pathway reaction graph has multiple dead ends, so we might miss the correct last reaction id.
+                # REJECT P if P is a biosynthetic pathway missing enzymes for its final step
+                if "Biosynthesis" in pathway_ontology_parents:
+                    if last_reaction_id not in self.reactome:
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: biosynthesis pathway {pathway_id}'s last reaction is not present in known catalyzed reactome.",
+                        )
+                        return False
+                # REJECT P if P is a catabolic pathway missing enzymes for its initial step
+                elif "Degradation" in pathway_ontology_parents:
+                    if first_reaction_id not in self.reactome:
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: catabolysis pathway {pathway_id}'s first reaction is not present in known catalyzed reactome.",
+                        )
+                        return False
+                # REJECT P if P is an energy metabolism pathway and is missing more than half its catalyzed reactions (understood as both non orphan and non spontaneous reactions)
+                elif "Energy-Metabolism" in pathway_ontology_parents:
+                    catalyzed_reactions = [
+                        reaction
+                        for reaction in non_orphan_non_spontaneous_pathway_reactions
+                        if reaction in self.reactome
+                    ]
+                    if (
+                        len(catalyzed_reactions)
+                        < len(non_orphan_non_spontaneous_pathway_reactions) / 2
+                    ):
+                        self.amend_reason(
+                            pathway_id,
+                            f"REJECT: energy metabolism pathway {pathway_id} is missing more than half its catalyzed reactions.",
+                        )
+                        return False
 
         # INCLUDE P if the score of P exceeds the threshold PATHWAY-PREDICTION-CUTOFF
         if pathway_scores[pathway_id] > self.PATHWAY_SCORE_THRESHOLD:
@@ -336,11 +333,11 @@ class PythonicPathwayInference(PathwayInference):
 
 
 def infer_metabolism(
-    reactome: set[str], taxon: int, reason_filename: Optional[str] = None, config=None
+    reactome: set[str], taxon: int, reason_filename: str | None = None, config=None
 ) -> set[str]:
     kb = select_kb(config)
     inference = PythonicPathwayInference(
-        kb, reactome, taxon, reason_filename is not None, config=config
+        config, kb, reactome, taxon, reason_filename is not None
     )
     metabolism: set[str] = inference.inferred_pathways()
     if reason_filename is not None:
@@ -370,7 +367,7 @@ def main():
         default=0,
         help="Log level (-v: ERROR, -vv: WARNING, -vvv: INFO, -vvvv: DEBUG)",
     )
-    args, remaining_argv = parser.parse_known_args()
+    args, _remaining_argv = parser.parse_known_args()
 
     set_logging_level(args.verbose)
 
@@ -382,19 +379,14 @@ def main():
 
     # Update config globally overriding default_config with keys from given config filename
     if args.config:
-        logging.info(f"Overriding default configuration with {args.config}")
-        config_override = configparser.ConfigParser()
-        config_override.read([args.config])
-        config.update(config_override)
-
-    # Log the used config
-    with io.StringIO() as config_string_stream:
-        config.write(config_string_stream)
-        logger.info(f"Using config:\n{config_string_stream.getvalue()}")
+        logger.info(f"Overriding default configuration with {args.config}")
+        config = override_config(args.config)
 
     # Infer the metabolism
     reactome: set[str] = set(read_list(args.reactome))
-    metabolism: set[str] = infer_metabolism(reactome, args.taxon, args.reason, config=config)
+    metabolism: set[str] = infer_metabolism(
+        reactome, args.taxon, args.reason, config=config
+    )
     write_output(args.output, metabolism)
 
 

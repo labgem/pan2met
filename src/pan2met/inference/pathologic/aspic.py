@@ -3,37 +3,34 @@ An implementation of a PathoLogic-like pathway inference algorithm,
 relying on an Answer Set Programming approach with clingo.
 """
 
-from pathlib import Path
-from typing import Dict, Set, List, Optional
-import importlib.resources
-import configparser
 import argparse
+import importlib.resources
 import logging
-import io
+from pathlib import Path
 
 import clyngor
 
 import pan2met
-from ...utils import unquote
-from ...utils import read_list, write_output, set_logging_level
-from ...io.knowledge_base import KnowledgeBase
-from ...io.knowledge_base import select_kb
-from ...asp import kb_as_asp as kb_as_asp
+
+from ...asp import kb_as_asp
+from ...config import default_config, override_config
+from ...io.knowledge_base import KnowledgeBase, select_kb
+from ...utils import read_list, set_logging_level, unquote, write_output
 from .generic import PathwayInference
-from ...config import override_config, default_config
 
 logger = logging.getLogger("pan2met:inference:pathologic:aspic")
+
 
 class AspicPathwayInference(PathwayInference):
     def __init__(
         self,
+        config,
         kb: KnowledgeBase,
-        reactome: Set[str],
+        reactome: set[str],
         taxon_id: int,
         reference_kb_asp: Path,
-        config = None
     ):
-        super().__init__(kb, reactome, taxon_id=taxon_id, config=config)
+        super().__init__(config, kb, reactome, taxon_id=taxon_id)
         self.reference_kb_asp: Path = reference_kb_asp
 
     def prepare_clingo_inline_program(self) -> str:
@@ -44,11 +41,11 @@ class AspicPathwayInference(PathwayInference):
         taxonomic_range_atoms = kb_as_asp.pathways_in_taxonomic_range_as_asp(
             self.pathway_in_taxonomic_range
         )
-        return "\n".join([reactome_atoms, taxonomic_range_atoms])
+        return f"{reactome_atoms}\n{taxonomic_range_atoms}"
 
     def solve_asp_problem(
         self, inline_program: str, reference_kb_asp: Path
-    ) -> Dict[str, List[str]]:
+    ) -> dict[str, list[str]]:
         """
         Use clingo with clyngor to solve the Answer Set Programming problem to infer pathways.
 
@@ -78,7 +75,7 @@ class AspicPathwayInference(PathwayInference):
             ],
         }
 
-    def infer_pathways(self) -> List[str]:
+    def infer_pathways(self) -> list[str]:
         inline_program = self.prepare_clingo_inline_program()
         inferrence_results = self.solve_asp_problem(
             inline_program, self.reference_kb_asp
@@ -115,9 +112,9 @@ class AspicPathwayInference(PathwayInference):
                 pathway_score = self.pathway_score(
                     pathway,
                     non_orphan_non_spontaneous_reactions,
-                    pathways_keys_reactions,
+                    set(pathways_keys_reactions),
                 )
-                if pathway_score >= self.PATHWAY_COMPLETION_THRESHOLD:
+                if pathway_score >= self.PATHWAY_SCORE_THRESHOLD:
                     inferred_pathways.append(pathway)
                     self.amend_reason(
                         pathway,
@@ -172,7 +169,7 @@ def main():
     set_logging_level(args.verbose)
 
     # Config
-    logging.info(f"Overriding default configuration with {args.config}")
+    logger.info(f"Overriding default configuration with {args.config}")
     if args.config:
         config = override_config(args.config)
     else:
@@ -181,7 +178,11 @@ def main():
     kb = select_kb(config)
     reactome = set(read_list(args.reactome))
     pathway_inference = AspicPathwayInference(
-        kb, reactome, taxon_id=int(args.taxon), reference_kb_asp=Path(args.kb_asp), config=config
+        config,
+        kb,
+        reactome,
+        taxon_id=int(args.taxon),
+        reference_kb_asp=Path(args.kb_asp),
     )
     logger.info("Inferring pathways with ASP")
     pathways = pathway_inference.infer_pathways()

@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
-
 """
 Export "reverse" GPR rules
 """
 
 import argparse
-from typing import Iterable
+from collections.abc import Iterable
 
 from ..utils import read_list, write_output
 
@@ -65,7 +63,7 @@ def parse_arguments():
 
 
 def main():
-    parser, args = parse_arguments()
+    _parser, args = parse_arguments()
     gpr_rules = read_list(args.input)
     reverse_gpr_rules = reverse_gpr_asp(gpr_rules)
     write_output(args.output, reverse_gpr_rules)

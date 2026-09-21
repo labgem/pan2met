@@ -16,10 +16,8 @@ The Answer Set Programming atoms we use are:
 
 import argparse
 
-
-from ..io.knowledge_base import KnowledgeBase
-from ..io.knowledge_base import select_kb
 from ..config import default_config, override_config
+from ..io.knowledge_base import KnowledgeBase, select_kb
 
 
 def pathway_asp_atom(pathway: str) -> str:
@@ -62,38 +60,48 @@ def write_kb_as_asp(kb: KnowledgeBase, output_file: str):
     with open(output_file, "w") as f:
         # Write pathway/1 atoms
         pathways = kb.pathways()
-        for pathway in pathways:
-            f.write(pathway_asp_atom(pathway) + "\n")
+        f.writelines(pathway_asp_atom(pathway) + "\n" for pathway in pathways)
 
         # Write is_in_pathway/2 atoms
         for pathway in pathways:
             reactions = kb.reactions_of_pathway(pathway)
-            for reaction in reactions:
-                f.write(is_in_pathway_asp_atom(reaction, pathway) + "\n")
+            f.writelines(
+                is_in_pathway_asp_atom(reaction, pathway) + "\n"
+                for reaction in reactions
+            )
 
         # Write is_a/2 atoms for pathway ontology
         for pathway in pathways:
-            for pathway_class in kb.ontology_parent_class_of_pathway(pathway):
-                f.write(pathway_class_asp_atom(pathway, pathway_class) + "\n")
+            f.writelines(
+                pathway_class_asp_atom(pathway, pathway_class) + "\n"
+                for pathway_class in kb.ontology_parent_class_of_pathway(pathway)
+            )
 
         # Write orphan/1 atoms
-        for reaction in kb.orphan_reactions():
-            f.write(orphan_asp_atom(reaction) + "\n")
+        f.writelines(
+            orphan_asp_atom(reaction) + "\n" for reaction in kb.orphan_reactions()
+        )
 
         # Write spontaneous/1 atoms
-        for reaction in kb.spontaneous_reactions():
-            f.write(spontaneous_asp_atom(reaction) + "\n")
+        f.writelines(
+            spontaneous_asp_atom(reaction) + "\n"
+            for reaction in kb.spontaneous_reactions()
+        )
 
         # Write pathway reaction order atoms
         for pathway in pathways:
             reaction_order = kb.pathway_reaction_order(pathway)
-            for predecessor, successor in reaction_order:
-                f.write(pathway_reaction_order(pathway, predecessor, successor) + "\n")
+            f.writelines(
+                pathway_reaction_order(pathway, predecessor, successor) + "\n"
+                for predecessor, successor in reaction_order
+            )
 
         # Write pathway key reactions atoms
         for pathway in pathways:
-            for reaction in kb.key_reactions_of_pathway(pathway):
-                f.write(pathway_key_reaction_asp_atom(pathway, reaction) + "\n")
+            f.writelines(
+                pathway_key_reaction_asp_atom(pathway, reaction) + "\n"
+                for reaction in kb.key_reactions_of_pathway(pathway)
+            )
 
 
 def target_organism_reactions_as_asp(reactome: set[str]) -> str:
@@ -122,11 +130,7 @@ def main():
         help="The output file to write the ASP atoms to",
     )
     parser.add_argument(
-        "-c",
-        "--config",
-        help="Config override",
-        required=False,
-        default=None
+        "-c", "--config", help="Config override", required=False, default=None
     )
     args = parser.parse_args()
     if args.config:

@@ -2,12 +2,12 @@
 Some helper functions to deal with pangenome related input files.
 """
 
-from typing import Dict, Set, Literal
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+from typing import Literal
 
 
-def read_pangenome_rtab(rtab_filename: Path) -> Dict[str, Set[str]]:
+def read_pangenome_rtab(rtab_filename: Path) -> dict[str, set[str]]:
     """
     Read a .Rtab file
     :param rtab_filename: path to the .Rtab file
@@ -18,19 +18,17 @@ def read_pangenome_rtab(rtab_filename: Path) -> Dict[str, Set[str]]:
         strains = header.split("\t")[1:]
         strain_to_families = defaultdict(set)
         for line in rtab_file:
-            i = 0
-            for field in line.rstrip().split("\t"):
+            for i, field in enumerate(line.rstrip().split("\t")):
                 if i == 0:
                     family_id = field
                 elif field == "1":
                     strain_to_families[strains[i - 1]].add(family_id)
-                i += 1
     return dict(strain_to_families)
 
 
 def read_partition_files(
     persistent_filename: Path, shell_filename: Path, cloud_filename: Path
-) -> Dict[Literal["persistent", "shell", "cloud"], Set[str]]:
+) -> dict[Literal["persistent", "shell", "cloud"], set[str]]:
     """
     Read persistent.txt, shell.txt and cloud.txt files, with lists of gene families identifiers.
     :param persistent_filename: Path to a text file listing gene families of the persistent partition
@@ -38,7 +36,7 @@ def read_partition_files(
     :param cloud_filename: Path to a text file listing gene families of the cloud partition
     :return: A dictionnary mapping the name of the partition ("persistent", "shell", "cloud") to the set of gene families identifiers.
     """
-    partitions_with_families = dict()
+    partitions_with_families = {}
     with open(persistent_filename) as f:
         partitions_with_families["persistent"] = {line.rstrip().upper() for line in f}
     with open(shell_filename) as f:
@@ -48,13 +46,13 @@ def read_partition_files(
     return partitions_with_families
 
 
-def read_functional_module_file(module_filename: Path) -> Dict[str, Set[str]]:
+def read_functional_module_file(module_filename: Path) -> dict[str, set[str]]:
     """
     Read a pangenome module file.
     :param module_filename: Path to the module TSV file with two columns (module identifier, gene families identifier)
     :return: a dictionnary mapping the name of the module to the set of gene families identifiers.
     """
-    modules_with_families = dict()
+    modules_with_families = {}
     with open(module_filename, "r") as module_file:
         _header = module_file.readline().rstrip()
         for line in module_file:

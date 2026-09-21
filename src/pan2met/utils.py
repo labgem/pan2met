@@ -1,11 +1,11 @@
 import logging
 from collections import defaultdict
-from typing import Dict, Iterable, List, Set
+from collections.abc import Iterable
 
 logger = logging.getLogger("pan2met")
 
 
-def read_list(filename: str) -> List[str]:
+def read_list(filename: str) -> list[str]:
     """
     Read a list of strings from a file, one per line
     """
@@ -13,11 +13,11 @@ def read_list(filename: str) -> List[str]:
         return f.read().splitlines()
 
 
-def read_mapping(filename: str, sep="\t") -> Dict[str, Set[str]]:
+def read_mapping(filename: str, sep="\t") -> dict[str, set[str]]:
     """
     Read a dictionary from a file.
     """
-    mapping: Dict[str, Set[str]] = defaultdict(set)
+    mapping: dict[str, set[str]] = defaultdict(set)
     with open(filename, "r") as f:
         for row in f:
             parts = row.strip().split("\t")
@@ -28,11 +28,11 @@ def read_mapping(filename: str, sep="\t") -> Dict[str, Set[str]]:
     return dict(mapping)
 
 
-def reverse_mapping(mapping: Dict[str, Set[str]]) -> Dict[str, Set[str]]:
+def reverse_mapping(mapping: dict[str, set[str]]) -> dict[str, set[str]]:
     """
     Reverse a dictionnary. Set values as keys and keys as values.
     """
-    reversed: Dict[str, Set[str]] = defaultdict(set)
+    reversed: dict[str, set[str]] = defaultdict(set)
     for key, values in mapping.items():
         for value in values:
             reversed[value].add(key)
@@ -51,8 +51,8 @@ def static_vars(**kwargs):
     """Decorate a function with local attributes"""
 
     def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
+        for key, value in kwargs.items():
+            setattr(func, key, value)
         return func
 
     return decorate

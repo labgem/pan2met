@@ -7,7 +7,7 @@ we get more confidence on this candidate catalyzis.
 
 import logging
 from collections import namedtuple
-from typing import Dict, Iterable, List, Set, Tuple
+from collections.abc import Iterable
 
 import graph_tool as gt
 
@@ -25,11 +25,11 @@ logger = logging.getLogger()
 
 def assign_candidate_enzymes_catalysis(
     pathway: str,
-    candidate_catalyzis: Dict[str, Set[str]],
-    gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
-    pathway_closures: Dict[str, List[List[Tuple[bool, gt.Vertex]]]],
+    candidate_catalyzis: dict[str, set[str]],
+    gene_family_to_pangenome_graph_nodes: dict[str, list[gt.Vertex]],
+    pathway_closures: dict[str, list[list[tuple[bool, gt.Vertex]]]],
     kb: KnowledgeBase,
-) -> Dict[str, Dict[str, List[GeneFamilyClosureAssignation]]]:
+) -> dict[str, dict[str, list[GeneFamilyClosureAssignation]]]:
     """
     Assign a candidate gene family with uncertain catalysis
     to a pangenome graph closure on gene family nodes near gene
@@ -46,7 +46,6 @@ def assign_candidate_enzymes_catalysis(
             result[enzyme] = {}
             assignations = list(
                 assign_candidate_enzyme_to_pathway_reactions(
-                    pathway,
                     enzyme,
                     reaction,
                     gene_family_to_pangenome_graph_nodes,
@@ -60,7 +59,7 @@ def assign_candidate_enzymes_catalysis(
 
 
 def is_within_a_closure(
-    vertex: gt.Vertex, closure: List[Tuple[bool, gt.Vertex]]
+    vertex: gt.Vertex, closure: list[tuple[bool, gt.Vertex]]
 ) -> bool:
     """
     Check whether a vertex belongs to a listed closure
@@ -73,16 +72,12 @@ def is_within_a_closure(
 
 
 def assign_candidate_enzyme_to_pathway_reactions(
-    pathway: str,
     enzyme_gene_family: str,
     enzyme_reaction: str,
-    gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
-    pathway_closures: Dict[str, List[List[Tuple[bool, gt.Vertex]]]],
+    gene_family_to_pangenome_graph_nodes: dict[str, list[gt.Vertex]],
+    pathway_closures: dict[str, list[list[tuple[bool, gt.Vertex]]]],
     kb: KnowledgeBase,
 ) -> Iterable[GeneFamilyClosureAssignation]:
-    logger.info(
-        f"Attempt to assign a closure node to {enzyme_reaction} in pathway {pathway}"
-    )
     if enzyme_gene_family in gene_family_to_pangenome_graph_nodes:
         for gene_family_vertex in gene_family_to_pangenome_graph_nodes[
             enzyme_gene_family
@@ -101,8 +96,8 @@ def assign_candidate_enzyme_to_pathway_reactions(
 def pathway_operon_filler(
     pangenome_graph: gt.Graph,
     kb: KnowledgeBase,
-    confident_enzyme_catalyzis: Dict[str, Set[str]],
-    less_confident_enzyme_catalyzis: Dict[str, Set[str]],
+    confident_enzyme_catalyzis: dict[str, set[str]],
+    less_confident_enzyme_catalyzis: dict[str, set[str]],
     distance: int,
     local_edge_jaccard_threshold: float,
 ) -> dict[str, dict[str, list[GeneFamilyClosureAssignation]]]:
@@ -113,7 +108,7 @@ def pathway_operon_filler(
     pathways = kb.pathways()
     # Select a subset of the pathways that have at least one listed reaction
     reaction_pathways: set[str] = set()
-    for _enzyme, reactions in confident_enzyme_catalyzis.items():
+    for reactions in confident_enzyme_catalyzis.values():
         for reaction in reactions:
             for pathway in kb.pathways_with_reaction(reaction):
                 reaction_pathways.add(pathway)

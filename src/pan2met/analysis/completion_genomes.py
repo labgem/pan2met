@@ -3,14 +3,13 @@ Completion matrix for a folder with files with sets of reactions
 """
 
 import argparse
-from pathlib import Path
-from typing import List, Set, Dict
-import logging
 import csv
+import logging
+from pathlib import Path
 
-from ..config import override_config, default_config
-from ..utils import read_list
+from ..config import default_config, override_config
 from ..io.knowledge_base import KnowledgeBase, select_kb
+from ..utils import read_list
 
 logger = logging.getLogger("pan2met:analysis:completion_genomes")
 logging.basicConfig(level=logging.DEBUG)
@@ -18,12 +17,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 def write_pathway_completion_by_strain(
     prefix: str,
-    pathways: List[str],
-    strain_to_reactions: Dict[str, Set[str]],
+    pathways: list[str],
+    strain_to_reactions: dict[str, set[str]],
     use_orphan: bool,
     kb: KnowledgeBase,
 ):
-    logger.info(f"Computing completion values for {len(pathways)} pathways in {len(strain_to_reactions.keys())} strains, {'with orphan reactions' if use_orphan else 'ignoring orphan reactions'}.")
+    logger.info(
+        f"Computing completion values for {len(pathways)} pathways in {len(strain_to_reactions.keys())} strains, {'with orphan reactions' if use_orphan else 'ignoring orphan reactions'}."
+    )
     if use_orphan:
         pathways_to_reactions = {
             pathway: set(kb.non_spontaneous_reactions_of_pathway(pathway))
@@ -40,13 +41,13 @@ def write_pathway_completion_by_strain(
     with open(filename, "w") as output_file:
         logger.info(f"Writing completion values to {filename}")
         writer = csv.writer(output_file, delimiter="\t")
-        sorted_strains = list(sorted(strain_to_reactions.keys()))
+        sorted_strains = sorted(strain_to_reactions.keys())
         header = [
-                "pathway",
-                "pathway name",
-                "nb reactions",
-                "max completion",
-            ] + sorted_strains
+            "pathway",
+            "pathway name",
+            "nb reactions",
+            "max completion",
+        ] + sorted_strains
         writer.writerow(header)
         for pathway, pathway_reactions in pathways_to_reactions.items():
             if len(pathway_reactions) == 0:
@@ -56,32 +57,38 @@ def write_pathway_completion_by_strain(
             pathway_name = ""
             try:
                 pathway_name = kb.name_of_pathway(pathway)
-            except NotImplementedError as e:
+            except NotImplementedError:
                 pass
 
             record = [
-                    pathway,
-                    pathway_name,
-                    len(pathway_reactions),
-                ]
-            strain_completion = dict()
+                pathway,
+                pathway_name,
+                len(pathway_reactions),
+            ]
+            strain_completion = {}
             for strain, strain_reactions in strain_to_reactions.items():
-                strain_completion[strain] = len(strain_reactions.intersection(pathway_reactions)) / len(pathway_reactions)
+                strain_completion[strain] = len(
+                    strain_reactions.intersection(pathway_reactions)
+                ) / len(pathway_reactions)
             max_completion = max(strain_completion.values())
             if max_completion == 0:
-                logger.critical(f"pathway {pathway} has a null completion in all strains.")
+                logger.critical(
+                    f"pathway {pathway} has a null completion in all strains."
+                )
             record.append(max_completion)
             for strain in sorted_strains:
                 record.append(strain_completion[strain])
             writer.writerow(record)
 
-def read_folder_sets(folder: Path) -> Dict[str, Set[str]]:
-    folder_sets: Dict[str, Set[str]] = {}
+
+def read_folder_sets(folder: Path) -> dict[str, set[str]]:
+    folder_sets: dict[str, set[str]] = {}
     for file in folder.iterdir():
         id = file.stem
         file_entries = set(read_list(file))
         folder_sets[id] = file_entries
     return folder_sets
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -106,9 +113,10 @@ def main():
     else:
         config = default_config
 
-    pathways: List[str] = read_list(args.pathways)
-    strain_to_reactions: Dict[str, Set[str]] = read_folder_sets(Path(args.genome_reactions))
-
+    pathways: list[str] = read_list(args.pathways)
+    strain_to_reactions: dict[str, set[str]] = read_folder_sets(
+        Path(args.genome_reactions)
+    )
 
     kb = select_kb(config)
     write_pathway_completion_by_strain(

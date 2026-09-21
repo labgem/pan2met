@@ -13,24 +13,23 @@ TODO:
 import argparse
 import csv
 from pathlib import Path
-from typing import Dict
 
-from ppanggolin.pangenome import Pangenome
-from ppanggolin.genome import Gene
-from ppanggolin.geneFamily import GeneFamily
 from ppanggolin.formats.readBinaries import check_pangenome_info
+from ppanggolin.geneFamily import GeneFamily
+from ppanggolin.genome import Gene
+from ppanggolin.pangenome import Pangenome
 
 
 def ppanggolin_extract_gene_to_partition_mapping(
     pangenome: Pangenome,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Construct a mapping between gene identifier and gene family partition
 
     :param pangenome: a PPanGGOLiN pangenome
     :return: a dictionnary with gene name as key, and corresponding gene partition as value
     """
-    mapping: Dict[str, str] = {}
+    mapping: dict[str, str] = {}
     for contig in pangenome.contigs:
         for gene in contig.genes:
             gene_family = gene.family
@@ -56,7 +55,7 @@ def ppanggolin_get_gene_by_identifier(
 
 
 def ppanggolin_partition_of_gene_family(
-    gene_identifier: str, pangenome: Pangenome, gene_to_family: Dict[str, str]
+    gene_identifier: str, pangenome: Pangenome, gene_to_family: dict[str, str]
 ) -> str:
     """
     Get the pangenome partition class of a gene as annoted in PPanGGOLiN pangenome.
@@ -103,13 +102,13 @@ def main():
         pangenome, need_families=True, need_annotations=True, disable_bar=True
     )  # do not forget the call to this function, otherwise the generator of contigs and genes will be empty as the pangenome would not be loaded.
     # Prepare a dictionnary mapping a gene identifier to a gene partition
-    gene_to_partition: Dict[str, str] = ppanggolin_extract_gene_to_partition_mapping(
+    gene_to_partition: dict[str, str] = ppanggolin_extract_gene_to_partition_mapping(
         pangenome
     )
 
     # Read the reference mapping of reaction to enzyme file
     with open(args.reaction_enzyme, "r") as reaction_enzyme_file:
-        reaction_to_enzyme_gene: Dict[str, str] = {}
+        reaction_to_enzyme_gene: dict[str, str] = {}
         reader = csv.reader(reaction_enzyme_file, delimiter="\t")
         for row in reader:
             if len(row) == 2:
@@ -118,24 +117,23 @@ def main():
                 reaction_to_enzyme_gene[reaction] = enzyme_gene
 
     # Write the output file
-    with open(args.reactions, "r") as reactions_file:
-        with open(args.output, "w") as output_file:
-            writer = csv.writer(output_file, delimiter="\t")
-            writer.writerow(
-                ["reaction", "enzyme_gene", "pangenome_partition"]
-            )  # write header
-            for row in reactions_file:
-                reaction = row.strip()
-                if reaction != "" and reaction in reaction_to_enzyme_gene:
-                    enzyme_gene = reaction_to_enzyme_gene[reaction]
-                    if enzyme_gene in gene_to_partition:
-                        pangenome_partition = gene_to_partition[enzyme_gene]
-                    else:
-                        pangenome_partition = "NA"
-                else:
-                    enzyme_gene = "NA"
-                    pangenome_partition = "NA"
-                writer.writerow([reaction, enzyme_gene, pangenome_partition])
+    with (
+        open(args.reactions, "r") as reactions_file,
+        open(args.output, "w") as output_file,
+    ):
+        writer = csv.writer(output_file, delimiter="\t")
+        writer.writerow(
+            ["reaction", "enzyme_gene", "pangenome_partition"]
+        )  # write header
+        for row in reactions_file:
+            reaction = row.strip()
+            if reaction != "" and reaction in reaction_to_enzyme_gene:
+                enzyme_gene = reaction_to_enzyme_gene[reaction]
+                pangenome_partition = gene_to_partition.get(enzyme_gene, "NA")
+            else:
+                enzyme_gene = "NA"
+                pangenome_partition = "NA"
+            writer.writerow([reaction, enzyme_gene, pangenome_partition])
 
 
 if __name__ == "__main__":

@@ -4,9 +4,8 @@ Some helper functions to deal with the taxonomic range.
 The taxonomic "ground truth" is taken from NCBI Taxonomy.
 """
 
-from typing import Dict, Set
-from pathlib import Path
 import csv
+from pathlib import Path
 
 
 class NCBITaxonomyTree:
@@ -23,12 +22,12 @@ class NCBITaxonomyTree:
 
     def parse_parent_dict(self, dump_path: str):
         """
-        :param dump_path: path to the directory with the dump of the NCBI Taxonomy database.
-        load a dictionnary linking a taxid to its direct parent in the NCBI Taxonomy tree.
+        Load a dictionnary linking a taxid to its direct parent in the NCBI Taxonomy tree.
+        :param dump_path: path to the directory with the dump of the NCBI Taxonomy database
         """
-        self.parent_dict: Dict[int, int] = {}
-        self.tax_rank: Dict[int, str] = {}
-        self.species_taxa: Set[int] = set()
+        self.parent_dict: dict[int, int] = {}
+        self.tax_rank: dict[int, str] = {}
+        self.species_taxa: set[int] = set()
 
         with open(Path(dump_path) / "nodes.dmp", "r") as nodes_file:
             reader = csv.DictReader(
@@ -53,15 +52,15 @@ class NCBITaxonomyTree:
             for row in reader:
                 tax_id = int(row["tax_id"].replace("\t", ""))
                 parent_tax_id = int(row["parent tax_id"].replace("\t", ""))
-                if row["rank"] != "no rank":
-                    if row["rank"] == "species":
-                        self.species_taxa.add(tax_id)
+                if row["rank"] != "no rank" and row["rank"] == "species":
+                    self.species_taxa.add(tax_id)
 
                 self.parent_dict[tax_id] = parent_tax_id
                 self.tax_rank[tax_id] = row["rank"].replace("\t", "")
 
     def is_child_of_parent_tax_id(self, parent_tax_id: int, child_tax_id: int) -> bool:
         """
+        Check if a node is a parent of another node.
 
         :param parent_tax_id: NCBI Taxonomy identifier
         :param child_tax_id:  NCBI Taxonomy identifier

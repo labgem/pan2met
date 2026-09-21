@@ -5,7 +5,6 @@ We want to identify reactions that are catalyzed by multiple different enzymes.
 import argparse
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Set
 
 from ppanggolin.formats.readBinaries import check_pangenome_info
 from ppanggolin.pangenome import Pangenome
@@ -13,7 +12,7 @@ from ppanggolin.pangenome import Pangenome
 
 def ppanggolin_gene_families_strain_count(
     pangenome: Pangenome,
-) -> Dict[str, Dict[str, int]]:
+) -> dict[str, dict[str, int]]:
     """
     Count how many genes belongs to each gene family in each strain.
     :param pangenome: a PPanGGOLiN pangenome
@@ -33,8 +32,8 @@ def ppanggolin_gene_families_strain_count(
 
 
 def count_enzymes_per_reactions(
-    enzyme_reaction_mapping: Dict[str, Set[str]],
-) -> Dict[str, int]:
+    enzyme_reaction_mapping: dict[str, set[str]],
+) -> dict[str, int]:
     """
     Count the number of enzymes that catalyze each reaction.
 
@@ -42,16 +41,16 @@ def count_enzymes_per_reactions(
     :return: A dictionary mapping each reaction identifier to the count of enzymes that catalyze it.
     """
     reaction_enzyme_count = defaultdict(int)
-    for _enzyme, catalyzed_reactions in enzyme_reaction_mapping.items():
+    for catalyzed_reactions in enzyme_reaction_mapping.values():
         for reaction in catalyzed_reactions:
             reaction_enzyme_count[reaction] += 1
     return dict(reaction_enzyme_count)
 
 
 def count_enzymes_per_reaction_within_strain(
-    enzyme_reaction_mapping: Dict[str, Set[str]],
-    gene_family_strain_count: Dict[str, Dict[str, int]],
-) -> Dict[str, Dict[str, int]]:
+    enzyme_reaction_mapping: dict[str, set[str]],
+    gene_family_strain_count: dict[str, dict[str, int]],
+) -> dict[str, dict[str, int]]:
     """
     In a reactome predicted at the scale of a pangenome,
     counting the whole number of enzymes that catalyze a reaction is misleading, as some of these enzymes may be present in different strains.
@@ -131,8 +130,10 @@ def main():
         )
         with open(args.output, "w") as output_file:
             for reaction, strain_counts in reaction_enzyme_count_by_strain.items():
-                for strain, count in strain_counts.items():
-                    output_file.write(f"{reaction}\t{count}\t{strain}\n")
+                output_file.writelines(
+                    f"{reaction}\t{count}\t{strain}\n"
+                    for strain, count in strain_counts.items()
+                )
     else:
         reaction_enzyme_count = count_enzymes_per_reactions(enzyme_reaction_mapping)
         with open(args.output, "w") as output_file:

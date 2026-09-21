@@ -8,23 +8,20 @@ To identify chimeric pathways, we use the file .Rtab with the matrix of presence
 and a knowledge base with allowing to get the set of reactions in each pathway as well as a set of predicted pathways.
 """
 
-from typing import Dict, Set, List
 import argparse
 import itertools
-import logging
-import configparser
 
+from ..config import default_config, override_config
 from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..io.pangenome import read_pangenome_rtab
 from ..utils import read_list, read_mapping, reverse_mapping
-from ..config import default_config, override_config
 
 
 def strain_with_reaction(
     reaction: str,
-    reaction_to_genes: Dict[str, Set[str]],
-    gene_to_strains: Dict[str, Set[str]],
-) -> Set[str]:
+    reaction_to_genes: dict[str, set[str]],
+    gene_to_strains: dict[str, set[str]],
+) -> set[str]:
     """
     Get the list of strains of the pangenomes that is expected to have a enzyme catalyzing the reaction.
     :param reaction: a reaction identifier
@@ -40,8 +37,8 @@ def strain_with_reaction(
 
 def is_chimeric(
     pathway: str,
-    reaction_to_genes: Dict[str, Set[str]],
-    gene_to_strains: Dict[str, Set[str]],
+    reaction_to_genes: dict[str, set[str]],
+    gene_to_strains: dict[str, set[str]],
     kb: KnowledgeBase,
 ) -> bool:
     """
@@ -50,20 +47,19 @@ def is_chimeric(
     :param pathway: a pathway identifier, available in the knowledge base
     :return: True if the pathway is chimeric, False otherwise.
     """
-    pathway_non_orphan_non_spontaneous_reactions: List[str] = (
+    pathway_non_orphan_non_spontaneous_reactions: list[str] = (
         kb.non_orphan_non_spontaneous_reactions_of_pathway(pathway)
     )
-    reaction_strain_sets: List[Set[str]] = []
+    reaction_strain_sets: list[set[str]] = []
     for reaction in pathway_non_orphan_non_spontaneous_reactions:
-        reaction_strains: Set[str] = strain_with_reaction(
+        reaction_strains: set[str] = strain_with_reaction(
             reaction, reaction_to_genes, gene_to_strains
         )
         reaction_strain_sets.append(reaction_strains)
 
     for set_a, set_b in itertools.combinations(reaction_strain_sets):
-        if len(set_a) >= 1 and len(set_b) >= 1:
-            if len(set_a.intersection(set_b)) == 0:
-                return True
+        if len(set_a) >= 1 and len(set_b) >= 1 and len(set_a.intersection(set_b)) == 0:
+            return True
     return False
 
 
@@ -94,13 +90,13 @@ def main():
     parser = argument_parser()
     args = parser.parse_args()
 
-    strain_to_genes: Dict[str, Set[str]] = read_pangenome_rtab(
+    strain_to_genes: dict[str, set[str]] = read_pangenome_rtab(
         args.gene_presence_absence
     )
-    pathways: List[str] = read_list(args.pathways)
-    gene_to_reactions: Dict[str, Set[str]] = read_mapping(args.gene_reaction)
-    reaction_to_genes: Dict[str, Set[str]] = reverse_mapping(gene_to_reactions)
-    gene_to_strains: Dict[str, Set[str]] = reverse_mapping(strain_to_genes)
+    pathways: list[str] = read_list(args.pathways)
+    gene_to_reactions: dict[str, set[str]] = read_mapping(args.gene_reaction)
+    reaction_to_genes: dict[str, set[str]] = reverse_mapping(gene_to_reactions)
+    gene_to_strains: dict[str, set[str]] = reverse_mapping(strain_to_genes)
 
     # Update config globally overriding default_config with keys from given config filename
     if args.config:

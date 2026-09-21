@@ -2,12 +2,12 @@
 Compute the set of proteic complex
 """
 
-from typing import Iterable, Set
+from collections.abc import Iterable
 
 from pan2met.io.knowledge_base import KnowledgeBase
 
 
-def is_constructible(complex_id: str, monomers: Set[str], kb: KnowledgeBase) -> bool:
+def is_constructible(complex_id: str, monomers: set[str], kb: KnowledgeBase) -> bool:
     """
     Check if a complex is constrictible.
     A complex is constructible if all its component is either constructible or a listed monomer.
@@ -22,7 +22,7 @@ def is_constructible(complex_id: str, monomers: Set[str], kb: KnowledgeBase) -> 
     return True
 
 
-def infer_complex(kb: KnowledgeBase, monomers: Set[str]) -> Iterable[str]:
+def infer_complex(kb: KnowledgeBase, monomers: set[str]) -> Iterable[str]:
     """
     List the set of protein complex that are constructible based on a set of protein monomers.
     """

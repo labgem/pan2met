@@ -2,8 +2,9 @@
 (pan)genome to (pan)metabolism
 """
 
-from . import config
 import importlib.metadata
+
+from . import config
 
 __all__ = ["config"]
 __version__ = importlib.metadata.version(__name__)

@@ -1,5 +1,4 @@
 import logging
-from typing import Optional, Dict
 
 from ...io.knowledge_base import KnowledgeBase
 from ...taxonomy import NCBITaxonomyTree
@@ -8,21 +7,19 @@ logger = logging.getLogger("pan2met:inference:pathologic")
 
 
 class PathwayInference:
-
     def __init__(
         self,
+        config: dict,
         kb: KnowledgeBase,
         reactome: set[str],
-        taxon_id: int = None,
+        taxon_id: int | None = None,
         record_reason: bool = False,
-        config = None,
     ):
+        self.config = config
         # Configure prediction algorithm
-        self.PATHWAY_COMPLETION_THRESHOLD: float = float(
-             config["inference"]["pathway_completion_threshold"]
-        )
+
         self.PATHWAY_SCORE_THRESHOLD: float = float(
-            config["inference"]["pathway_score_threshold"]
+            config["inference"]["pathway_score"]["threshold"]
         )
         AVAILABLE_RULES = [
             "taxonomic_range",
@@ -34,18 +31,18 @@ class PathwayInference:
         ]
         self.RULES: dict[str, bool] = {key: True for key in AVAILABLE_RULES}
         self.RULES.update(
-            {
-                key: config["inference.rules"].getboolean(key)
-                for key in AVAILABLE_RULES
-            }
+            {key: key in config["inference"]["rules"] for key in AVAILABLE_RULES}
         )
 
         logger.debug(f"Using taxonomic_range rule: {self.RULES['taxonomic_range']}")
         logger.debug(f"Use taxon id {taxon_id} as reference")
 
-
-        if (self.RULES["taxonomic_range"] or self.RULES['pathway_species']) and taxon_id is None:
-            raise ValueError("taxon_id cannot be None when using the taxonomic range and species based heuristics")
+        if (
+            self.RULES["taxonomic_range"] or self.RULES["pathway_species"]
+        ) and taxon_id is None:
+            raise ValueError(
+                "taxon_id cannot be None when using the taxonomic range and species based heuristics"
+            )
 
         self.kb: KnowledgeBase = kb
         self.reactome: set[str] = reactome
@@ -62,8 +59,7 @@ class PathwayInference:
         self.decision_reason: dict[str, str] = {}
         self.record_reason = record_reason
 
-
-    def reason(self, pathway_id: str) -> Optional[str]:
+    def reason(self, pathway_id: str) -> str | None:
         """
         Get a report on why the pathway is retained or not.
         """
@@ -281,11 +277,13 @@ class PathwayInference:
         # FIXME: Warning: in metabiantes, the strain is not taken into account
         for evidence_species_id in self.kb.species_evidence_of_pathway(pathway_id):
             if self.taxonomy.is_under_same_species(self.taxon_id, evidence_species_id):
-                return 1.2  # config["inference"]["weights"]["neighbor_species_boost"]
+                return self.config["inference"]["pathway_score"][
+                    "neighbor_species_boost"
+                ]
         return 1
 
     def taxonomic_range_boost(self, pathway_id: str) -> float:
-        """
+        r"""
         "PS receives an additional boost T2 if the subject organism is within the expected taxonomic range
         of the pathway as designated within MetaCyc (e.g., if the subject organism is a plant and the path-
         way is designated as a plant pathway). If the subject organism is outside the expected taxonomic
@@ -298,17 +296,14 @@ class PathwayInference:
         :param pathway_id: the identifier of the pathway
         :return: the taxonomic range boost score of the pathway
         """
-        if (
-            pathway_id in self.pathway_in_taxonomic_range
-            and self.pathway_in_taxonomic_range[pathway_id]
-        ):
-            return 1.2  # config["inference"]["weights"]["taxonomic_range_boost"]
+        if self.pathway_in_taxonomic_range.get(pathway_id):
+            return self.config["inference"]["pathway_score"]["taxonomic_range_boost"]
         else:
             return 1
 
     def taxonomic_range_belonging_precompute(
         self, pathways: list[str]
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         """
         Precompute the Boolean saying whether the target organism
         is under the given NCBI-Taxonomy ID for the target organism.

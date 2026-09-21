@@ -19,17 +19,13 @@ To launch this script, you will need to launch the pathway-tools python API with
 """
 
 import argparse
-from typing import Iterable
+import logging
+from collections.abc import Iterable
 
-import pythoncyc
+from pan2met.config import default_config, override_config
+from pan2met.io.knowledge_base import KnowledgeBase, select_kb
 
-from ..utils import logger
-from ..io.pythoncyc.metacyc import (
-    get_reactions_of_pathway,
-    is_spontaneous,
-    is_orphan,
-    remove_pipes,
-)
+logger = logging.getLogger("pan2met:pathway_rules")
 
 
 def pathway_asp_rule(pathway: str, reactions: Iterable[str]) -> str:
@@ -40,10 +36,11 @@ def pathway_asp_rule(pathway: str, reactions: Iterable[str]) -> str:
     )
 
 
-def pathway_asp_generator(pgdb, ignore_orphan: bool = False) -> Iterable[str]:
+def pathway_asp_generator(
+    kb: KnowledgeBase, ignore_orphan: bool = False
+) -> Iterable[str]:
     """
     Generate Answer Set Programming rules for pathway inference rules
-    from a BioCyc PGDB (MetaCyc most probably).
 
     Each pathway will be represented by a AnsProlog rule as follows,
     given that the pathway "PWY-1" contains the reactions RXN-1, RXN-2 and RXN-3:
@@ -64,16 +61,14 @@ def pathway_asp_generator(pgdb, ignore_orphan: bool = False) -> Iterable[str]:
         ASP rules
 
     """
-    for pathway in pgdb.all_pathways():
-        required_reactions = []
-        for reaction in get_reactions_of_pathway(pgdb, pathway):
-            if not is_spontaneous(pgdb, reaction) and (
-                ignore_orphan or not is_orphan(pgdb, reaction)
-            ):
-                required_reactions.append(reaction)
-        yield pathway_asp_rule(
-            remove_pipes(pathway), map(remove_pipes, required_reactions)
-        )
+    for pathway in kb.pathways():
+        if ignore_orphan:
+            required_reactions = kb.non_spontaneous_reactions_of_pathway(pathway)
+        else:
+            required_reactions = kb.non_orphan_non_spontaneous_reactions_of_pathway(
+                pathway
+            )
+        yield pathway_asp_rule(pathway, required_reactions)
 
 
 def parse_arguments():
@@ -90,6 +85,7 @@ def parse_arguments():
         "--ignore-orphan",
         action=argparse.BooleanOptionalAction,
         help="If set to --ignore-orphan, orphan reactions will not appear in any pathway ASP rules, thus being considered not required to infer the reaction as present in the metabolism.",
+        default=False,
     )
     return parser.parse_args()
 
@@ -97,10 +93,16 @@ def parse_arguments():
 def main():
     logger.setLevel("DEBUG")
     args = parse_arguments()
-    pgdb = pythoncyc.select_organism("meta")
+    if args.config:
+        config = override_config(args.config)
+    else:
+        config = default_config
+    kb: KnowledgeBase = select_kb(config)
     with open(args.output, "w") as asp_file:
-        for rule in pathway_asp_generator(pgdb):
-            asp_file.write(rule + "\n")
+        asp_file.writelines(
+            rule + "\n"
+            for rule in pathway_asp_generator(kb, ignore_orphan=args.ignore_orphan)
+        )
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ Identify a (pan)-genome genomic context of a pathway
 import logging
 import queue
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from collections.abc import Iterable
 
 import graph_tool as gt
 
@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 def get_pangenome_graph_nid_to_vertex_mapping(
     pangenome_graph: gt.Graph,
-) -> Dict[str, List[gt.Vertex]]:
+) -> dict[str, list[gt.Vertex]]:
     """
     Get a mapping from a gene family to the list of pangenome graph vertex associated with this gene family.
     """
@@ -26,7 +26,7 @@ def get_pangenome_graph_nid_to_vertex_mapping(
 
 
 def local_edge_jaccard(
-    pangenome_graph: gt.Graph, edge: gt.Edge, genomes: Set[str]
+    pangenome_graph: gt.Graph, edge: gt.Edge, genomes: set[str]
 ) -> float:
     """
     A Jaccard index is computed on each edge.
@@ -45,11 +45,11 @@ def local_edge_jaccard(
     """
     u = edge.source()
     v = edge.target()
-    genomes_u: List[str] = pangenome_graph.vp["strains"][u]
-    genomes_v: List[str] = pangenome_graph.vp["strains"][v]
+    genomes_u: list[str] = pangenome_graph.vp["strains"][u]
+    genomes_v: list[str] = pangenome_graph.vp["strains"][v]
 
-    edge_genomes: List[str] = pangenome_graph.ep["strains"][edge]
-    edge_genomes_pathway: Set[str] = set(edge_genomes).intersection(genomes)
+    edge_genomes: list[str] = pangenome_graph.ep["strains"][edge]
+    edge_genomes_pathway: set[str] = set(edge_genomes).intersection(genomes)
 
     union_vertices_genomes = set(genomes_u).union(set(genomes_v))
     union_vertices_genomes_pathway = union_vertices_genomes.intersection(genomes)
@@ -66,11 +66,11 @@ def local_edge_jaccard(
 
 
 def list_genomes_linked_to_the_pathway(
-    pathway_reactions: List[str],
-    reaction_to_gene_families: Dict[str, Set[str]],
-    gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
+    pathway_reactions: list[str],
+    reaction_to_gene_families: dict[str, set[str]],
+    gene_family_to_pangenome_graph_nodes: dict[str, list[gt.Vertex]],
     pangenome_graph: gt.Graph,
-) -> Set[str]:
+) -> set[str]:
     """
     List the genomes where at least one reaction of a pathway have at least one enzyme that catalyzes it.
     :param pathway_id: a pathway identifier
@@ -79,8 +79,8 @@ def list_genomes_linked_to_the_pathway(
     :param gene_family_to_pangenome_nodes: a mapping of gene family identifier to pangenome graph nodes
     :return: a set of such genomes
     """
-    genomes: Set[str] = set()
-    genome_reactions: Dict[str, Set[str]] = {}
+    genomes: set[str] = set()
+    genome_reactions: dict[str, set[str]] = {}
     for reaction in pathway_reactions:
         genome_reactions[reaction] = set()
         if reaction in reaction_to_gene_families:
@@ -104,12 +104,12 @@ def list_genomes_linked_to_the_pathway(
 def pathway_transitive_closure_connected_components(
     pathway: str,
     pangenome_graph: gt.Graph,
-    pathway_reactions: List[str],
-    reaction_to_gene_families: Dict[str, Set[str]],
-    gene_family_to_pangenome_graph_nodes: Dict[str, List[gt.Vertex]],
+    pathway_reactions: list[str],
+    reaction_to_gene_families: dict[str, set[str]],
+    gene_family_to_pangenome_graph_nodes: dict[str, list[gt.Vertex]],
     distance: int,
     local_edge_jaccard_threshold: float,
-) -> Iterable[List[Tuple[bool, List[gt.Vertex]]]]:
+) -> Iterable[list[tuple[bool, list[gt.Vertex]]]]:
     """
 
     :param pangenome_graph:
@@ -150,12 +150,12 @@ def pathway_transitive_closure_connected_components(
         return False
 
     def transitive_closure(
-        seed_node: gt.Vertex, visited: Set[gt.Vertex]
-    ) -> Optional[List[gt.Vertex]]:
+        seed_node: gt.Vertex, visited: set[gt.Vertex]
+    ) -> list[gt.Vertex] | None:
         if seed_node in visited:
             return None
         closure = [(True, seed_node)]
-        q: queue.PriorityQueue[Tuple[int, gt.Vertex]] = queue.PriorityQueue()
+        q: queue.PriorityQueue[tuple[int, gt.Vertex]] = queue.PriorityQueue()
         depth = 0  # We start with a gene family node belonging to the set of enzyme catalyzing a reaction of the pathway
         q.put((depth, seed_node))
         while not q.empty():
@@ -169,14 +169,16 @@ def pathway_transitive_closure_connected_components(
                         if reset_depth(successor_node):
                             successor_depth = 0
                             flag = True
-                        if successor_node not in visited:
-                            if successor_depth <= distance:
-                                closure.append((flag, successor_node))
-                                q.put((successor_depth, successor_node))
+                        if (
+                            successor_node not in visited
+                            and successor_depth <= distance
+                        ):
+                            closure.append((flag, successor_node))
+                            q.put((successor_depth, successor_node))
             visited.add(node)
         return closure
 
-    visited: Set[gt.Vertex] = set()
+    visited: set[gt.Vertex] = set()
     for reaction in pathway_reactions:
         if reaction in reaction_to_gene_families:
             reaction_enzyme_gene_families = reaction_to_gene_families[reaction]

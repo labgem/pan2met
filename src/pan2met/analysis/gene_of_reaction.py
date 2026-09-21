@@ -2,26 +2,23 @@
 Find the gene identifiers, of a reaction identifiers, based on a pangenome and gene
 """
 
-from typing import Dict, Set
-import csv
 import argparse
-from pathlib import Path
+import csv
 from collections import defaultdict
+from pathlib import Path
 
-from ppanggolin.pangenome import Pangenome
-from ppanggolin.genome import Gene
-from ppanggolin.geneFamily import GeneFamily
 from ppanggolin.formats.readBinaries import check_pangenome_info
+from ppanggolin.pangenome import Pangenome
 
+from ..config import default_config as config
 from ..io.knowledge_base import select_kb
 from ..io.pangenome import read_pangenome_rtab
-from ..config import default_config as config
 from ..utils import read_mapping
 
 
 def pangenome_strain_family_to_genes(
     pangenome: Pangenome,
-) -> Dict[str, Dict[str, Set[str]]]:
+) -> dict[str, dict[str, set[str]]]:
     """
     Read a pangenome HDF5 file and return a mapping from each strain to the gene families present in the strain, and for each gene family, the set of gene identifiers of the family in the strain.
     :param pangenome: Path to the pangenome HDF5 file
@@ -69,12 +66,9 @@ def main():
 
     pathway = args.pathway
 
-
     kb = select_kb(config)
     reactions = kb.non_spontaneous_reactions_of_pathway(pathway)
     reaction_to_gene_families = read_mapping(args.reaction_to_gene_family)
-
-
 
     # Open the pangenome
     pangenome = Pangenome()
@@ -82,9 +76,11 @@ def main():
     check_pangenome_info(
         pangenome, need_families=True, need_annotations=True, disable_bar=False
     )  # do not forget the call to this function, otherwise the generator of contigs and genes will be empty as the pangenome would not be loaded.
-    strain_to_gene_families: Dict[str, Set[str]] = read_pangenome_rtab(args.pangenome_rtab)
-    strain_to_gene_families_to_genes: Dict[str, Dict[str, Set[str]]] = pangenome_strain_family_to_genes(
-        pangenome
+    strain_to_gene_families: dict[str, set[str]] = read_pangenome_rtab(
+        args.pangenome_rtab
+    )
+    strain_to_gene_families_to_genes: dict[str, dict[str, set[str]]] = (
+        pangenome_strain_family_to_genes(pangenome)
     )
 
     with open(args.output, "w") as output_file:
@@ -97,13 +93,11 @@ def main():
                 writer.writerow(
                     [pathway, reaction, gene_family]
                     + [
-                        ",".join(
-                            strain_to_gene_families_to_genes[strain][gene_family]
-                        )
-                            if strain in strain_to_gene_families_to_genes
-                            and gene_family in strain_to_gene_families_to_genes[strain]
-                            else ""
-                            for strain in strains
+                        ",".join(strain_to_gene_families_to_genes[strain][gene_family])
+                        if strain in strain_to_gene_families_to_genes
+                        and gene_family in strain_to_gene_families_to_genes[strain]
+                        else ""
+                        for strain in strains
                     ]
                 )
 

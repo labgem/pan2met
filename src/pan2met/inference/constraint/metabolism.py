@@ -45,9 +45,7 @@ class ASPPathwayInference:
             pathway_reactions
         )
 
-        return "\n".join(
-            [pathway_list_asp, reaction_list_asp, pathway_reaction_list_asp]
-        )
+        return f"{pathway_list_asp}\n{reaction_list_asp}\n{pathway_reaction_list_asp}"
 
     def dump_pathway_list_to_asp(self, pathways: list[str]) -> str:
         return "pathway(" + ";".join(f'"{pathway}"' for pathway in pathways) + ")."

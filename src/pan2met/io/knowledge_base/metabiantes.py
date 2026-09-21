@@ -22,7 +22,9 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             importlib.resources.read_text(pan2met.sql.metabiantes, "queries.sql"),
             "sqlite3",
         )
-        self.connection = sqlite3.connect(config["metabiantes"]["database"])
+        self.connection = sqlite3.connect(
+            config["reference"]["metabiantes"]["database"]
+        )
 
     def _aiosql_to_list(self, iterator: Iterable[tuple]):
         if iterator is not None:
@@ -204,7 +206,7 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             )
         )
 
-    def reaction_graph_topological_order(self, pathway) -> list[str]:
+    def reaction_graph_topological_order(self, pathway) -> list[str] | None:
         """
         Return the topological ordering of a pathway reaction graph.
 
@@ -219,7 +221,12 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             if reaction_2 not in vmap:
                 vmap[reaction_2] = graph.add_vertex()
             graph.add_edge(vmap[reaction_1], vmap[reaction_2])
-        sort = gt.topology.topological_sort(graph)
+        try:
+            sort = gt.topology.topological_sort(graph)
+        except ValueError:
+            # topological sort fails if the graph is not a DAG.
+            # in this case we return None
+            return None
         reverse_vmap = {value: key for key, value in vmap.items()}
         sort_reactions = [reverse_vmap[vertex] for vertex in sort]
         return sort_reactions
