@@ -29,3 +29,12 @@ If you updated the documentation or the project dependencies:
 
 1. run `cd docs/ && make html && python3 -m http.server 8000`
 2. go to http://localhost:8000 and check that everything looks good
+
+
+It is a good practice to add unit test to check the good behavior of your code.
+We use pytest for this purpose.
+We can run unit tests and functional tests with:
+
+```bash
+python3 -m pytest
+```
