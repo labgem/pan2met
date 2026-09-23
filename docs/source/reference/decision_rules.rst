@@ -11,15 +11,9 @@ How to enable or disable a decision rule?
 Each decision rule has an unique identifier. To enable or disable a
 decision rule in the metabolic pathway inference, edit the configuration
 file section ``rules`` and add or remove the corresponding identifier.
-You can use the file
-```conf/example.yaml`` <https://github.com/labgem/pan2met-rs/blob/main/conf/example.yaml>`__
 
-For instance, a configuration file ``configuration.yaml`` with the
-following content would enable only the filter on transport pathwways
-and signaling pathway (``TransportPathway`` and ``SignalingPathway``
-rule identifiers), the filter of pathway with no catalysis evidence
-found (``AllReactionsMissing``) and would keep all pathways with all
-reactions catalyzed, or spontaneous (``AllReactionsCatalyzed``).
+See :doc:`config` for more information on **pan2met** configuration file.
+
 
 How does the inference algorithm work?
 --------------------------------------
@@ -35,17 +29,49 @@ pathway is rejected by default.
 A glimpse into the decision rules proposed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``TransportPathway`` - Reject the transport pathways
+``pathway_ontology`` - Reject some metabolic pathway based on pathway ontology
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``biosynthesis_missing_last`` - Reject if a biosynthesis pathway lacks its "last" reaction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Rationale**: If the last reaction leading to the metabolite of
+interest is missing, it might be a sign that the metabolite is not
+synthesized in the organism, hence that the biosynthesis pathway is not
+there.
+
+**Caution remak**: To identify the last reaction of a pathway, we use a topological sort of the reaction graph of the pathway. This assumes that the pathway is a directed acyclic graph, which might not always be the case for biosynthesis pathway. Moreover, for branching pathways, the last reaction of the obtained topological sort might be different from the reaction leading to the metabolite of interest. Thus, use this rule with caution.
+
+``degradation_missing_first`` - Reject if a degradation pathway lacks its "first" reaction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Rationale**: If the first reaction in a degradation pathway, the one
+that initially transformed the metabolite targetted by the degradation
+pathway, is not catalyzed, it might be a sign that no such degradation
+occurs in the organism.
+
+**Caution remark**: The same caution must be taken regarding the computation of the "first" reaction with topological sorting as for the rule ``biosynthesis_missing_last``.
+
+
+.. ```` - Reject the transport pathways
+.. ------------------------------------
+
+``signaling_pathways`` - Reject the signaling pathways
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``SignalingPathway`` - Reject the signaling pathways
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-``AllReactionsCatalyzed`` - Accept a pathway when all its non spontaneous reactions are catalyzed
+``all_reactions_catalyzed`` - Accept a pathway when all its non spontaneous reactions are catalyzed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``AllReactionsMissing`` - Reject a pathway when none of its non spontaneous reactions is catalyzed
+**Rationale**: If we found evidence for the catalysis of all reactions of a pathway in an organism, we can reasonably expect this pathway to occurs in effect in the organism.
+
+When all reactions of a given pathway are either spontaneous, or have a known enzyme catalyzing them.
+
+When all reactions of the pathway can be spontaneous, this rule will fire too.
+
+``all_reactions_missing`` - Reject a pathway when none of its non spontaneous reactions is catalyzed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Rationale**: When none of the reactions of the pathway have an associated enzyme, we have no reason to retained it.
 
 ``KeyReaction``
 ^^^^^^^^^^^^^^^
@@ -53,23 +79,15 @@ A glimpse into the decision rules proposed
 ``SynthesisMissingLast`` - Reject a biosynthesis pathway missing its last reaction.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Rationale**: If the last reaction leading to the metabolite of
-interest is missing, it might be a sign that the metabolite is not
-synthesized in the organism, hence that the biosynthesis pathway is not
-there.
 
 ``DegradationMissingFirst`` - Reject a degradation pathway missing its last reaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Rationale**: If the first reaction in a degradation pathway, the one
-that initially transformed the metabolite targetted by the degradation
-pathway, is not catalyzed, it might be a sign that no such degradation
-occurs in the organism.
 
 ``EnergyMissingHalf`` - Reject an energy metabolism related pathway when half of its non spontaneous reactions lacks a catalyzis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Rationale**:
+**********Rationale**:
 
 ``PathwayScore`` - Accept the pathway if its pathway score exceeds a threshold
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -83,7 +101,6 @@ pathway is to be effectively in the target organism metabolism.
 The pathway score is a weighted sum of the :math:`ReactionScore`.
 
 .. math::
-
 
    PathwayScore(Pathway) = \frac{\sum_{r \in Reaction(Pathway)} ReactionScore(r)}{|Reaction(Pathway)|}
 

@@ -3,14 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-pan2met: Predicting metabolic networks of procaryotes at pangenome scale
+pan2met: Predict metabolic networks of procaryotes at pangenome scale
 ========================================================================
 
-**pan2met** is a software suite aiming to predict metabolic network of procaryotes, bacteria and archaea, at the pangenome scale.
+**pan2met** is a software suite aiming to provide tools to reconstruct metabolic networks of procaryotes: bacteria and archaea, at the pangenome scale.
 
-**pan2met** requires a pangenome in `PPanGGOLiN <https://github.com/labgem/PPanGGOLiN>`_'s HDF5 format.
-It starts to annotate pangenome gene families reference proteins with enzymatic activity by homology with proteins from reference databases (KEGG, MetaCyc, UniProt). Then, It tries to predict what metabolic pathways constitute the target organism metabolism, both at the pangenome scale and at the scale of the strain.
+**pan2met** can use a pangenome gene graph, such as the ones produced by `PPanGGOLiN <https://github.com/labgem/PPanGGOLiN>`_ or `panaroo <https://github.com/gtonkinhill/panaroo>`_ to try to enhance the metabolic pathway predictions.
 
+The decision rules implemented in **pan2met** can also be used to reconstruct a metabolic network from a single genome.
+
+In spite of being designed primary with prokaryote genomes and pangenomes in mind, **pan2met** could also be applied to a certain extent to Eukaryotes.
 
 
 User guide
@@ -18,11 +20,12 @@ User guide
 
 .. toctree::
 
+   Installation <setup>
    Tutorials <tutorial/index>
    Reference <reference/index>
 
 
-Developper guide
+Developer guide
 ----------------
 
 .. toctree::
