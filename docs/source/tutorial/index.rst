@@ -10,3 +10,4 @@ Tutorials
    asp_monomer_inference
    analysis
    panmetabolism_projection
+   minpath

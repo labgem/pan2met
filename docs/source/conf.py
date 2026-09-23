@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
     "sphinx_search.extension",
 ]
 autosummary_generate = True
@@ -32,3 +33,7 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 suppress_warnings = ["autosectionlabel.*"]
+
+
+mathjax_inline = [r"\(", r"\)", "$"]
+mathjax_display = [r"\[", r"\]", "$$"]
