@@ -85,9 +85,9 @@ jobs:
     # Check that it is installed and displays help without error
     - name: Check that pan2met is installed
       run: |
+        python --version
         pan2met --version
         pan2met --help
-        python --version
 
     # Check that unit tests are all passing
     - name: Unit and functional tests
