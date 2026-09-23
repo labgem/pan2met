@@ -10,6 +10,8 @@ inference:
         - pathway_key_reaction
         - pathway_ontology
         - pathway_variant
+        - all_reactions_missing
+        - all_reactions_catalyzed
     pathway_score:
         threshold: 0.15
         # this value must be > 1 to be effective.

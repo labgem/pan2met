@@ -26,6 +26,8 @@ inference:
                 - pathway_ontology
                 - pathway_variant
                 - pathway_score
+                - all_reactions_missing
+                - all_reactions_catalyzed
         pathway_score:
             type: dict
             schema:

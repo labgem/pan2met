@@ -28,6 +28,8 @@ class PathwayInference:
             "pathway_key_reaction",
             "pathway_ontology",
             "pathway_variant",
+            "all_reactions_missing",
+            "all_reactions_catalyzed",
         ]
         self.RULES: dict[str, bool] = {key: True for key in AVAILABLE_RULES}
         self.RULES.update(
@@ -102,7 +104,7 @@ class PathwayInference:
         $U \in [0; 0.6]$: uniqueness score
 
         U increases if the reaction is present in a single pathway,
-          and decreases with the number of pathway it is involved in.
+        and decreases with the number of pathway it is involved in.
 
         $K$: key reaction score
 

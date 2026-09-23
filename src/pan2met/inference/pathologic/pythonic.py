@@ -133,7 +133,7 @@ class PythonicPathwayInference(PathwayInference):
             reaction not in self.reactome
             for reaction in non_orphan_non_spontaneous_pathway_reactions
         )
-        if all_reactions_absent:
+        if self.RULES["all_reactions_missing"] and all_reactions_absent:
             self.amend_reason(
                 pathway_id,
                 details="REJECT: no known catalyzis at all for this pathway.",
@@ -179,7 +179,7 @@ class PythonicPathwayInference(PathwayInference):
                     )
                     return False
         else:
-            if all_reactions_are_present:
+            if self.RULES["all_reactions_catalyzed"] and all_reactions_are_present:
                 self.amend_reason(
                     pathway_id,
                     details="ACCEPT: all reactions are present and we don't care about the taxonomic range.",
