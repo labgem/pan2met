@@ -20,3 +20,15 @@ def complex_asp_rule(complex: str, monomers: list[str]) -> str:
         + " , ".join('monomer("{monomer}")' for monomer in monomers)
         + "."
     )
+
+
+def list_to_asp_atoms(predicate: str, literals: str) -> str:
+    return "\n".join(f'{predicate}("{literal}").' for literal in literals)
+
+
+def reactome_to_asp(reactome) -> str:
+    return list_to_asp_atoms("reaction", reactome)
+
+
+def catalyzis_to_asp(reactions) -> str:
+    return list_to_asp_atoms("catalyzis", reactions)

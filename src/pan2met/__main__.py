@@ -13,6 +13,7 @@ import pan2met
 
 from .config import default_config, override_config
 from .inference import reactome
+from .inference.minpath import minpath
 from .inference.pathologic.pythonic import infer_metabolism
 from .inference.pathway_operon_filler import pathway_operon_filler
 from .inference.proteic_complex import infer_complex
@@ -52,6 +53,15 @@ def metabolism_command(args, config=default_config):
     taxon_id: int = int(args.taxon_id)
     reason_filename = args.reason
     pathways = infer_metabolism(reactome, taxon_id, reason_filename, config=config)
+    write_output(args.output, pathways)
+
+
+def minpath_command(args, config=default_config):
+    """
+    `pan2met minpath` subcommand
+    """
+    reactome: set[str] = set(read_list(args.reactions))
+    pathways = minpath.infer_metabolism(reactome, method=args.method, config=config)
     write_output(args.output, pathways)
 
 
@@ -138,6 +148,7 @@ def parse_arguments():
     )
     # Define subcommands
     subparsers = parser.add_subparsers(help="commands", dest="command")
+    # metabolism subcommand
     parser_metabolism = subparsers.add_parser(
         "metabolism",
         description="infer the (pan)metabolism (i.e., a set of expected metabolic pathways)",
@@ -166,6 +177,31 @@ def parse_arguments():
         "-t",
         "--taxon-id",
         help="the NCBI-Taxonomy tax id of the target organism.",
+        required=False,
+    )
+    # minpath subcommand
+    parser_metabolism_minpath = subparsers.add_parser(
+        "minpath",
+        description="run a MinPath like prediction algorithm, using the configured knowledge base as a reference.",
+    )
+    parser_metabolism_minpath.add_argument(
+        "-r",
+        "--reactions",
+        help="a file listing the reactions found in the (pan)-reactome",
+        required=True,
+    )
+    parser_metabolism_minpath.add_argument(
+        "-o",
+        "--output",
+        help="the output listing possible minimum sets of pathways.",
+        required=True,
+    )
+    parser_metabolism_minpath.add_argument(
+        "-m",
+        "--method",
+        help="the method to use to solve the MinPath problem",
+        choices=["clingo"],  # maybe we will support the classic GLPK too here.
+        default="clingo",
         required=False,
     )
     # Reverse reactome problem
@@ -246,6 +282,7 @@ def parse_arguments():
     # Set default function command function handler
     # parser_reactome.set_defaults(func=reactome_command)
     parser_metabolism.set_defaults(func=metabolism_command)
+    parser_metabolism_minpath.set_defaults(func=minpath_command)
     parser_reverse_reactome.set_defaults(func=reverse_reactome_command)
     parser_proteic_complex.set_defaults(func=proteic_complex_command)
     parser_pathway_operon_filler.set_defaults(func=pathway_operon_filler_command)

@@ -76,6 +76,14 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_spontaneous_reactions(self.connection)
         )
 
+    def non_spontaneous_reactions(self) -> list[str]:
+        """
+        List spontaneous reactions
+        """
+        return self._aiosql_to_list(
+            self.queries.get_non_spontaneous_reactions(self.connection)
+        )
+
     def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway

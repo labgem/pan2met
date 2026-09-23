@@ -20,6 +20,11 @@ WHERE NOT EXISTS (
 SELECT id FROM reaction
 WHERE spontaneous;
 
+-- name: get_non_spontaneous_reactions()
+-- Get all non spontaneous reactions in the database
+SELECT id FROM reaction
+WHERE NOT spontaneous;
+
 -- name: get_reactions_of_pathway(pathway_id)
 -- Get all reactions of a pathway
 SELECT reaction.id

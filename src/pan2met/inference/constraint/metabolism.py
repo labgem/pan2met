@@ -8,6 +8,7 @@ import logging
 
 import pan2met
 
+from ...asp.rules import reactome_to_asp
 from ...config import default_config, override_config
 from ...io.knowledge_base import KnowledgeBase, select_kb
 from ...utils import read_list, write_output
@@ -65,9 +66,6 @@ class ASPPathwayInference:
             for reaction in reactions
         )
 
-    def reactome_to_asp(self) -> str:
-        return "\n".join(f'reactome("{reaction}").' for reaction in self.reactome)
-
     def inferred_pathways(self, kb_asp_path: str) -> set[str]:
         """
         List all inferred pathways using Answer Set Programming/ASP inference rules.
@@ -89,7 +87,7 @@ class ASPPathwayInference:
         with importlib.resources.path(
             pan2met, "asp/rules/minimal_covering_pathway.lp"
         ) as minimal_covering_pathway_rule_path:
-            inline_asp = self.reactome_to_asp()
+            inline_asp = reactome_to_asp(self.reactome)
 
             answers = clyngor.solve(
                 [minimal_covering_pathway_rule_path, kb_asp_path],

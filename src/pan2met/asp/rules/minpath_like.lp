@@ -35,7 +35,7 @@ pathway_count(N) :- N=#count { Pathway : inferred_pathway(Pathway) }.
 % However, we still want to explain all reactions by an involvement in a pathway.
 % Hopefully the pathway knowledge base cover is large enough to contain all reaction we can annotate.
 covered_reaction(Reaction) :- inferred_pathway(Pathway) , is_in_pathway(Reaction, Pathway).
-:- reactome(Reaction) , not covered_reaction(Reaction).
+:- catalysis(Reaction) , not covered_reaction(Reaction).
 
 % pathway("PWY1").
 % pathway("PWY2").
@@ -46,6 +46,6 @@ covered_reaction(Reaction) :- inferred_pathway(Pathway) , is_in_pathway(Reaction
 % is_in_pathway("RXN3", "PWY1").
 % is_in_pathway("RXN4", "PWY3").
 % is_in_pathway("RXN4", "PWY1").
-% reactome("RXN1"; "RXN2"; "RXN3").
+% catalysis("RXN1"; "RXN2"; "RXN3").
 % #show inferred_pathway/1.
 % % Expect PWY4 not to be selected in the inferred pathway set.
