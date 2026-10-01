@@ -3,7 +3,6 @@ A SPARQL backend using the 'BioPAX' model.
 """
 
 import importlib.resources
-import logging
 from collections.abc import Iterable
 
 import ouisparql
@@ -13,8 +12,6 @@ import pan2met
 import pan2met.sparql.biopax
 
 from . import KnowledgeBase
-
-logger = logging.getLogger()
 
 
 def ouisparql_list(response, key) -> list[str]:

@@ -4,15 +4,13 @@ Default configuration
 
 import importlib.resources
 import io
-import logging
 from pathlib import Path
 
 import yaml
 
 import pan2met.conf
 import pan2met.conf.schema
-
-logger = logging.getLogger("pan2met:config")
+from pan2met.utils import logger
 
 # Load default config
 default_config_str = importlib.resources.read_text(pan2met.conf, "default.yaml")

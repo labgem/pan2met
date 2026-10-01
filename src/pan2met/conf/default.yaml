@@ -26,3 +26,5 @@ reference:
         file: /mnt/shared/bank/metacyc.padmet
     metabiantes:
         database: /mnt/shared/bank/metabiantes_metacyc_29.5.db
+    biopax_folder:
+        path: ./tests/test_data/biopax-specification/Level3/examples

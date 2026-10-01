@@ -1,0 +1,440 @@
+# For documentation on BioPAX ontology, you can have a look at https://www.biopax.org/owldoc/Level3/
+
+
+# name: get_all_pathways()
+# List all pathways referenced in the database
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT ?pathway
+WHERE {
+    ?pathway rdf:type bp:Pathway .
+}
+
+# name: get_all_reactions()
+# List all reactions referenced in the database (type bp:BiochemicalReaction)
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT ?reaction
+WHERE {
+    ?reaction rdf:type bp:BiochemicalReaction .
+}
+
+# name: paginated_get_pathways(page_size, page_offset)
+# Pagination helper to get the pathways URI referenced in the database
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT DISTINCT ?pathway ?pathway_name ?pathway_description
+WHERE {
+    ?pathway rdf:type bp:Pathway .
+}
+ORDER BY (LCASE(?pathway))
+LIMIT :page_size
+OFFSET :page_offset
+
+
+# name: count_pathways()
+# Count how many pathways are referenced in the database
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT (count(distinct ?pathway) as ?number_of_pathway)
+WHERE {
+    ?pathway rdf:type bp:Pathway .
+}
+
+# name: get_reactions_of_pathway(pathway_uri)
+# List all reactions of a pathway
+# Example: pathway=<http://biocyc.org/biopax/biopax-level3#Pathway561264>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?reaction ?reaction_name
+WHERE {
+    :pathway_uri rdf:type bp:Pathway ;
+             bp:pathwayComponent ?reaction .
+    ?reaction rdf:type bp:BiochemicalReaction ; # pathwayComponent ranges in bp:Interaction, bp:BiochemicalReaction is a bp:Conversion, which is an Interaction.
+              bp:standardName ?reaction_name .
+}
+
+# name: get_ordered_reactions_of_pathway(pathway)
+# List all reactions of a pathway ordered by Pathway property pathwayOrder
+# Example: pathway=<http://biocyc.org/biopax/biopax-level3#Pathway561264>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?pathway ?reaction
+WHERE {
+    ?pathway VALUES {
+        :pathway
+    }
+    ?pathway rdf:type bp:Pathway .
+    ?reaction rdf:type bp:BiochemicalReaction . # pathwayComponent ranges in bp:Interaction, bp:BiochemicalReaction is a bp:Conversion, which is an Interaction.
+    ?pathway bp:pathwayComponent ?reaction .
+}
+
+# name: get_standard_name_of_pathway(pathway_id)
+# Get a standard name of a pathway
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?pathway_name
+WHERE {
+    :pathway_id rdf:type bp:Pathway ;
+             bp:standardName ?pathway_name .
+}
+
+# name: get_name_of_pathway(pathway_id)
+# Get a standard name of a pathway
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?pathway_name
+WHERE {
+    :pathway_id rdf:type bp:Pathway ;
+             bp:name ?pathway_name .
+}
+
+
+# name: get_pathway_summary(pathway_id)
+# List get some information on a pathway by its identifier
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?pathway ?pathway_name ?pathway_comment
+WHERE {
+    ?pathway rdf:type bp:Pathway ;
+             bp:standardName ?pathway_name .
+
+    OPTIONAL {
+        ?pathway bp:comment ?pathway_comment .
+    }
+
+    FILTER(?pathway = :pathway_id)
+}
+
+# name: get_standard_name_of_reaction(reaction_id)
+# Get a standard name of a reaction
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?reaction_name
+WHERE {
+    :reaction_id rdf:type bp:BiochemicalReaction ;
+             bp:standardName ?reaction_name .
+}
+
+# name: get_reaction_left(reaction)
+# Get the left side of a reaction
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?reaction_left ?reaction_left_name
+WHERE {
+   	:reaction rdf:type bp:BiochemicalReaction ;
+	          bp:left ?reaction_left .
+	?reaction_left bp:standardName ?reaction_left_name .
+}
+
+# name: get_reaction_side(reaction, side)
+# Get the left side of a reaction
+# reaction=<http://biocyc.org/biopax/biopax-level3#BiochemicalReaction548650>
+# side=bp:left
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?metabolite ?metabolite_name
+WHERE {
+   	:reaction rdf:type bp:BiochemicalReaction ;
+	          :side ?metabolite .
+	?metabolite bp:standardName ?metabolite_name .
+}
+
+# name: get_enzymes_of_reaction(reaction_uri)
+# Get the protein uri of enzymes catalyzing a reaction
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT DISTINCT ?enzyme
+WHERE {
+  # Specify the reaction (replace with your actual reaction URI)
+  VALUES ?reaction { :reaction_uri }
+  ?reaction rdf:type bp:BiochemicalReaction .
+  ?catalysis
+             rdf:type bp:Catalysis ;
+			 bp:controlled ?reaction ;
+             bp:controller ?enzyme .
+}
+
+# name: get_orphan_reactions()
+# Get the list of orphan reaction uri
+# An orphan reaction is a reaction which is not associated with any catalyzis control
+# and that is also non spontaneous
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT ?reaction WHERE {
+    ?reaction rdf:type bp:BiochemicalReaction .
+    FILTER NOT EXISTS {
+        ?reaction bp:spontaneous true .
+    }
+    FILTER NOT EXISTS {
+        ?catalysis rdf:type bp:Catalysis ;
+                   bp:controlled ?reaction ;
+                   bp:controller ?enzyme .
+    }
+}
+
+
+# name: reaction_is_spontaneous(reaction_uri)
+# Check whether a reaction is spontaneous
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?spontaneous
+WHERE {
+    :reaction_uri rdf:type bp:BiochemicalReaction ;
+                  bp:spontaneous ?spontaneous .
+}
+
+# name: get_spontaneous_reactions()
+# List the spontaneous reactions
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?reaction
+WHERE {
+    ?reaction rdf:type bp:BiochemicalReaction ;
+                  bp:spontaneous true .
+}
+
+# name: get_non_spontaneous_reactions()
+# List the spontaneous reactions
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?reaction
+WHERE {
+    ?reaction rdf:type bp:BiochemicalReaction ;
+                  bp:spontaneous false .
+}
+
+# name: get_non_spontaneous_reactions_of_pathway(pathway_uri)
+# Get the list of non spontaneous reactions of a pathway
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?reaction ?reaction_name
+WHERE {
+    :pathway_uri rdf:type bp:Pathway ;
+             bp:pathwayComponent ?reaction .
+    ?reaction rdf:type bp:BiochemicalReaction ; # pathwayComponent ranges in bp:Interaction, bp:BiochemicalReaction is a bp:Conversion, which is an Interaction.
+              bp:standardName ?reaction_name ;
+              bp:spontaneous false
+}
+
+# name: get_non_orphan_non_spontaneous_reactions_of_pathway(pathway_uri)
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?reaction ?reaction_name
+WHERE {
+    :pathway_uri rdf:type bp:Pathway ;
+             bp:pathwayComponent ?reaction .
+    ?reaction rdf:type bp:BiochemicalReaction ; # pathwayComponent ranges in bp:Interaction, bp:BiochemicalReaction is a bp:Conversion, which is an Interaction.
+              bp:standardName ?reaction_name ;
+              bp:spontaneous false .
+    ?catalysis rdf:type bp:Catalysis ;
+                   bp:controlled ?reaction ;
+                   bp:controller ?enzyme .
+
+}
+
+
+
+# name: get_pathway_by_partial_text_match(pattern)
+# Get 10 potential result pathway uri given a partial text match on its name
+# pattern must be wrapped in double quote.
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?pathway ?pathway_name
+WHERE {
+   	?pathway rdf:type bp:Pathway ;
+             bp:standardName ?pathway_name .
+    FILTER(REGEX(?pathway_name, :pattern))
+}
+ORDER BY (STRLEN(?pathway_name))
+
+# name: get_compound_by_partial_text_match(pattern)
+# Get 10 potential result SmallMolecule uri given a partial text match on its name
+# pattern must be wrapped in double quote.
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?compound ?compound_name
+WHERE {
+   	?compound rdf:type bp:SmallMolecule ;
+             bp:standardName ?compound_name .
+    FILTER(REGEX(?compound_name, :pattern))
+}
+ORDER BY (STRLEN(?compound_name))
+
+# name: get_reaction_by_partial_text_match(pattern)
+# Get potential BiochemicalReaction  uri given a partial text match on its name
+# pattern must be wrapped in double quote.
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?reaction ?reaction_name
+WHERE {
+   	?reaction rdf:type bp:BiochemicalReaction ;
+             bp:standardName ?reaction_name .
+    FILTER(REGEX(?reaction_name, :pattern))
+}
+ORDER BY (STRLEN(?reaction_name))
+
+# name: get_pathway_by_partial_compound_match(compound_to_pathway_triplets)
+# Get 10 potential result pathway uri given a partial text match on its name
+# pattern must be wrapped in double quote.
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?pathway ?pathway_name
+WHERE {
+   	?pathway rdf:type bp:Pathway ;
+             bp:standardName ?pathway_name .
+    :compound_to_pathway_triplets
+}
+
+
+# name: get_compound_description(compound_id)
+# Get 10 potential result SmallMolecule uri given a partial text match on its name
+# pattern must be wrapped in double quote.
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?compound ?compound_name ?compound_smiles
+WHERE {
+    ?compound rdf:type bp:SmallMolecule ;
+        bp:entityReference ?compound_reference ;
+        bp:standardName ?compound_name .
+
+    OPTIONAL {
+        ?compound_reference bp:structure ?compound_structure .
+        ?compound_structure rdf:type bp:ChemicalStructure ;
+                            bp:structureData ?compound_smiles ;
+                            bp:structureFormat "SMILES" .
+    }
+    FILTER(?compound = :compound_id)
+}
+
+
+# Summary statistics
+# name: count_entities(entity_type)
+# Count how many subject are of type `entity_type`
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT (count(DISTINCT ?item) as ?count)
+WHERE {
+    ?item rdf:type :entity_type .
+}
+
+# name: get_pathway_metacyc_id(pathway)
+# Get pathway MetaCyc identifier
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?pathway ?metacyc_id WHERE {
+    ?pathway rdf:type bp:Pathway ;
+	     bp:xref ?xref .
+	 ?xref bp:db "MetaCyc" ;
+	       bp:id ?metacyc_id .
+     FILTER(?pathway = :pathway)
+}
+
+# name: get_entity_by_reference_id(entity_type, reference_id, reference_database)
+# Get the URI of an entity of type `entity_type` (e.g. bp:Pathway) with identifier `reference_id` in database `reference_database` (e.g. PWY-8089 in MetaCyc).
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?entity WHERE {
+    ?entity rdf:type :entity_type ;
+	     bp:xref ?xref .
+	 ?xref bp:db :reference_database ;
+	       bp:id :reference_id .
+}
+
+# name: get_referenced_databases()
+# Get the label of the cross-referenced database
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT DISTINCT ?db WHERE {
+   ?any bp:db ?db .
+}
+
+# name: get_reactions_by_ec_number(ec_number)
+# Get the reaction by an EC number
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT ?reaction WHERE {
+   ?reaction rdf:type bp:BiochemicalReaction ;
+             bp:eCNumber :ec_number .
+}
+
+# name: get_protein()
+# Get the list of proteins
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT ?protein WHERE {
+   ?protein rdf:type bp:Protein .
+}
+
+# name: get_complex()
+# Get the list of complexes
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT ?complex WHERE {
+   ?complex rdf:type bp:Complex .
+}
+
+# name: get_complex_components(complex_uri)
+# Get the components of a complex protein
+# Example of complex IRI in pathwaykb: <http://biocyc.org/biopax/biopax-level3#Complex100242>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT ?complex ?protein_component WHERE {
+    VALUES ?complex {
+        :complex_uri
+    }
+    ?complex bp:component ?protein_component .
+}
+
+# name: get_pathways_with_reaction(reaction_uri)
+# Get the list of pathways with a given reaction
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
+
+SELECT ?pathway WHERE {
+    VALUES ?reaction {
+        :reaction_uri
+    }
+    ?pathway rdf:type bp:Pathway ;
+             bp:pathwayComponent ?reaction .
+    ?reaction rdf:type bp:BiochemicalReaction .
+}

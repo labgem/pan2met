@@ -6,6 +6,21 @@ Knowledge base backends should implement all the methods of the KnowledgeBase ab
 from abc import ABC
 
 
+def unsupported(function):
+    """
+    A decorator to make the function raise NotImplementedError and add the attribute __unsupported.
+
+    __unsupported is True when the function would raise NotImplementedError
+    """
+
+    def magic(self):
+        raise NotImplementedError(function)
+        # We do not call the function it self
+
+    setattr(magic, "__unsupported", True)
+    return magic
+
+
 class KnowledgeBase(ABC):
     """
     An abstract class to implement an interface to a metabolic pathway knowledgebase.
@@ -147,6 +162,10 @@ def select_kb(config) -> KnowledgeBase:
             from .padmet import PADMetKnowledgeBase
 
             return PADMetKnowledgeBase(config)
+        case "biopax_folder":
+            from .biopax_folder import BioPAXFolderKnowledgeBase
+
+            return BioPAXFolderKnowledgeBase(config)
         case _:
             raise ValueError(
                 f"Cannot load kb for choice {config['reference']['source']}. Not in { {'metabiantes', 'pythoncyc', 'padmet'} }"

@@ -3,7 +3,6 @@ Configuration schema validation
 """
 
 import importlib.resources
-import logging
 
 import yaml
 from cerberus import Validator
@@ -11,7 +10,7 @@ from cerberus import Validator
 import pan2met
 import pan2met.conf
 
-logger = logging.getLogger("pan2met:config")
+from ..utils import logger
 
 schema_definition = yaml.safe_load(
     importlib.resources.read_text(pan2met.conf, "schema.yaml")

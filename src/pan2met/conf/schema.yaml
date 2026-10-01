@@ -63,3 +63,8 @@ reference:
             schema:
                 database:
                     type: string
+
+        biopax_folder:
+            schema:
+                path:
+                    type: string
