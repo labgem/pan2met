@@ -1,3 +1,6 @@
 [submodule "submodules/metabiantes"]
 	path = submodules/metabiantes
 	url = https://github.com/labgem/metabiantes.git
+[submodule "tests/test_data/biopax-specification"]
+	path = tests/test_data/biopax-specification
+	url = https://github.com/BioPAX/specification.git
