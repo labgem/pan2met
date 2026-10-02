@@ -1,19 +1,18 @@
-import importlib
-import logging
+import importlib.resources
+from collections.abc import Iterable
 from typing import Literal
 
 import pan2met
 from pan2met.config import default_config
+from pan2met.utils import logger
 
 from ...asp import rules
 from ...io.knowledge_base import KnowledgeBase, select_kb
 
-logger = logging.getLogger("pan2met:inference:minpath")
-
 
 def inferred_pathways(
     kb: KnowledgeBase, reactome: set[str], nb_model=1
-) -> list[set[str]]:
+) -> Iterable[set[str]]:
     """
     List all inferred pathways using Answer Set Programming/ASP inference rules
     with the MinPath approach to select a minimum set of metabolic pathways.
@@ -34,7 +33,7 @@ def inferred_pathways(
     ) as minpath_rule_path:
         logger.info("Generate ASP atoms for MinPath inference.")
         catalysis_asp = rules.list_to_asp_atoms(
-            "catalysis", reactome
+            "catalysis", list(reactome)
         )  # writes reaction/1. atoms : reaction("RXN-1"). if reaction RXN-1 is in the 'known' reactome of the organism
         pathways = kb.pathways()
         pathway_asp = rules.list_to_asp_atoms(

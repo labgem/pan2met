@@ -4,15 +4,11 @@ Completion matrix for a folder with files with sets of reactions
 
 import argparse
 import csv
-import logging
 from pathlib import Path
 
 from ..config import default_config, override_config
 from ..io.knowledge_base import KnowledgeBase, select_kb
-from ..utils import read_list
-
-logger = logging.getLogger("pan2met:analysis:completion_genomes")
-logging.basicConfig(level=logging.DEBUG)
+from ..utils import logger, read_list
 
 
 def write_pathway_completion_by_strain(

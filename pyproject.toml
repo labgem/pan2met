@@ -16,7 +16,7 @@ maintainers = [
 	{ name = "Samuel Ortion" },
 ]
 readme = "README.md"
-keywords = ["pangenomics", "metabolism", "bioinformatics", "prokaryote"]
+keywords = ["Pangenomics", "Metabolism", "Bioinformatics", "Prokaryote"]
 classifiers = [
 	"Development Status :: 1 - Planning",
 	"Environment :: Console",
@@ -30,11 +30,13 @@ license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = [
 	"aiosql>=15.0,<16",
-	"ouisparql>=0.1.0",
 	"SPARQLWrapper",
 	"clyngor>=1.0.0,<2",
 	"padmet>=5.0.3,<6",
 	"cerberus>=1.3.8",
+	"duckdb>=1.5.6",
+	"ouisparql",
+	"pyyaml>=6.0.3",
 ]
 
 [project.optional-dependencies]
@@ -47,9 +49,6 @@ doc = [
 test = [
 	"pytest>=9.1.1",
 	"pytest-cov>=7.1.0",
-]
-viz = [
-	"bokeh>=3.10"
 ]
 
 
@@ -72,10 +71,9 @@ platforms = ["linux-64"]
 
 
 [tool.pixi.environments]
-default = { features = ["doc", "test", "viz"], solve-group = "default" }
+default = { features = ["doc", "test"], solve-group = "default" }
 doc = { features = ["doc"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
-viz = { features = ["viz"], solve-group = "default" }
 prod = { features = [], solve-group = "default" }
 
 [tool.pixi.tasks]
@@ -88,3 +86,15 @@ cerberus = ">=1.3.8,<2"
 yaml = ">=0.2.5,<0.3"
 pyyaml = ">=6.0.3,<7"
 tqdm = ">=4.70.1,<5"
+[tool.uv.workspace]
+members = [
+    "worktree/benchmark/benchmark",
+]
+
+[tool.uv.sources]
+ouisparql = { git = "https://gitlab.com/sortion/ouisparql", rev = "47e47688cf461506e6f565f340742f543d3873b2" }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

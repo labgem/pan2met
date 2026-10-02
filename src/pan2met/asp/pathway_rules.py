@@ -19,13 +19,11 @@ To launch this script, you will need to launch the pathway-tools python API with
 """
 
 import argparse
-import logging
 from collections.abc import Iterable
 
 from pan2met.config import default_config, override_config
 from pan2met.io.knowledge_base import KnowledgeBase, select_kb
-
-logger = logging.getLogger("pan2met:pathway_rules")
+from pan2met.utils import logger
 
 
 def pathway_asp_rule(pathway: str, reactions: Iterable[str]) -> str:

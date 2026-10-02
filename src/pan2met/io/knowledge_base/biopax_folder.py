@@ -62,9 +62,8 @@ def basename_from_filename(pathway_filename: str) -> str:
 
 
 # we would type it as tuple_extract_value[T](tuples: Iterable[Tuple[T, ...]], index: int) -> Iterable[T] starting from Python3.12
-def tuple_extract_value(tuples, index: int):
-    for tuple in tuples:
-        yield tuple[index]
+def tuple_extract_value(tuples, index: int) -> list[str]:
+    return [tuple[index] for tuple in tuples]
 
 
 class BioPAXFolderKnowledgeBase(KnowledgeBase):

@@ -1,5 +1,6 @@
-import pan2met.io.metabiantes.kb
 import pan2met.inference.metabolism
+import pan2met.io.metabiantes.kb
+
 from pan2met.utils import read_list, write_output
 
 

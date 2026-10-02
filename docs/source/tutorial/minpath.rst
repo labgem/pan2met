@@ -4,7 +4,7 @@ How to infer a "minimal" set of metabolic pathway with a MinPath-like approach
 
 The MinPath algorithm, from Ye and Doak 2009 paper "A Parsimony Approach to Biological Pathway Reconstruction/Inference for Genomes and Metagenomes" (`doi <https://doi.org/10.1371/journal.pcbi.1000465>`__) relies on a Mixed Integer Linear programming approach to select a minimum set of metabolic pathway that covers a set of target reactions.
 
-This approach can be reduced to finding a solution to a `set cover <https://en.wikipedia.org/wiki/Set_cover_problem>` problem, where the universe is the whole set of reactions in the knowledgebase, the target set we want to cover are the reaction catalyzis found in the genome candidate subsets are the sets of reactions for each metabolic pathways.
+This approach can be reduced to finding a solution to a `set cover <https://en.wikipedia.org/wiki/Set_cover_problem>` problem, where the universe is the whole set of reactions in the knowledgebase, the target set we want to cover are the reaction catalyzis found in the genome and candidate subsets are the sets of reactions for each metabolic pathways.
 
 In term of Mixed Integer Linear programming, as proposed by Ye and Doak, this problem can be expressed as:
 

@@ -2,14 +2,13 @@
 Identify a (pan)-genome genomic context of a pathway
 """
 
-import logging
 import queue
 from collections import defaultdict
 from collections.abc import Iterable
 
 import graph_tool as gt
 
-logger = logging.getLogger()
+from pan2met.utils import logger
 
 
 def get_pangenome_graph_nid_to_vertex_mapping(

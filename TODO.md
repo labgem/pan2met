@@ -1,11 +1,24 @@
 # Tasks
 
+## Knowledge base input methods
+
+- [ ] QLever repository of BioPAX
+- [ ] Plain folder of BioPAX
+  - QLever backend or pax2graphml-like backend?
+- [ ] Plain folder of SBML
+
+## Input format
+
+- [x] Reaction / Monomer table
+- [ ] Reaction list: in this case, we will not be able to use the graph topology.
+
+
 ## Export format
 
 - [ ] PADMet
 - [ ] SBML
 - [ ] BioPAX
-- [ ] Plain list of pathway identifiers
+- [x] Plain list of pathway identifiers
 - [ ] Plain list of reaction identifiers (the input reactions + the inferred ones?)
 
 ## Inference rules

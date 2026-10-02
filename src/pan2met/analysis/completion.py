@@ -4,7 +4,6 @@ Completion matrix
 
 import argparse
 import csv
-import logging
 from pathlib import Path
 from typing import Literal
 
@@ -17,10 +16,7 @@ from ..io.pangenome import (
     read_pangenome_rtab,
     read_partition_files,
 )
-from ..utils import read_list, read_mapping, reverse_mapping
-
-logger = logging.getLogger("pan2met:analysis:completion")
-logging.basicConfig(level=logging.DEBUG)
+from ..utils import logger, read_list, read_mapping, reverse_mapping
 
 
 def write_reaction_presence_absence_by_strain(
