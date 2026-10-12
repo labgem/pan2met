@@ -17,19 +17,20 @@ def test_metabolism_inference():
         outdir = Path(tmpdirname)
         reactions_filename = "./tests/test_data/cases/test0/reactions.list"
         output_filename = outdir / "pathways.list"
-        output_log_filename = outdir / "reason.log"
+        # output_log_filename = outdir / "reason.log"
         taxon_id = 562  # E. coli
 
         cmd = (
             f'pan2met metabolism --reactions "{reactions_filename}" --output "{output_filename}"'
-            f' --taxon-id {taxon_id} --reason "{output_log_filename}"'
+            f" --taxon-id {taxon_id} "
+            # --reason "{output_log_filename}"'
         )
 
         run(cmd)
 
         expected_outputs = [
             output_filename,
-            output_log_filename,
+            # output_log_filename,
         ]
 
         for file in expected_outputs:

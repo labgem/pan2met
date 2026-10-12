@@ -5,19 +5,25 @@ genomic_context:
 inference:
     rules:
         - taxonomic_range
-        - pathway_species
-        - pathway_uniqueness
-        - pathway_key_reaction
-        - pathway_ontology
-        - pathway_variant
+        - transport_pathway
+        - electron_transfer_pathway
         - all_reactions_missing
         - all_reactions_catalyzed
+        - degradation_pathway_missing_first
+        - biosynthesis_pathway_missing_last
+        - key_reaction_missing
+        - pathway_score
     pathway_score:
         threshold: 0.15
         # this value must be > 1 to be effective.
         taxonomic_range_boost: 1.2
         # must be above 1 too.
         neighbor_species_boost: 1.2
+        components:
+            - uniqueness
+            - key_reaction
+            - taxonomic_range_boost
+            - neighbor_species_boost
 
 reference:
     ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01

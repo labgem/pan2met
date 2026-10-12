@@ -1,87 +1,31 @@
+from pan2met.taxonomy import NCBITaxonomyTree
+
 from ...io.knowledge_base import KnowledgeBase
-from ...taxonomy import NCBITaxonomyTree
 from ...utils import logger
 
 
-class PathwayInference:
+class PathwayScore:
     def __init__(
         self,
         config: dict,
+        pathway_id: str,
+        pathway_reactions: set[str],
         kb: KnowledgeBase,
-        reactome: set[str],
-        taxon_id: int | None = None,
-        record_reason: bool = False,
+        catalyzed_reactions: set[str],
+        taxonomy: NCBITaxonomyTree | None,
+        taxon_id: int | None,
     ):
         self.config = config
-        # Configure prediction algorithm
-
-        self.PATHWAY_SCORE_THRESHOLD: float = float(
-            config["inference"]["pathway_score"]["threshold"]
-        )
-        AVAILABLE_RULES = [
-            "taxonomic_range",
-            "pathway_species",
-            "pathway_uniqueness",
-            "pathway_key_reaction",
-            "pathway_ontology",
-            "pathway_variant",
-            "all_reactions_missing",
-            "all_reactions_catalyzed",
-        ]
-        self.RULES: dict[str, bool] = {key: True for key in AVAILABLE_RULES}
-        self.RULES.update(
-            {key: key in config["inference"]["rules"] for key in AVAILABLE_RULES}
-        )
-
-        logger.debug(f"Using taxonomic_range rule: {self.RULES['taxonomic_range']}")
-        logger.debug(f"Use taxon id {taxon_id} as reference")
-
-        if (
-            self.RULES["taxonomic_range"] or self.RULES["pathway_species"]
-        ) and taxon_id is None:
-            raise ValueError(
-                "taxon_id cannot be None when using the taxonomic range and species based heuristics"
-            )
-
         self.kb: KnowledgeBase = kb
-        self.reactome: set[str] = reactome
-        self.pathways: list[str] = self.kb.pathways()
-        if self.RULES["taxonomic_range"] or self.RULES["pathway_species"]:
-            self.taxonomy: NCBITaxonomyTree = NCBITaxonomyTree(
-                config["reference"]["ncbi_taxonomy"]
-            )
-            self.taxon_id: int = taxon_id
-            self.pathway_in_taxonomic_range: dict[str, bool] = (
-                self.taxonomic_range_belonging_precompute(self.pathways)
-            )
-        # Trace the decision algorithm if `record_reason` option is set to true.
-        self.decision_reason: dict[str, str] = {}
-        self.record_reason = record_reason
+        self.catalyzed_reactions: set[str] = catalyzed_reactions
+        self.pathway_id: str = pathway_id
+        self.pathway_reactions: set[str] = pathway_reactions
+        self.taxonomy = taxonomy
+        self.taxon_id = taxon_id
+        if not getattr(self.kb.key_reactions_of_pathway, "__unsupported", False):
+            self.pathway_key_reactions = self.kb.key_reactions_of_pathway(pathway_id)
 
-    def reason(self, pathway_id: str) -> str | None:
-        """
-        Get a report on why the pathway is retained or not.
-        """
-        if (
-            self.record_reason
-            and self.decision_reason is not None
-            and pathway_id in self.decision_reason
-        ):
-            return self.decision_reason[pathway_id]
-
-    def amend_reason(self, pathway_id: str, details: str):
-        """
-        Add a string fragment to the reason dictionnary for a pathway.
-        """
-        # Initialize the reason, if no reason exist for the moment
-        if pathway_id not in self.decision_reason:
-            self.decision_reason[pathway_id] = ""
-        # Amend the existing reason
-        self.decision_reason[pathway_id] += details
-
-    def reaction_score(
-        self, reaction_id: str, pathway_id: str, pathway_key_reactions: set[str]
-    ) -> float:
+    def reaction_score(self, reaction_id: str) -> float:
         r"""
         Compute the reaction score $RS$ following the definition of PathoLogic.
 
@@ -119,30 +63,29 @@ class PathwayInference:
         """
         score = 0
         # Add base presence score
-        # IDEA: it might be usefull to give more weight to the presence,
+        # IDEA: it might be useful to give more weight to the presence,
         #  when the other score parts are disabled.
         presence_score = self.presence_score(reaction_id)
         score += presence_score
 
         # Add uniqueness score
-        if self.RULES["pathway_uniqueness"]:
+        if "uniqueness" in self.config["inference"]["pathway_score"]["components"]:
             uniqueness_score = self.uniqueness_score(reaction_id)
             score += uniqueness_score
         else:
             uniqueness_score = None
 
         # Add key reaction score
-        if self.RULES["pathway_key_reaction"]:
+        if "key_reaction" in self.config["inference"]["pathway_score"]["components"]:
             key_reaction_score = self.key_reaction_score(
-                reaction_id, pathway_key_reactions
+                reaction_id, self.pathway_key_reactions
             )
             score += key_reaction_score
         else:
             key_reaction_score = None
 
-        self.amend_reason(
-            pathway_id,
-            f"- with reaction {reaction_id}: PresenceScore = {presence_score}, UniquenessScore = {uniqueness_score}, KeyReactionScore = {key_reaction_score}\n",
+        logger.debug(
+            f"reaction_score({reaction_id}) = uniqueness_score + key_reaction_score =  {uniqueness_score} + {key_reaction_score} = {score}"
         )
         return score
 
@@ -155,7 +98,7 @@ class PathwayInference:
         :param reaction_id: the identifier of the reaction
         :return: the presence score of the reaction
         """
-        if reaction_id in self.reactome:
+        if reaction_id in self.catalyzed_reactions:
             return 0.2
         else:
             return 0
@@ -180,7 +123,7 @@ class PathwayInference:
 
         :param reaction_id: the identifier of the reaction
         """
-        if reaction_id not in self.reactome:
+        if reaction_id not in self.catalyzed_reactions:
             return 0
         pathways_having_reaction: int = len(self.kb.pathways_with_reaction(reaction_id))
         if (
@@ -200,16 +143,13 @@ class PathwayInference:
         :param pathway_key_reactions: the set of key reaction of the pathway
         :return: the key reaction score of the reaction for the given pathway
         """
-        if reaction in self.reactome and reaction in pathway_key_reactions:
+        if reaction in self.catalyzed_reactions and reaction in pathway_key_reactions:
             return 0.5
         else:
             return 0
 
     def pathway_score(
         self,
-        pathway_id: str,
-        non_orphan_non_spontaneous_pathway_reactions: list[str],
-        pathway_key_reactions: set[str],
     ) -> float:
         r"""
         Compute the pathway score $PS$ according to the PathoLogic heuristic.
@@ -229,34 +169,41 @@ class PathwayInference:
         :param non_orphan_non_spontaneous_pathway_reactions: the list of reactions of the pathway that are both non-spontaneous and non-orphan.
         :param pathway_key_reactions: the set of key reaction of the pathway
         """
-        n = len(non_orphan_non_spontaneous_pathway_reactions)
+        n = len(self.pathway_reactions)
         if n == 0:
             return 0
         score: float = (
             sum(
-                self.reaction_score(reaction_id, pathway_id, pathway_key_reactions)
-                for reaction_id in non_orphan_non_spontaneous_pathway_reactions
+                self.reaction_score(reaction_id)
+                for reaction_id in self.pathway_reactions
             )
             / n
         )
         # Species evidence neighborhood
-        if self.RULES["pathway_species"]:
+        if (
+            "neighbor_species_boost"
+            in self.config["inference"]["pathway_score"]["components"]
+        ):
             pathway_neighbor_species_boost_score = self.taxonomic_neighborhood_boost(
-                pathway_id
-            )  # T1
+                self.pathway_id
+            )
             score *= pathway_neighbor_species_boost_score
         else:
             pathway_neighbor_species_boost_score = None
         # Taxonomic range boost
-        if self.RULES["taxonomic_range"]:
-            pathway_taxonomic_range_boost_score = self.taxonomic_range_boost(pathway_id)
+        if (
+            "taxonomic_range_boost"
+            in self.config["inference"]["pathway_score"]["components"]
+        ):
+            pathway_taxonomic_range_boost_score = self.taxonomic_range_boost(
+                self.pathway_id
+            )
             score *= pathway_taxonomic_range_boost_score
         else:
             pathway_taxonomic_range_boost_score = None
 
-        self.amend_reason(
-            pathway_id,
-            f"PathwayScore = {score} for n = {n} non-spontaneous, non-orphan reactions with taxonomic range boost T1 = {pathway_taxonomic_range_boost_score} and neighbor species boost T2 = {pathway_neighbor_species_boost_score}.\n",
+        logger.debug(
+            f"pathway_score({self.pathway_id}) = {score} for n = {n} non-spontaneous, non-orphan reactions with taxonomic range boost T1 = {pathway_taxonomic_range_boost_score} and neighbor species boost T2 = {pathway_neighbor_species_boost_score}.\n",
         )
         return score
 
@@ -273,13 +220,23 @@ class PathwayInference:
 
         :param pathway_id: the identifier of the pathway
         """
-        # FIXME: Warning: in metabiantes, the strain is not taken into account
+
+        if self.taxon_id is None or self.taxonomy is None:
+            raise ValueError(
+                "Cannot apply a species neighborhood boost if the taxon id is not specified, or no reference taxonomy tree is provided."
+            )
+
+        if getattr(self.kb.species_evidence_of_pathway, "__unsupported", False):
+            raise ValueError(
+                "Cannot apply a species neighborhood boost if the reference knowledgebase does not contain pathway species evidence information."
+            )
+
         for evidence_species_id in self.kb.species_evidence_of_pathway(pathway_id):
             if self.taxonomy.is_under_same_species(self.taxon_id, evidence_species_id):
                 return self.config["inference"]["pathway_score"][
                     "neighbor_species_boost"
                 ]
-        return 1
+        return 1  # multiply by 1 does not change the score.
 
     def taxonomic_range_boost(self, pathway_id: str) -> float:
         r"""
@@ -295,27 +252,24 @@ class PathwayInference:
         :param pathway_id: the identifier of the pathway
         :return: the taxonomic range boost score of the pathway
         """
-        if self.pathway_in_taxonomic_range.get(pathway_id):
+
+        if self.taxon_id is None or self.taxonomy is None:
+            raise ValueError(
+                "Cannot apply a taxonomic range boost if the taxon id is not specified, or no reference taxonomy tree is provided."
+            )
+
+        if getattr(self.kb.pathway_taxonomic_range, "__unsupported", False):
+            raise ValueError(
+                "Cannot apply a taxonomic range boost if the reference knowledgebase does not contain pathway taxonomic range information."
+            )
+
+        pathway_taxonomic_range = self.kb.pathway_taxonomic_range(pathway_id)
+        if (
+            pathway_taxonomic_range is not None
+            and self.taxonomy.is_child_of_parent_tax_id(
+                pathway_taxonomic_range, self.taxon_id
+            )
+        ):
             return self.config["inference"]["pathway_score"]["taxonomic_range_boost"]
         else:
             return 1
-
-    def taxonomic_range_belonging_precompute(
-        self, pathways: list[str]
-    ) -> dict[str, bool]:
-        """
-        Precompute the Boolean saying whether the target organism
-        is under the given NCBI-Taxonomy ID for the target organism.
-        :param pathways: the list of pathway identifier to precompute the taxonomic range belonging for.
-        """
-
-        pathway_in_taxonomic_range: dict[str, bool] = {}
-        for pathway in pathways:
-            taxonomic_range = self.kb.pathway_taxonomic_range(pathway)
-            if taxonomic_range is not None:
-                pathway_in_taxonomic_range[pathway] = (
-                    self.taxonomy.is_child_of_parent_tax_id(
-                        taxonomic_range, self.taxon_id
-                    )
-                )
-        return pathway_in_taxonomic_range

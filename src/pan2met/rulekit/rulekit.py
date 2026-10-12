@@ -12,11 +12,7 @@ class Rule(ABC):
     """
 
     def __init__(self):
-        pass
-
-    @property
-    def priority(self) -> int:
-        raise NotImplementedError()
+        self.priority = 0
 
     def evaluate(self, context) -> bool:
         raise NotImplementedError()
@@ -26,7 +22,7 @@ class Rule(ABC):
 
 
 class RuleEngine:
-    def __init__(self, rules: list[Rule]):
+    def __init__(self, rules: frozenset[Rule]):
         self.rules = rules
 
     def evaluate_all(self, context):

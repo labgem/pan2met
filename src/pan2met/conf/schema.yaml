@@ -21,7 +21,6 @@ inference:
             allowed:
                 - taxonomic_range
                 - pathway_species
-                - pathway_uniqueness
                 - pathway_key_reaction
                 - pathway_ontology
                 - pathway_variant
@@ -42,6 +41,13 @@ inference:
                 threshold:
                     type: float
                     min: 0
+                components:
+                    type: list
+                    allowed:
+                        - uniqueness
+                        - key_reaction
+                        - taxonomic_range_boost
+                        - neighbor_species_boost
 
 reference:
     type: dict

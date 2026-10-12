@@ -7,8 +7,6 @@ import sqlite3
 from collections.abc import Iterable
 
 import aiosql
-import graph_tool as gt
-import graph_tool.topology
 
 import pan2met
 import pan2met.sql.metabiantes
@@ -220,6 +218,9 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
 
         Assume that the pathway reaction graph is a directed acyclic graph.
         """
+        import graph_tool as gt
+        import graph_tool.topology
+
         reaction_order: list[tuple[str, str]] = self.pathway_reaction_order(pathway)
         graph = gt.Graph(directed=True)
         vmap = {}

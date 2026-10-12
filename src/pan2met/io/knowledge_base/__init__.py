@@ -170,6 +170,13 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
+    @unsupported
+    def reaction_graph_topological_order(self, pathway_id: str) -> list[str]:
+        """
+        Get the ordered topological order of reactions in the pathway reaction graph.
+        """
+        raise NotImplementedError()
+
 
 def select_kb(config) -> KnowledgeBase:
     match config["reference"]["knowledge_base"]:

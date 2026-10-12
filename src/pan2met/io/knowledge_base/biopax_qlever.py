@@ -101,7 +101,6 @@ class BioPAXSparqlKnowledgeBase(KnowledgeBase):
                 """
 
         compound_to_pathway_triplets = "\n".join(generate_rdf_triplets(compounds))
-        print(compound_to_pathway_triplets)
         response = self.queries.get_pathway_by_partial_compound_match(
             self.sparql_wrapper,
             compound_to_pathway_triplets=compound_to_pathway_triplets,

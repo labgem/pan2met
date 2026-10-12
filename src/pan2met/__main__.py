@@ -13,14 +13,14 @@ import pan2met
 from .config import default_config, override_config
 from .inference import reactome
 from .inference.minpath import minpath
-from .inference.pathologic.pythonic import infer_metabolism
 from .inference.pathway_operon_filler import pathway_operon_filler
 from .inference.proteic_complex import infer_complex
+from .inference.rulekit.metabolism import infer_metabolism
 from .io.knowledge_base import KnowledgeBase, select_kb
 from .utils import logger, read_list, read_mapping, set_logging_level, write_output
 
 
-def reactome_command(args, config=default_config):
+def reactome_command(args, config):
     """
     `pan2met reactome` subcommand
     """
@@ -31,7 +31,7 @@ def reactome_command(args, config=default_config):
     write_output(args.output, reactions)
 
 
-def reverse_reactome_command(args, config=default_config):
+def reverse_reactome_command(args, config):
     """
     `pan2met reverse-reactome` subcommand
     """
@@ -42,18 +42,17 @@ def reverse_reactome_command(args, config=default_config):
     write_output(args.output, monomers)
 
 
-def metabolism_command(args, config=default_config):
+def metabolism_command(args, config):
     """
     `pan2met metabolism` subcommand
     """
     reactome: set[str] = set(read_list(args.reactions))
-    taxon_id: int = int(args.taxon_id)
-    reason_filename = args.reason
-    pathways = infer_metabolism(reactome, taxon_id, reason_filename, config=config)
+    taxon_id: int | None = args.taxon_id
+    pathways = infer_metabolism(reactome, taxon_id, config=config)
     write_output(args.output, pathways)
 
 
-def minpath_command(args, config=default_config):
+def minpath_command(args, config):
     """
     `pan2met minpath` subcommand
     """
@@ -62,7 +61,7 @@ def minpath_command(args, config=default_config):
     write_output(args.output, pathways)
 
 
-def proteic_complex_command(args, config=default_config):
+def proteic_complex_command(args, config):
     """
     `pan2met protein-complex` subcommand
     """
@@ -72,7 +71,7 @@ def proteic_complex_command(args, config=default_config):
     write_output(args.output, complex)
 
 
-def pathway_operon_filler_command(args, config=default_config):
+def pathway_operon_filler_command(args, config):
     """
     `pan2met pathway-operon-filler` subcommand
     """
@@ -165,15 +164,10 @@ def parse_arguments():
         required=True,
     )
     parser_metabolism.add_argument(
-        "--reason",
-        help="the path to an output file with a reason log.",
-        default=None,
-        required=False,
-    )
-    parser_metabolism.add_argument(
         "-t",
         "--taxon-id",
         help="the NCBI-Taxonomy tax id of the target organism.",
+        type=int,
         required=False,
     )
     # minpath subcommand

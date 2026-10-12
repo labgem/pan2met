@@ -2,24 +2,30 @@
 Use the builtin rule kit engine to infer metabolic pathway
 """
 
-from ...io.knowledge_base import KnowledgeBase
-from ...rulekit.rulekit import Rule
+from collections.abc import Iterable
+
+from ...io.knowledge_base import KnowledgeBase, select_kb
+from ...rulekit.rulekit import Rule, RuleEngine
 from ...taxonomy import NCBITaxonomyTree
+from .pathway_score import PathwayScore
 
 
 class MetabolismRuleContext:
     def __init__(
         self,
+        config,
         pathway_id: str,
         kb: KnowledgeBase,
-        pathway_non_spontaneous_reactions: set[str],
         catalyzed_reactions: set[str],
         taxon_id: int | None,
         taxonomy: NCBITaxonomyTree | None,
     ):
+        self.config = config
         self.pathway_id = pathway_id
         self.kb = kb
-        self.pathway_non_spontaneous_reactions = pathway_non_spontaneous_reactions
+        self.pathway_non_spontaneous_reactions: set[str] = set(
+            self.kb.non_spontaneous_reactions_of_pathway(pathway_id)
+        )
         self.catalyzed_reactions = catalyzed_reactions
         self.taxonomy = taxonomy
         self.taxon_id = taxon_id
@@ -71,16 +77,31 @@ class MetabolismRuleContext:
                 return True
         return False
 
-    def missing_last_reaction(self):
-        raise NotImplementedError()
+    def missing_last_reaction(self) -> bool:
+        order = self.kb.reaction_graph_topological_order(self.pathway_id)
+        if order is None:
+            raise ValueError("pathway graph is not a DAG.")
+        if len(order) == 0:
+            raise ValueError("pathway reaction graph has no reaction.")
+        last_reaction = order[-1]
+        return (
+            last_reaction not in self.catalyzed_reactions
+            and last_reaction
+            in self.kb.non_spontaneous_reactions_of_pathway(self.pathway_id)
+        )
 
-    def missing_first_reaction(self):
-        raise NotImplementedError()
-
-
-class MetabolismRuleKit:
-    def __init__(self):
-        pass
+    def missing_first_reaction(self) -> bool:
+        order = self.kb.reaction_graph_topological_order(self.pathway_id)
+        if order is None:
+            raise ValueError("pathway graph is not a DAG.")
+        if len(order) == 0:
+            raise ValueError("pathway reaction graph has no reaction.")
+        first_reaction = order[0]
+        return (
+            first_reaction not in self.catalyzed_reactions
+            and first_reaction
+            in self.kb.non_spontaneous_reactions_of_pathway(self.pathway_id)
+        )
 
 
 class RuleNotApplicableException(Exception):
@@ -97,7 +118,7 @@ class ApplicableRule(Rule):
 
     def rule_applicability(self, requirements: list):
         for required_method in requirements:
-            if required_method.__unsupported == True:
+            if getattr(required_method, "__unsupported", False):
                 raise RuleNotApplicableException(self.ID)
 
 
@@ -106,10 +127,6 @@ class AllReactionsRule(ApplicableRule):
 
     def __init__(self, kb):
         self.rule_applicability([kb.reactions_of_pathway])
-
-    @property
-    def priority(self):
-        return 1
 
     def evaluate(self, context):
         """
@@ -127,10 +144,6 @@ class NoReactionCatalyzedRule(ApplicableRule):
     def __init__(self, kb):
 
         self.rule_applicability([kb.reactions_of_pathway])
-
-    @property
-    def priority(self):
-        return 1
 
     def evaluate(self, context):
         """
@@ -150,11 +163,7 @@ class TransportPathwayRule(ApplicableRule):
     def __init__(self, kb):
         # I should probably check the applicacability of this rule before instantiating it
         # this rule requires the ontology of the pathway to be available
-        self.rule_applicability([kb.pathway_ontology_parent_classes])
-
-    @property
-    def priority(self):
-        return 0
+        self.rule_applicability([kb.ontology_parent_class_of_pathway])
 
     def evaluate(self, context):
         """
@@ -168,16 +177,12 @@ class TransportPathwayRule(ApplicableRule):
 
 
 class ElectronTransferRule(ApplicableRule):
-    ID = "electron_transfer"
+    ID = "electron_transfer_pathway"
 
     def __init__(self, kb):
         self.rule_applicability([kb.ontology_parent_class_of_pathway])
         # I should probably check the applicacability of this rule before instantiating it
         # this rule requires the ontology of the pathway to be available
-
-    @property
-    def priority(self):
-        return 1
 
     def evaluate(self, context):
         """
@@ -198,10 +203,6 @@ class PathwayInTaxonomicRangeRule(ApplicableRule):
     def __init__(self, kb):
         self.rule_applicability([kb.pathway_taxonomic_range])
 
-    @property
-    def priority(self):
-        return 3
-
     def evaluate(self, context):
         return context.in_taxonomic_range and context.all_reactions_catalyzed
 
@@ -214,15 +215,19 @@ class PathwayDegradationMissingFirstRule(ApplicableRule):
 
     def __init__(self, kb):
         self.rule_applicability(
-            [kb.pathway_reaction_order, kb.pathway_ontology_parent_classes]
+            [kb.pathway_reaction_order, kb.ontology_parent_class_of_pathway]
         )
 
-    @property
-    def priority(self):
-        return 4
-
     def evaluate(self, context):
-        return context.pathway_is_a("Degradation") and context.missing_first_reaction()
+        try:
+            return (
+                context.pathway_is_a("Degradation") and context.missing_first_reaction()
+            )
+        except ValueError as _e:
+            return False
+
+    def apply(self, context):
+        return False
 
 
 class PathwayBiosynthesisMissingLastRule(ApplicableRule):
@@ -230,12 +235,132 @@ class PathwayBiosynthesisMissingLastRule(ApplicableRule):
 
     def __init__(self, kb):
         self.rule_applicability(
-            [kb.pathway_reaction_order, kb.pathway_ontology_parent_classes]
+            [kb.pathway_reaction_order, kb.ontology_parent_class_of_pathway]
         )
 
-    @property
-    def priority(self):
-        return 4
+    def evaluate(self, context):
+        try:
+            return (
+                context.pathway_is_a("Biosynthesis") and context.missing_last_reaction()
+            )
+        except ValueError as _e:
+            return False
+
+    def apply(self, context):
+        return False
+
+
+class MissingKeyReactionRule(ApplicableRule):
+    ID = "key_reaction_missing"
+
+    def __init__(self, kb):
+        self.rule_applicability([kb.key_reactions_of_pathway])
 
     def evaluate(self, context):
-        return context.pathway_is_a("Degradation") and context.missing_last_reaction()
+        pathway_key_reactions = context.kb.key_reactions_of_pathway(context.pathway_id)
+        return (
+            len(set(pathway_key_reactions).difference(context.catalyzed_reactions)) > 0
+        )
+
+    def apply(self, context):
+        return False
+
+
+class PathwayScoreRule(ApplicableRule):
+    ID = "pathway_score"
+
+    def __init__(self, kb):
+        # TODO: Is there some rule applicability to check?
+        pass
+
+    def evaluate(self, context):
+        scorer = PathwayScore(
+            context.config,
+            context.pathway_id,
+            context.pathway_non_spontaneous_reactions,
+            context.kb,
+            context.catalyzed_reactions,
+            context.taxonomy,
+            context.taxon_id,
+        )
+        pathway_score = scorer.pathway_score()
+        return (
+            pathway_score >= context.config["inference"]["pathway_score"]["threshold"]
+        )
+
+
+class DefaultRule(ApplicableRule):
+    ID = "default"
+
+    def __init__(self, kb):
+        pass
+
+    def evaluate(self, context):
+        return True
+
+    def apply(self, context):
+        return False
+
+
+AVAILABLE_RULE_CLASSES = [
+    AllReactionsRule,
+    NoReactionCatalyzedRule,
+    TransportPathwayRule,
+    ElectronTransferRule,
+    PathwayInTaxonomicRangeRule,
+    PathwayDegradationMissingFirstRule,
+    PathwayBiosynthesisMissingLastRule,
+    MissingKeyReactionRule,
+    PathwayScoreRule,
+]
+
+
+class MetabolismRuleKit:
+    def __init__(
+        self,
+        config: dict,
+        kb: KnowledgeBase,
+        catalyzed_reactions: set[str],
+        taxon_id: int | None,
+        taxonomy: NCBITaxonomyTree | None,
+    ):
+        self.config = config
+        self.kb = kb
+        self.catalyzed_reactions = catalyzed_reactions
+        self.enabled_rule_identifiers: list[str] = config["inference"]["rules"]
+        self.rule_id_to_rule_class = {cl.ID: cl for cl in AVAILABLE_RULE_CLASSES}
+        self.rule_class = [
+            self.rule_id_to_rule_class[rule_id]
+            for rule_id in self.enabled_rule_identifiers
+        ]
+        self.taxon_id = taxon_id
+        self.taxonomy = taxonomy
+
+        self.rules = [rule_class(kb) for rule_class in self.rule_class]
+        # Force the rule order
+        for i in range(len(self.rules)):
+            self.rules[i].priority = i
+
+    def inference(self) -> Iterable[str]:
+        for pathway_id in self.kb.pathways():
+            engine = RuleEngine(frozenset(self.rules))
+            context = MetabolismRuleContext(
+                self.config,
+                pathway_id,
+                self.kb,
+                self.catalyzed_reactions,
+                self.taxon_id,
+                self.taxonomy,
+            )
+            if engine.evaluate_first(context):
+                yield pathway_id
+
+
+def infer_metabolism(reactome: set[str], taxon_id: int | None, config):
+    kb = select_kb(config)
+    if taxon_id is not None:
+        taxonomy = NCBITaxonomyTree(config["reference"]["ncbi_taxonomy"])
+    else:
+        taxonomy = None
+    rule_kit = MetabolismRuleKit(config, kb, reactome, taxon_id, taxonomy)
+    yield from rule_kit.inference()
