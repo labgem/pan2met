@@ -80,7 +80,7 @@ prod = { features = [], solve-group = "default" }
 
 [tool.pixi.dependencies]
 python = "3.14.*"
-pip = ">=26.0.1,<27"
+pip = ">=26.2.1,<27"
 graph-tool = ">=3"
 cerberus = ">=1.3.8,<2"
 yaml = ">=0.2.5,<0.3"

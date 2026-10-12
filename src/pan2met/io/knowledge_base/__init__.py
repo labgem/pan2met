@@ -29,48 +29,55 @@ class KnowledgeBase(ABC):
     def __init__(self):
         pass
 
+    @unsupported
     def monomers(self) -> list[str]:
         """
         List monomer polypeptides
         """
         raise NotImplementedError()
 
+    @unsupported
     def pathways(self) -> list[str]:
         """
         List the pathways referenced by the knowledge base
         """
         raise NotImplementedError()
 
+    @unsupported
     def reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List reactions of a pathway
         """
-        raise NotImplementedError()
 
+    @unsupported
     def name_of_pathway(self, pathway_id: str) -> str:
         """
         Get the name of a pathway
         """
         raise NotImplementedError()
 
+    @unsupported
     def spontaneous_reactions(self) -> list[str]:
         """
         List spontaneous reactions
         """
         raise NotImplementedError()
 
+    @unsupported
     def orphan_reactions(self) -> list[str]:
         """
         List orphan reactions
         """
         raise NotImplementedError()
 
+    @unsupported
     def non_spontaneous_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         Non-spontaneous reactions of a pathway
         """
         raise NotImplementedError()
 
+    @unsupported
     def non_orphan_non_spontaneous_reactions_of_pathway(
         self, pathway_id: str
     ) -> list[str]:
@@ -79,72 +86,84 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
+    @unsupported
     def enzymes_of_reaction(self, reaction_id: str) -> list[str]:
         """
         List enzymes catalyzing a reaction
         """
         raise NotImplementedError()
 
+    @unsupported
     def reactions_by_ec_number(self, ec_number: str) -> list[str]:
         """
         List reactions annotated with given EC-number
         """
         raise NotImplementedError()
 
+    @unsupported
     def pathway_taxonomic_range(self, pathway_id: str) -> int | None:
         """
         Return a NCBI-Taxonomy Taxonomy Identifier number
         """
         raise NotImplementedError()
 
+    @unsupported
     def reaction_is_key(self, pathway_id: str, reaction_id: str) -> bool:
         """
         Return True if the reaction is a key reaction of the pathway
         """
         raise NotImplementedError()
 
+    @unsupported
     def key_reactions_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List all key reactions of a pathway.
         """
         raise NotImplementedError()
 
+    @unsupported
     def pathway_reaction_order(self, pathway_id: str) -> list[tuple[str, str]]:
         """
         Return a list of (predecessor, successor) reactions of a pathway.
         """
         raise NotImplementedError()
 
+    @unsupported
     def pathways_with_reaction(self, reaction_id: str) -> list[str]:
         """
         List all pathways with the given reaction identifier.
         """
         raise NotImplementedError()
 
+    @unsupported
     def variants_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the variants of a pathway.
         """
         raise NotImplementedError()
 
+    @unsupported
     def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
         """
         List species NCBI Taxonomy identifiers where pathway presence evidence were found.
         """
         raise NotImplementedError()
 
+    @unsupported
     def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the pathway ontology parents of a pathway
         """
         raise NotImplementedError()
 
+    @unsupported
     def complex(self) -> list[str]:
         """
         List the protein complex
         """
         raise NotImplementedError()
 
+    @unsupported
     def components_of_complex(self, complex_id: str) -> list[str]:
         """
         List the components of a complex
