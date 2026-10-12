@@ -1,4 +1,4 @@
-Tutorials
+Reference
 =========
 
 
@@ -6,3 +6,4 @@ Tutorials
 
     config
     decision_rules
+    analysis/index

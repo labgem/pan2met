@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 pan2met: Predict metabolic networks of procaryotes at pangenome scale
-========================================================================
+=====================================================================
 
 **pan2met** is a software suite aiming to provide tools to reconstruct metabolic networks of procaryotes: bacteria and archaea, at the pangenome scale.
 
@@ -14,6 +14,8 @@ The decision rules implemented in **pan2met** can also be used to reconstruct a 
 
 In spite of being designed primary with prokaryote genomes and pangenomes in mind, **pan2met** could also be applied to a certain extent to Eukaryotes.
 
+
+**pan2met** is an open-source bioinformatics tool developed by the LABGeM team and distributed under the CeCILL version 2.1 free software license agreement.
 
 User guide
 ----------
