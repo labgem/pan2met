@@ -22,10 +22,8 @@ import pan2met.conf
 from pan2met.config import override_config
 
 from ...io.knowledge_base import KnowledgeBase, select_kb
-from ...utils import read_list, set_logging_level, write_output
+from ...utils import logger, read_list, set_logging_level, write_output
 from .generic import PathwayInference
-
-logger = logging.getLogger("pan2met:inference")
 
 
 class PythonicPathwayInference(PathwayInference):

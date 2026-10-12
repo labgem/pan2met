@@ -10,8 +10,6 @@ from pathlib import Path
 from ppanggolin.formats.readBinaries import check_pangenome_info
 from ppanggolin.pangenome import Pangenome
 
-from ..config import default_config as config
-from ..io.knowledge_base import select_kb
 from ..io.pangenome import read_pangenome_rtab
 from ..utils import read_mapping
 
@@ -40,7 +38,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Find the gene family identifiers of reactions of a pathway"
     )
-    parser.add_argument("--pathway", help="Pathway identifier", required=True)
+    # parser.add_argument("--pathway", help="Pathway identifier", required=True)
     parser.add_argument(
         "--pangenome-rtab",
         help="Path to the pangenome gene presence/absence table in Rtab format",
@@ -59,16 +57,17 @@ def main():
     parser.add_argument(
         "-o",
         "--output",
-        help="Path to the output file in TSV format, columns: pathway identifier, reaction identifier, gene family identifier",
+        help="Path to the output file in TSV format, columns: reaction identifier, gene family identifier + a gene identifier for each strain (comma separated if multiple gene identifier for a strain)",
         required=True,
     )
     args = parser.parse_args()
 
-    pathway = args.pathway
+    # pathway = args.pathway
 
-    kb = select_kb(config)
-    reactions = kb.non_spontaneous_reactions_of_pathway(pathway)
+    # kb = select_kb(config)
     reaction_to_gene_families = read_mapping(args.reaction_to_gene_family)
+    # reactions = kb.non_spontaneous_reactions_of_pathway(pathway)
+    reactions = sorted(reaction_to_gene_families.keys())
 
     # Open the pangenome
     pangenome = Pangenome()
@@ -82,16 +81,16 @@ def main():
     strain_to_gene_families_to_genes: dict[str, dict[str, set[str]]] = (
         pangenome_strain_family_to_genes(pangenome)
     )
+    strains = sorted(strain_to_gene_families.keys())
 
     with open(args.output, "w") as output_file:
         writer = csv.writer(output_file, delimiter="\t")
         # Write header
-        strains = sorted(strain_to_gene_families.keys())
-        writer.writerow(["pathway", "reaction", "protein_family"] + strains)
+        writer.writerow(["reaction", "protein_family"] + strains)
         for reaction in reactions:
             for gene_family in reaction_to_gene_families[reaction]:
                 writer.writerow(
-                    [pathway, reaction, gene_family]
+                    [reaction, gene_family]
                     + [
                         ",".join(strain_to_gene_families_to_genes[strain][gene_family])
                         if strain in strain_to_gene_families_to_genes

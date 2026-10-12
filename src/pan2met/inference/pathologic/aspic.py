@@ -5,7 +5,6 @@ relying on an Answer Set Programming approach with clingo.
 
 import argparse
 import importlib.resources
-import logging
 from pathlib import Path
 
 import clyngor
@@ -15,10 +14,8 @@ import pan2met
 from ...asp import kb_as_asp
 from ...config import default_config, override_config
 from ...io.knowledge_base import KnowledgeBase, select_kb
-from ...utils import read_list, set_logging_level, unquote, write_output
+from ...utils import logger, read_list, set_logging_level, unquote, write_output
 from .generic import PathwayInference
-
-logger = logging.getLogger("pan2met:inference:pathologic:aspic")
 
 
 class AspicPathwayInference(PathwayInference):

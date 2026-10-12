@@ -4,7 +4,6 @@ Command line interface of pangenome2metabolism
 
 import argparse
 import csv
-import logging
 import sys
 
 import graph_tool as gt
@@ -18,9 +17,7 @@ from .inference.pathologic.pythonic import infer_metabolism
 from .inference.pathway_operon_filler import pathway_operon_filler
 from .inference.proteic_complex import infer_complex
 from .io.knowledge_base import KnowledgeBase, select_kb
-from .utils import read_list, read_mapping, set_logging_level, write_output
-
-logger = logging.getLogger()
+from .utils import logger, read_list, read_mapping, set_logging_level, write_output
 
 
 def reactome_command(args, config=default_config):

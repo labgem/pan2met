@@ -17,7 +17,7 @@ import duckdb
 import ouisparql
 
 import pan2met
-from pan2met.io.knowledge_base import KnowledgeBase, unsupported
+from pan2met.io.knowledge_base import KnowledgeBase
 from pan2met.utils import logger
 
 
@@ -62,9 +62,8 @@ def basename_from_filename(pathway_filename: str) -> str:
 
 
 # we would type it as tuple_extract_value[T](tuples: Iterable[Tuple[T, ...]], index: int) -> Iterable[T] starting from Python3.12
-def tuple_extract_value(tuples, index: int):
-    for tuple in tuples:
-        yield tuple[index]
+def tuple_extract_value(tuples, index: int) -> list[str]:
+    return [tuple[index] for tuple in tuples]
 
 
 class BioPAXFolderKnowledgeBase(KnowledgeBase):
@@ -207,58 +206,6 @@ class BioPAXFolderKnowledgeBase(KnowledgeBase):
             self.conn, ec_number=ec_number
         )
         return tuple_extract_value(results, 0)
-
-    @unsupported
-    def pathway_taxonomic_range(self, pathway_id: str) -> int | None:
-        """
-        Return a NCBI-Taxonomy Taxonomy Identifier number
-        """
-
-    @unsupported
-    def reaction_is_key(self, pathway_id: str, reaction_id: str) -> bool:
-        """
-        Return True if the reaction is a key reaction of the pathway
-        """
-
-    @unsupported
-    def key_reactions_of_pathway(self, pathway_id: str) -> list[str]:
-        """
-        List all key reactions of a pathway.
-        """
-
-    @unsupported
-    def pathway_reaction_order(self, pathway_id: str) -> list[tuple[str, str]]:
-        """
-        Return a list of (predecessor, successor) reactions of a pathway.
-        """
-
-    def pathways_with_reaction(self, reaction_id: str) -> list[str]:
-        """
-        List all pathways with the given reaction identifier.
-        """
-        reaction_uri = f"<{reaction_id}>"
-        results = self.queries.pathways_with_reaction(
-            self.conn, reaction_uri=reaction_uri
-        )
-        return tuple_extract_value(results, index=0)
-
-    @unsupported
-    def variants_of_pathway(self, pathway_id: str) -> list[str]:
-        """
-        List the variants of a pathway.
-        """
-
-    @unsupported
-    def species_evidence_of_pathway(self, pathway_id: str) -> list[int]:
-        """
-        List species NCBI Taxonomy identifiers where pathway presence evidence were found.
-        """
-
-    @unsupported
-    def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
-        """
-        List the pathway ontology parents of a pathway
-        """
 
     def complex(self) -> list[str]:
         """

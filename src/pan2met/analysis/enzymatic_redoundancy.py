@@ -76,7 +76,7 @@ def main():
         description="Count the number of enzymes that catalyze each reaction."
     )
     parser.add_argument(
-        "--enzyme-reaction-mapping",
+        "--gene-reaction",
         type=str,
         required=True,
         help="Path to a file containing the mapping from enzymes to reactions they catalyze in TSV format, column 1: enzyme, column 2: reaction identifier.",
@@ -102,7 +102,7 @@ def main():
     args = parser.parse_args()
 
     # Load the protein-families to reactions mapping
-    input_enzyme_reaction_mapping = args.enzyme_reaction_mapping
+    input_enzyme_reaction_mapping = args.gene_reaction
     with open(input_enzyme_reaction_mapping, "r") as f:
         enzyme_reaction_mapping = defaultdict(set)
         for line in f:

@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+
+
 def complex_components_asp_rules(complex: str, components: str) -> str:
     return (
         f'complex("{complex}") :-'
@@ -14,15 +17,15 @@ def potential_monomer_asp_rule(monomer: str) -> str:
     return f'potential_monomer("{monomer}").'
 
 
-def complex_asp_rule(complex: str, monomers: list[str]) -> str:
+def complex_asp_rule(complex: str, monomers: Iterable[str]) -> str:
     return (
-        'complex("{complex}") :- '
+        f'complex("{complex}") :- '
         + " , ".join('monomer("{monomer}")' for monomer in monomers)
         + "."
     )
 
 
-def list_to_asp_atoms(predicate: str, literals: str) -> str:
+def list_to_asp_atoms(predicate: str, literals: Iterable[str]) -> str:
     return "\n".join(f'{predicate}("{literal}").' for literal in literals)
 
 

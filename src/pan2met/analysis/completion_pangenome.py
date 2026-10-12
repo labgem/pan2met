@@ -4,7 +4,6 @@ Completion matrix
 
 import argparse
 import csv
-import logging
 from pathlib import Path
 from typing import Literal
 
@@ -17,10 +16,7 @@ from ..io.pangenome import (
     read_pangenome_rtab,
     read_partition_files,
 )
-from ..utils import read_list, read_mapping, reverse_mapping
-
-logger = logging.getLogger("pan2met:analysis:completion")
-logging.basicConfig(level=logging.DEBUG)
+from ..utils import logger, read_list, read_mapping, reverse_mapping
 
 
 def write_reaction_presence_absence_by_strain(
@@ -255,7 +251,7 @@ def main():
     )
     parser.add_argument("--prefix", help="Output filenames prefix", required=True)
     parser.add_argument(
-        "--families-reaction",
+        "--gene-reaction",
         help="A TSV mapping gene families to reaction identifiers",
         required=True,
     )
@@ -289,7 +285,7 @@ def main():
     # Modules to families
     module_to_families = read_functional_module_file(module_filename)
     # Read a mapping from gene families to reaction identifiers
-    families_to_reactions: dict[str, set[str]] = read_mapping(args.families_reaction)
+    families_to_reactions: dict[str, set[str]] = read_mapping(args.gene_reaction)
     reaction_to_families: dict[str, set[str]] = reverse_mapping(families_to_reactions)
     pangenome_reactions: set[str] = {reaction for reaction in reaction_to_families}
 

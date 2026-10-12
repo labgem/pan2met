@@ -5,7 +5,6 @@ When a candidate protein catalyzing a reaction of the pathway is within a closur
 we get more confidence on this candidate catalyzis.
 """
 
-import logging
 from collections import namedtuple
 from collections.abc import Iterable
 
@@ -18,9 +17,6 @@ from pan2met.utils import reverse_mapping
 GeneFamilyClosureAssignation = namedtuple(
     "GeneFamilyClosureAssignation", ["pathway", "vertex", "closure"]
 )
-
-
-logger = logging.getLogger()
 
 
 def assign_candidate_enzymes_catalysis(

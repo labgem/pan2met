@@ -1,9 +1,6 @@
-import logging
-
 from ...io.knowledge_base import KnowledgeBase
 from ...taxonomy import NCBITaxonomyTree
-
-logger = logging.getLogger("pan2met:inference:pathologic")
+from ...utils import logger
 
 
 class PathwayInference:

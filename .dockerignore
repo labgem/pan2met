@@ -1,0 +1,8 @@
+.pixi
+.git
+.pytest_cache
+.ruff_cache
+.venv
+.mypy_cache
+container
+docs

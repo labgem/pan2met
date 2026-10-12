@@ -1,11 +1,24 @@
 # Tasks
 
+## Knowledge base input methods
+
+- [x] metabiantes SQLite database
+- [x] padmet file
+- [ ] QLever repository of BioPAX
+- [x] Plain folder of BioPAX with DuckDB RDF extension
+- [ ] Plain folder of SBML
+
+## Input format
+
+- [x] Reaction / monomer table
+- [ ] Reaction list: in this case, we will not be able to use the graph topology
+
 ## Export format
 
 - [ ] PADMet
 - [ ] SBML
 - [ ] BioPAX
-- [ ] Plain list of pathway identifiers
+- [x] Plain list of pathway identifiers
 - [ ] Plain list of reaction identifiers (the input reactions + the inferred ones?)
 
 ## Inference rules

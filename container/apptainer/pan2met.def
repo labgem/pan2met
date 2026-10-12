@@ -1,0 +1,12 @@
+Bootstrap: docker
+From: python:3.14
+
+%files
+    $PWD/../pyproject.toml pyproject.toml
+    $PWD/../src/ src
+
+%post
+    pip install --root-user-action=ignore .
+
+%runscript
+    exec python3 -m pan2met $@

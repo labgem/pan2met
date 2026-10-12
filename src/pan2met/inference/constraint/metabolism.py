@@ -13,8 +13,6 @@ from ...config import default_config, override_config
 from ...io.knowledge_base import KnowledgeBase, select_kb
 from ...utils import read_list, write_output
 
-logger = logging.getLogger("pan2met:inference:constraint")
-
 
 class ASPPathwayInference:
     """
