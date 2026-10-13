@@ -31,6 +31,10 @@ class MetabolismRuleContext:
         self.taxon_id = taxon_id
 
     @property
+    def name(self):
+        return self.pathway_id
+
+    @property
     def all_reactions_catalyzed(self) -> bool:
         return (
             len(

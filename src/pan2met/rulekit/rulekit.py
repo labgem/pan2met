@@ -5,6 +5,8 @@ A rule kit inspired by https://docs.rs/rule_kit/
 import queue
 from abc import ABC
 
+from ..utils import logger
+
 
 class Rule(ABC):
     """
@@ -16,6 +18,9 @@ class Rule(ABC):
 
     def evaluate(self, context) -> bool:
         raise NotImplementedError()
+
+    def before_apply(self, context):
+        logger.info(f"Apply rule {self.ID} for {context.name}")
 
     def apply(self, context):
         raise NotImplementedError()
@@ -38,6 +43,7 @@ class RuleEngine:
         while not priority_queue.empty():
             _priority, rule = priority_queue.get()
             if rule.evaluate(context):
-                rule.apply(context)
-                return True
+                rule.before_apply(context)
+                result = rule.apply(context)
+                return result
         return False
