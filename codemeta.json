@@ -42,7 +42,6 @@
         "SQL",
         "Answer Set Programming"
     ],
-    "softwareRequirements": "https://pathway-tools.org/",
     "developmentStatus": "active",
     "funding": "ANR-20-PAMR-0002",
     "issueTracker": "https://github.com/labgem/pan2met/issues"
