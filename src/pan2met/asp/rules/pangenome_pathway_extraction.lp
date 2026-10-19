@@ -118,7 +118,7 @@ pathway_count(N) :- N = #count { Pathway: pathway(Pathway) }.
 
 
 #maximize{N: pathway_count(N)}.
-#maximize{N: pathway_size(N, P)}.
+#maximize{N: pathway_size(N, P), pathway(P)}.
 % % we want to put the maximum number of reactions in the pathway module
 
 % N > 1 :- pathway_size(N, Pathway) , pathway(Pathway).
