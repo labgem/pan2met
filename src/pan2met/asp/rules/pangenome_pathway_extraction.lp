@@ -20,11 +20,10 @@
 % - pathway(Pathway). : The answer set contains a pathway named Pathway (Pathway is a numeric identifier with no particular meaning)
 % - reaction_is_in_pathway(Pathway, Reaction). : The reaction Reaction belongs to the proposed pathway identified by Pathway
 
-#const n=100.
 
 pangenome_graph_edge(GeneFamily1, GeneFamily2) :- pangenome_graph_edge(GeneFamily2, GeneFamily1).
 
-pathway(1).
+{ pathway(1..n) }.
 
 % a pathway identifier is choosen from numbers in range 1 to n
 
@@ -84,12 +83,41 @@ pangenome_connected_reactions(Pathway, Reaction1, Reaction2) :- catalysis(Reacti
    , reaction_is_in_pathway(Pathway, Reaction2)
    , not spontaneous(Reaction2).
 
-%
-% What makes a pathway a 'good' candidate
-%
+% We do not admit duplicates
+% Two pathways are different if there exists a reaction in one but not the other
+has_a_different_reaction(Pathway1, Pathway2) :-
+    pathway(Pathway1),
+    pathway(Pathway2),
+    reaction(R),
+    reaction_is_in_pathway(Pathway1, R),
+    not reaction_is_in_pathway(Pathway2, R).
 
+has_a_different_reaction(Pathway1, Pathway2) :-
+    pathway(Pathway1),
+    pathway(Pathway2),
+    reaction(R),
+    reaction_is_in_pathway(Pathway2, R),
+    not reaction_is_in_pathway(Pathway1, R).
+
+% Same set of reactions = not different
+same_set_of_reactions(Pathway1, Pathway2) :-
+    pathway(Pathway1),
+    pathway(Pathway2),
+    not has_a_different_reaction(Pathway1, Pathway2).
+
+% Eliminate duplicates (keep only one representative)
+Pathway1 = Pathway2 :-
+    same_set_of_reactions(Pathway1, Pathway2),
+    Pathway1 < Pathway2.  % Use an ordering to avoid symmetric duplicates
+
+% number of reactions in the pathway
 pathway_size(N, Pathway) :- N = #count { Reaction: reaction_is_in_pathway(Pathway, Reaction) } , pathway(Pathway).
 
+% number of distinct pathways
+pathway_count(N) :- N = #count { Pathway: pathway(Pathway) }.
+
+
+#maximize{N: pathway_count(N)}.
 #maximize{N: pathway_size(N, P)}.
 % % we want to put the maximum number of reactions in the pathway module
 

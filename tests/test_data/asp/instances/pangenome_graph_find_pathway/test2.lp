@@ -1,8 +1,10 @@
+% Test reaction pangenome gene closure reachability
 
 reaction("RXN-1").
 reaction("RXN-2").
 reaction("RXN-3").
 reaction("RXN-4").
+reaction("RXN-5").
 
 spontaneous("RXN-2").
 
@@ -26,5 +28,4 @@ pangenome_graph_edge("GENE-5", "GENE-UNREACHABLE").
 
 
 % #show pangenome_connected_reactions/3.
-#show pathway/1.
 #show reaction_is_in_pathway/2.
