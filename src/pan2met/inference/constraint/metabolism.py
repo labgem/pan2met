@@ -25,7 +25,7 @@ class ASPPathwayInference:
 
     def dump_pathway_knowledge_to_asp(self):
         """
-        Dump a Clingo ASP file with the following atoms, with information taken from the knowledge based:
+        Dump a Clingo ASP file with the following atoms, with information taken from the knowledgebase:
         - pathway/1.
         - reaction/1.
         - pathway_reaction/2. (pathway(Pathway, Reaction)).
