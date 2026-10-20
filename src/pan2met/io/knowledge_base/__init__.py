@@ -37,6 +37,13 @@ class KnowledgeBase(ABC):
         raise NotImplementedError()
 
     @unsupported
+    def reactions(self) -> list[str]:
+        """
+        List reaction identifiers
+        """
+        raise NotImplementedError()
+
+    @unsupported
     def pathways(self) -> list[str]:
         """
         List the pathways referenced by the knowledge base
@@ -48,6 +55,7 @@ class KnowledgeBase(ABC):
         """
         List reactions of a pathway
         """
+        raise NotImplementedError()
 
     @unsupported
     def name_of_pathway(self, pathway_id: str) -> str:

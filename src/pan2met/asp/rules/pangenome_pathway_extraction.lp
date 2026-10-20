@@ -13,13 +13,14 @@
 % - reaction(Reaction). : Reaction is a reaction.
 % - spontaneous(Reaction). : Reaction is a spontaneous reaction
 % - catalysis(Reaction, GeneFamily). : Reaction is catalyzed by an enzyme belonging to the GeneFamily
-% - reaction_graph_edge(Reaction1, Reaction2) : directed, Reaction1 produces a metabolite consumed by Reaction2.
+% % - reaction_graph_edge(Reaction1, Reaction2). : directed, Reaction1 produces a metabolite consumed by Reaction2.
+% - reaction_graph_strongly_connected_component(Component, Reaction) : if two reactions belongs to the same strongly connected component, there exists a path from the first reaction to the second, or in the other direction.
+% - reaction_are_connected(Reaction1, Reaction2).
 % - pangenome_graph_edge(GeneFamily1, GeneFamily2) : undirected, GeneFamily1 and GeneFamily2 are linked in the pangenome gene graph
 %
 % The output is encoded as follows:
 % - pathway(Pathway). : The answer set contains a pathway named Pathway (Pathway is a numeric identifier with no particular meaning)
 % - reaction_is_in_pathway(Pathway, Reaction). : The reaction Reaction belongs to the proposed pathway identified by Pathway
-
 
 pangenome_graph_edge(GeneFamily1, GeneFamily2) :- pangenome_graph_edge(GeneFamily2, GeneFamily1).
 
@@ -35,27 +36,23 @@ pangenome_graph_edge(GeneFamily1, GeneFamily2) :- pangenome_graph_edge(GeneFamil
 % a pathway is composed of at least two reactions
 
 :- pathway(Pathway)
-                                                        , reaction_is_in_pathway(Pathway, Reaction1)
-                                                        , reaction_is_in_pathway(Pathway, Reaction2)
-                                                        , not reactions_are_connected(Reaction1, Reaction2).
-% a pathway is not a connected component if it has a two not connected reactions
+   , #count { Component :
+              reaction_is_in_pathway(Pathway, Reaction),
+              reaction_graph_strongly_connected_component(Component, Reaction)
+            } > 1.
+% a pathway cannot contain two reactions that do not belong to the same connected component
 
-reactions_are_connected(Reaction1, Reaction2) :- reaction_graph_path(Reaction1, Reaction2).
-reactions_are_connected(Reaction1, Reaction2) :- reaction_graph_path(Reaction2, Reaction1).
-% to check if two reactions are connected, we check if there is a directed edge in either direction,
-
-reaction_graph_path(Reaction1, Reaction2) :- Reaction1 = Reaction2 , reaction(Reaction1) , reaction(Reaction2).
-reaction_graph_path(Reaction1, Reaction2) :- reaction_graph_edge(Reaction1, Reaction2).
-reaction_graph_path(Reaction1, Reaction3) :- reaction_graph_path(Reaction1, Reaction2) , reaction_graph_path(Reaction2, Reaction3).
-% a directed path between Reaction1 and Reaction2 follows the directed edges, edge to edge.
-
-% we reject pathway that are not connected components
 
 %
 % What makes a pathway an 'operonic' pathway in the pangenome
 %
 
 % an operonic pathway is a pathway with reactions found contiguous in the pangenome graph
+
+% Two reactions are said to be "pangenome connected" if they are in the same pathway
+% and that they are on the same operon
+
+% Two reacions
 
 pangenome_connected_reactions(Pathway, Reaction1, Reaction3) :- pangenome_connected_reactions(Pathway, Reaction1, Reaction2)
                                                      , pangenome_connected_reactions(Pathway, Reaction2, Reaction3).
@@ -107,8 +104,7 @@ same_set_of_reactions(Pathway1, Pathway2) :-
 
 % Eliminate duplicates (keep only one representative)
 Pathway1 = Pathway2 :-
-    same_set_of_reactions(Pathway1, Pathway2),
-    Pathway1 < Pathway2.  % Use an ordering to avoid symmetric duplicates
+    same_set_of_reactions(Pathway1, Pathway2).
 
 % number of reactions in the pathway
 pathway_size(N, Pathway) :- N = #count { Reaction: reaction_is_in_pathway(Pathway, Reaction) } , pathway(Pathway).
@@ -116,9 +112,11 @@ pathway_size(N, Pathway) :- N = #count { Reaction: reaction_is_in_pathway(Pathwa
 % number of distinct pathways
 pathway_count(N) :- N = #count { Pathway: pathway(Pathway) }.
 
+N >= 4 :- pathway(Pathway) , pathway_size(N, Pathway).
+% Instead of optimizing for the size of the pathway, simply search for pathway with size at least 4.
 
-#maximize{N: pathway_count(N)}.
-#maximize{N: pathway_size(N, P), pathway(P)}.
+% #maximize{1@2, N: pathway_count(N)}.
+% #maximize{1@1, N: pathway_size(N, P), pathway(P)}.
 % % we want to put the maximum number of reactions in the pathway module
 
 % N > 1 :- pathway_size(N, Pathway) , pathway(Pathway).
