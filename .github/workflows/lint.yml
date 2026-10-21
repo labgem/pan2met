@@ -1,10 +1,38 @@
-name: Lint
+name: lint
 
-on: [pull_request]
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".readthedocs.yaml"
+      - "LICENSE"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".readthedocs.yaml"
+      - "LICENSE"
+  workflow_dispatch:
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
+  ruff:
+    name: ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: ruff-check
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: check
+
+      - name: Format
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: format --check
