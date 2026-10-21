@@ -17,15 +17,13 @@ default_config_str = importlib.resources.read_text(pan2met.conf, "default.yaml")
 default_config = yaml.safe_load(default_config_str)
 
 
-def override_config(filename: Path) -> dict:
+def override_config(filename: Path, config=default_config) -> dict:
     """
     Read default config and override it with values from config of a file
 
     :param filename: path to a config file.
     :return: the config
     """
-
-    config = default_config
 
     # Update config globally overriding default_config with keys from given config filename
     with open(filename, "r") as file:

@@ -19,8 +19,6 @@ from ..io.knowledge_base import KnowledgeBase, select_kb
 from ..io.reaction_graph import reaction_graph_from_knowledge_base
 from ..utils import logger
 
-REMOVE_EXTREMITIES = True
-
 
 def find_all_non_branching_path(G: gt.Graph) -> Iterable[list[int]]:
     """
@@ -59,7 +57,7 @@ def find_all_non_branching_path(G: gt.Graph) -> Iterable[list[int]]:
             else:
                 visited.add(current)
             visited.add(current)
-            out_edges = G.get_in_edges(current)
+            out_edges = G.get_out_edges(current)
             path.append(current)
         if len(path) > 1:
             yield path
@@ -76,8 +74,6 @@ def reactions_of_linear_path(
         and key "id" taking value in the the name of the reaction, or compound in the reference database / sbml
     :yield: the name of reaction in the linear path.
     """
-    if REMOVE_EXTREMITIES:
-        linear_path = linear_path[1:-1]
     for item in linear_path:
         yield reaction_graph.vp["reaction"][item]
 
@@ -103,9 +99,20 @@ def associate_reaction_set_to_pathway(
                     break
 
 
+def union(sets: Iterable[set]):
+    sets_iterator = iter(sets)
+    union_set: set = next(sets_iterator, set())
+    for other_set in sets:
+        union_set = union_set.union(other_set)
+    return union_set
+
+
 def find_linear_subpathways(
-    reaction_graph: gt.Graph, kb: KnowledgeBase
-) -> Iterable[tuple[list[gt]]]:
+    reaction_graph: gt.Graph,
+    reaction_to_pathways: dict[str, set[str]],
+    remove_extremities: bool,
+    keep_specific: bool,
+) -> Iterable[tuple[list[str], str]]:
     """
     Find linear sub-pathways.
 
@@ -131,20 +138,33 @@ def find_linear_subpathways(
         the pathway [...].
 
     :param reaction_graph: a directed reaction graph
-    :param kb: a metabolism knowledgebase
+    :param reaction_to_pathways: a mapping from reaction identifiers to the corresponding set of pathways that has them
+    :param remove_extremities: whether to keep the branching extremities in the reaction set to filter the linear subpathways that belongs to a pathway
+    :param keep_specific: whether to keep only the linear subpathways that are specific to a single pathway
     """
     for linear_path in find_all_non_branching_path(reaction_graph):
-        reaction_set: set[str] = set(
+        reactions: list[str] = list(
             reactions_of_linear_path(linear_path, reaction_graph)
         )
-        pathways: Iterable[str] = associate_reaction_set_to_pathway(kb, reaction_set)
+        if remove_extremities:
+            filter_reactions_considered = reactions[1:-1]
+        else:
+            filter_reactions_considered = reactions
+
+        pathways: Iterable[str] = union(
+            reaction_to_pathways[reaction] for reaction in filter_reactions_considered
+        )
         pathways: list[str] = list(pathways)
-        if len(pathways) == 1:
-            yield reaction_set, pathways[0]
-        elif len(pathways) > 1:
-            logger.warning(
-                f"Found a linear path matching several pathways: {reaction_set}, in {len(pathways)} pathway"
-            )
+        if keep_specific:
+            if len(pathways) == 1:
+                yield reactions, pathways[0]
+            elif len(pathways) > 1:
+                logger.warning(
+                    f"Found a linear path matching several pathways: {reactions} in {len(pathways)} pathways."
+                )
+        else:
+            for pathway in pathways:
+                yield reactions, pathway
 
 
 def argument_parser():
@@ -153,6 +173,18 @@ def argument_parser():
     )
     parser.add_argument(
         "-c", "--config", help="override default config", required=False
+    )
+    parser.add_argument(
+        "--extremities",
+        action=argparse.BooleanOptionalAction,
+        help="whether to keep the linear path branching extremities to assess the specificities of the linear subpathway among the pathways sharing these reactions.",
+        default=True,
+    )
+    parser.add_argument(
+        "--specific-only",
+        action=argparse.BooleanOptionalAction,
+        help="whether to keep only the linear subpathways that appears in only one pathway of the metabolism knowledgebase.",
+        default=True,
     )
     parser.add_argument(
         "-o",
@@ -164,23 +196,32 @@ def argument_parser():
     return parser
 
 
+def build_reaction_to_pathway_mapping(kb: KnowledgeBase) -> dict[str, set[str]]:
+    reaction_to_pathways: dict[str, set[str]] = {}
+    for pathway in kb.pathways():
+        for pathway_reaction in kb.reactions_of_pathway(pathway):
+            reaction_to_pathways.setdefault(pathway_reaction, set()).add(pathway)
+    return reaction_to_pathways
+
+
 def main():
     parser = argument_parser()
     args = parser.parse_args()
     if args.config:
-        config = override_config(args.config, default_config)
+        config = override_config(args.config, config=default_config)
     else:
         config = default_config
 
     kb: KnowledgeBase = select_kb(config)
     reaction_graph, _reaction_to_vertex = reaction_graph_from_knowledge_base(kb)
+    reaction_to_pathway = build_reaction_to_pathway_mapping(kb)
 
     with open(args.output, "w") as f:
         writer = csv.writer(f, delimiter="\t")
-        header = ["pathway", "linear path reactions"]
+        header = ["pathway", "linear reaction path"]
         writer.writerow(header)
         for linear_path_reactions, pathway in find_linear_subpathways(
-            reaction_graph, kb
+            reaction_graph, reaction_to_pathway, args.extremities, args.specific_only
         ):
             record = [pathway, ",".join(linear_path_reactions)]
             writer.writerow(record)
