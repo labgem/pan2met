@@ -13,7 +13,7 @@ def read_list(filename: str) -> list[str]:
         return f.read().splitlines()
 
 
-def read_mapping(filename: str, sep="\t") -> dict[str, set[str]]:
+def read_mapping(filename: str) -> dict[str, set[str]]:
     """
     Read a dictionary from a file.
     """
@@ -25,6 +25,21 @@ def read_mapping(filename: str, sep="\t") -> dict[str, set[str]]:
                 key, value = parts
                 for item in value.split(","):
                     mapping[key].add(item)
+    return dict(mapping)
+
+
+def read_list_mapping(filename: str) -> dict[str, list[set[str]]]:
+    """
+    Read a dictionary from a file, where the first column is the key and the second column is a comma separated values set.
+    """
+    mapping: dict[str, list[set[str]]] = defaultdict(list)
+    with open(filename, "r") as f:
+        for row in f:
+            parts = row.strip().split("\t")
+            if len(parts) == 2:
+                key, value = parts
+                values = value.split(",")
+                mapping[key].append(set(values))
     return dict(mapping)
 
 

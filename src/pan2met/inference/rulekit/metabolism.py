@@ -1,5 +1,5 @@
 """
-Use the builtin rule kit engine to infer metabolic pathway
+Use the builtin rule kit engine to infer metabolic pathways
 """
 
 from collections.abc import Iterable
@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from ...io.knowledge_base import KnowledgeBase, select_kb
 from ...rulekit.rulekit import Rule, RuleEngine
 from ...taxonomy import NCBITaxonomyTree
+from ...utils import logger, read_list_mapping
 from .pathway_score import PathwayScore
 
 
@@ -19,6 +20,7 @@ class MetabolismRuleContext:
         catalyzed_reactions: set[str],
         taxon_id: int | None,
         taxonomy: NCBITaxonomyTree | None,
+        linear_subpathways: dict[str, list[set[str]]] | None,
     ):
         self.config = config
         self.pathway_id = pathway_id
@@ -29,6 +31,7 @@ class MetabolismRuleContext:
         self.catalyzed_reactions = catalyzed_reactions
         self.taxonomy = taxonomy
         self.taxon_id = taxon_id
+        self.linear_subpathways = linear_subpathways
 
     @property
     def name(self):
@@ -270,6 +273,35 @@ class MissingKeyReactionRule(ApplicableRule):
         return False
 
 
+class SpecificLinearSubpathwayRule(ApplicableRule):
+    ID = "linear_subpathway_specificity"
+
+    def evaluate(self, context):
+        """
+        This rule fires when a linear subpathway is specific to the pathway and identified in the reactome.
+        """
+        if context.linear_subpathways is None:
+            logger.warning(
+                f"I attempted to use the '{SpecificLinearSubpathwayRule.ID}' rule whereas no precomputed linear subpathways was provided."
+            )
+            return False
+
+        pathway = context.pathway_id
+        return pathway in context.linear_subpathways and any(
+            all(
+                reaction in context.catalyzed_reactions
+                for reaction in linear_subpathway_reactions
+            )
+            for linear_subpathway_reactions in context.linear_subpathways[pathway]
+        )
+
+    def apply(self, context):
+        """
+        We accept this pathway when a linear subpathway specific to the pathway was found.
+        """
+        return True
+
+
 class PathwayScoreRule(ApplicableRule):
     ID = "pathway_score"
 
@@ -316,6 +348,7 @@ AVAILABLE_RULE_CLASSES = [
     PathwayBiosynthesisMissingLastRule,
     MissingKeyReactionRule,
     PathwayScoreRule,
+    SpecificLinearSubpathwayRule,
 ]
 
 
@@ -327,6 +360,7 @@ class MetabolismRuleKit:
         catalyzed_reactions: set[str],
         taxon_id: int | None,
         taxonomy: NCBITaxonomyTree | None,
+        linear_subpathways: dict[str, list[set[str]]] | None,
     ):
         self.config = config
         self.kb = kb
@@ -344,6 +378,7 @@ class MetabolismRuleKit:
         # Force the rule order
         for i in range(len(self.rules)):
             self.rules[i].priority = i
+        self.linear_subpathways = linear_subpathways
 
     def inference(self) -> Iterable[str]:
         for pathway_id in self.kb.pathways():
@@ -355,6 +390,7 @@ class MetabolismRuleKit:
                 self.catalyzed_reactions,
                 self.taxon_id,
                 self.taxonomy,
+                self.linear_subpathways,
             )
             if engine.evaluate_first(context):
                 yield pathway_id
@@ -366,5 +402,11 @@ def infer_metabolism(reactome: set[str], taxon_id: int | None, config):
         taxonomy = NCBITaxonomyTree(config["reference"]["ncbi_taxonomy"])
     else:
         taxonomy = None
-    rule_kit = MetabolismRuleKit(config, kb, reactome, taxon_id, taxonomy)
+    if "linear_subpathway_specificity" in config["inference"]["rules"]:
+        linear_subpathways: dict[str, list[set[str]]] = read_list_mapping(
+            config["reference"]["linear_subpathways"]["path"]
+        )
+    rule_kit = MetabolismRuleKit(
+        config, kb, reactome, taxon_id, taxonomy, linear_subpathways
+    )
     yield from rule_kit.inference()

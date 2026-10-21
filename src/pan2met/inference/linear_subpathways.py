@@ -168,6 +168,7 @@ def find_linear_subpathways(
 
 
 def argument_parser():
+
     parser = argparse.ArgumentParser(
         description="Identify the sets of linear reaction path that are specific to a pathway."
     )
