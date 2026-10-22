@@ -21,7 +21,7 @@ def test_minpath(kb):
         "RXN-2",
     ]
 
-    results = list(minpath.inferred_pathways(kb, pathway_reactions))
+    results = list(minpath.inferred_pathways(kb, set(pathway_reactions)))
 
     assert {pathway} in results
 
@@ -34,7 +34,7 @@ def test_minpath_unsatisfiable(kb):
         "RXN-2",
     ]
 
-    results = list(minpath.inferred_pathways(kb, pathway_reactions))
+    results = list(minpath.inferred_pathways(kb, set(pathway_reactions)))
 
     assert results == []
 
@@ -45,6 +45,6 @@ def test_minpath_minimal(kb):
     ]
     # each model should return a set of minimal size of 1 pathway only.
 
-    results = list(minpath.inferred_pathways(kb, pathway_reactions))
+    results = list(minpath.inferred_pathways(kb, set(pathway_reactions)))
     assert len(results) >= 1
     assert all(len(x) == 1 for x in results)
