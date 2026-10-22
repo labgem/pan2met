@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+        - "**.md"
+        - "docs/**"
+        - ".readthedocs.yaml"
+        - "LICENSE"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".readthedocs.yaml"
+      - "LICENSE"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test:
+    name: test pan2met on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest      # linux-64
+    steps:
+        - uses: actions/checkout@v7
+
+        - uses: prefix-dev/setup-pixi@v0.8.8
+          with:
+            environments: default
+            locked: true
+            cache: true
+
+        - name: install pan2met from source
+          run: pixi run -e default python -m pip install .
+
+        - name: Show versions
+          run: pixi run -e default python -c "import pan2met; print('pan2met', pan2met.__version__)"
+
+        - name: Run tests
+          run: pixi run -e default python -m pytest

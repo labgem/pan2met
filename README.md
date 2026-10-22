@@ -1,5 +1,14 @@
 # `pan2met`
 
+[![CI](https://github.com/LABGeM/pan2met/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/LABGeM/pan2met/actions/workflows/ci.yml)
+[![Lint](https://github.com/LABGeM/pan2met/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/LABGeM/pan2met/actions/workflows/lint.yml)
+[![Typecheck](https://github.com/LABGeM/pan2met/actions/workflows/typecheck.yml/badge.svg?branch=main)](https://github.com/LABGeM/pan2met/actions/workflows/typecheck.yml)
+[![Docs](https://readthedocs.org/projects/pan2met/badge/?version=latest)](https://pan2met.readthedocs.io)
+[![License: CeCILL-C](https://img.shields.io/badge/license-CeCILL--C-blue.svg)](https://cecill.info/licences/Licence_CeCILL_V2.1-en.html)
+
+[![Version](https://img.shields.io/github/v/release/LABGeM/pan2met?label=version&sort=semver)](https://github.com/LABGeM/pan2met/releases)
+<!-- [![Container](https://img.shields.io/badge/ghcr.io-labgem%2Fpan2met-2496ED?logo=docker&logoColor=white)](https://github.com/LABGeM/pan2met/pkgs/container/pan2met) -->
+
 > A python library / CLI to predict metabolic networks at the pangenome scale.
 
 ## Usage
