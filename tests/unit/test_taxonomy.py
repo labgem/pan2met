@@ -1,7 +1,28 @@
+from pathlib import Path
+
+import pytest
+
 from pan2met import taxonomy
 from pan2met.config import default_config as config
 
 
+def _require_ncbi_taxonomy():
+    has_taxonomy = False
+    try:
+        assert Path(config["reference"]["ncbi_taxonomy"]).exists()
+        has_taxonomy = True
+    except AssertionError:
+        pass
+
+    return pytest.mark.skipif(
+        not has_taxonomy, reason="access to the NCBI Taxonomy dump required"
+    )
+
+
+require_ncbi_taxonomy = _require_ncbi_taxonomy()
+
+
+@require_ncbi_taxonomy
 def test_taxonomy_parent_tax_id():
     tree = taxonomy.NCBITaxonomyTree(config["reference"]["ncbi_taxonomy"])
 

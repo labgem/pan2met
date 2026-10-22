@@ -19,14 +19,14 @@ jobs:
       - name: install pan2met with doc dependencies
         run: pip install .[doc]
 
-#       - name: Documentation build
-#         shell: bash -l {0}
-#         run: |
-#           cd docs/
-#           sphinx-build -b html . build/
-#       # Great extra actions to compose with:
-#       # Create an artifact of the html output.
-#       - uses: actions/upload-artifact@v7
-#         with:
-#           name: Documentation HTML
-#           path: docs/build/
+      - name: Documentation build
+        shell: bash -l {0}
+        run: |
+          cd docs/
+          sphinx-build -b html . build/
+      # Great extra actions to compose with:
+      # Create an artifact of the html output.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Documentation HTML
+          path: docs/build/
