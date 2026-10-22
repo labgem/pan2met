@@ -64,6 +64,10 @@ For more information on how to use `pan2met`, please refer to the [`pan2met` doc
    pixi shell
    ```
 
+   ```bash
+   pip install .
+   ```
+
    Then, the `pan2met` command line interface should be installed and available in your PATH:
 
    ``` bash
