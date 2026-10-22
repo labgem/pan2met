@@ -20,13 +20,14 @@ inference:
             type: list
             allowed:
                 - taxonomic_range
-                - pathway_species
-                - pathway_key_reaction
-                - pathway_ontology
-                - pathway_variant
-                - pathway_score
+                - transport_pathway
+                - electron_transfer_pathway
                 - all_reactions_missing
                 - all_reactions_catalyzed
+                - degradation_pathway_missing_first
+                - biosynthesis_pathway_missing_last
+                - key_reaction_missing
+                - pathway_score
         pathway_score:
             type: dict
             schema:

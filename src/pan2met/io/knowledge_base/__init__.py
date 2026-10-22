@@ -13,7 +13,7 @@ def unsupported(function):
     __unsupported is True when the function would raise NotImplementedError
     """
 
-    def magic(self):
+    def magic(self, *args, **kwargs):
         raise NotImplementedError(function)
         # We do not call the function it self
 

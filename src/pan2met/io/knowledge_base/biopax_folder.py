@@ -135,6 +135,16 @@ class BioPAXFolderKnowledgeBase(KnowledgeBase):
         )
         return tuple_extract_value(results, index=0)
 
+    def pathways_with_reaction(self, reaction_id) -> list[str]:
+        """
+        List all pathways with the given reaction identifier.
+        """
+        reaction_uri = f"<{reaction_id}>"
+        results = self.queries.get_pathways_with_reaction(
+            self.conn, reaction_uri=reaction_uri
+        )
+        return tuple_extract_value(results, index=0)
+
     def name_of_pathway(self, pathway_id: str) -> str:
         """
         Get the name of a pathway
@@ -167,8 +177,8 @@ class BioPAXFolderKnowledgeBase(KnowledgeBase):
         Non-spontaneous reactions of a pathway
         """
         pathway_uri = f"<{pathway_id}>"
-        results = self.queries.get_spontaneous_reactions_of_pathway(
-            self.conn, pathway_uri
+        results = self.queries.get_non_spontaneous_reactions_of_pathway(
+            self.conn, pathway_uri=pathway_uri
         )
         return tuple_extract_value(results, index=0)
 
@@ -180,7 +190,7 @@ class BioPAXFolderKnowledgeBase(KnowledgeBase):
         """
         pathway_uri = f"<{pathway_id}>"
         results = self.queries.get_non_orphan_non_spontaneous_reactions_of_pathway(
-            self.conn, pathway_uri
+            self.conn, pathway_uri=pathway_uri
         )
         return tuple_extract_value(results, index=0)
 
@@ -219,5 +229,7 @@ class BioPAXFolderKnowledgeBase(KnowledgeBase):
         List the components of a complex
         """
         complex_uri = f"<{complex_id}>"
-        results = self.queries.get_complex_components(self.conn, complex_uri)
+        results = self.queries.get_complex_components(
+            self.conn, complex_uri=complex_uri
+        )
         return tuple_extract_value(results, index=1)

@@ -11,10 +11,13 @@ def prefixed(id: str) -> str:
     return f"{BIOPAX_XML_BASE}{id}"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def kb() -> KnowledgeBase:
     # Force the reference source to use metabiantes sql
     default_config["reference"]["knowledge_base"] = "biopax_folder"
+    default_config["reference"]["biopax_folder"]["path"] = (
+        "./tests/data/biopax-specification/Level3/examples/"
+    )
     return select_kb(default_config)
 
 
@@ -56,7 +59,8 @@ def test_kb_non_spontaneous_reactions_of_pathway(kb: BioPAXFolderKnowledgeBase):
     pathway = "#Pathway50"
     prefixed_pathway = prefixed(pathway)
     non_spontanous_reactions = kb.non_spontaneous_reactions_of_pathway(prefixed_pathway)
-    assert len(non_spontanous_reactions) == 2
+    print(non_spontanous_reactions)
+    assert len(non_spontanous_reactions) == 1
 
 
 def test_kb_non_orphan_non_spontaneous_reactions_of_pathway(
@@ -155,6 +159,4 @@ def test_kb_complex_components(kb: BioPAXFolderKnowledgeBase):
     ]
     prefixed_expected_components = list(map(prefixed, expected_components))
     complex_components = kb.components_of_complex(complex)
-    print(prefixed_expected_components)
-    print(complex_components)
     assert sorted(prefixed_expected_components) == sorted(complex_components)

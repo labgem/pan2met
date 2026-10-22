@@ -225,13 +225,15 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX bp: <http://www.biopax.org/release/biopax-level3.owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?reaction ?reaction_name
+SELECT ?reaction
 WHERE {
-    :pathway_uri rdf:type bp:Pathway ;
+    VALUES ?pathway {
+        :pathway_uri
+    }
+    ?pathway rdf:type bp:Pathway ;
              bp:pathwayComponent ?reaction .
-    ?reaction rdf:type bp:BiochemicalReaction ; # pathwayComponent ranges in bp:Interaction, bp:BiochemicalReaction is a bp:Conversion, which is an Interaction.
-              bp:standardName ?reaction_name ;
-              bp:spontaneous false
+    ?reaction rdf:type bp:BiochemicalReaction . # pathwayComponent ranges in bp:Interaction, bp:BiochemicalReaction is a bp:Conversion, which is an Interaction.
+    FILTER NOT EXISTS { ?reaction bp:spontaneous true }
 }
 
 # name: get_non_orphan_non_spontaneous_reactions_of_pathway(pathway_uri)

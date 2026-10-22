@@ -15,7 +15,7 @@ def run(cmd):
 def test_metabolism_inference():
     with tempfile.TemporaryDirectory() as tmpdirname:
         outdir = Path(tmpdirname)
-        reactions_filename = "./tests/test_data/cases/test0/reactions.list"
+        reactions_filename = "./tests/data/cases/test0/reactions.list"
         output_filename = outdir / "pathways.list"
         # output_log_filename = outdir / "reason.log"
         taxon_id = 562  # E. coli
