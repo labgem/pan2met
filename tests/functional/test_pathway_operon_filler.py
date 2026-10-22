@@ -16,11 +16,9 @@ def test_metabolism_inference():
     with tempfile.TemporaryDirectory() as tmpdirname:
         outdir = Path(tmpdirname)
 
-        confident_filename = "./tests/test_data/operon_filler/confident_reactions.tsv"
-        less_confident_filename = (
-            "./tests/test_data/operon_filler/confident_reactions.tsv"
-        )
-        pangenome_filename = "./tests/test_data/mock_pangenome_graph.gt"
+        confident_filename = "./tests/data/operon_filler/confident_reactions.tsv"
+        less_confident_filename = "./tests/data/operon_filler/confident_reactions.tsv"
+        pangenome_filename = "./tests/data/mock_pangenome_graph.gt"
         output_filename = outdir / "operon_filler_report.tsv"
 
         cmd = (

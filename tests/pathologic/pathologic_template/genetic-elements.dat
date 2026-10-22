@@ -1,7 +1,0 @@
-ID	test-organism
-NAME	test-organism
-TYPE	:CHRSM
-CIRCULAR?	Y
-ANNOT-FILE	test.pf
-SEQ-FILE	test.fasta
-//

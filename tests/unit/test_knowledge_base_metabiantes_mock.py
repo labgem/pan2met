@@ -11,7 +11,7 @@ def kb() -> KnowledgeBase:
     if "metabiantes" not in default_config:
         default_config["reference"]["metabiantes"] = {}
     default_config["reference"]["metabiantes"]["database"] = (
-        "tests/test_data/mock_metabiantes.db"
+        "tests/data/mock_metabiantes.db"
     )
     return select_kb(default_config)
 
