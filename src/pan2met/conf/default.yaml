@@ -28,9 +28,7 @@ inference:
 reference:
     ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01
     knowledge_base: metabiantes
-    padmet:
-        file: /mnt/shared/bank/metacyc.padmet
     metabiantes:
-        database: /mnt/shared/bank/metabiantes_metacyc_29.5.db
+        database: ./tests/data/mock_metabiantes.db
     biopax_folder:
         path: ./tests/data/biopax-specification/Level3/examples

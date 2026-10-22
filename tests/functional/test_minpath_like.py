@@ -9,9 +9,9 @@ from pathlib import Path
 from pan2met.utils import write_output
 
 REACTIONS = [
-    "RXN-20930",
-    "RXN-20928",
-    "RXN-20929",
+    "RXN-0",
+    "RXN-1",
+    "RXN-2",
 ]
 
 
