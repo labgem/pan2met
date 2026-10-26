@@ -3,7 +3,6 @@ Default configuration
 """
 
 import importlib.resources
-import io
 from pathlib import Path
 
 import yaml
@@ -17,15 +16,13 @@ default_config_str = importlib.resources.read_text(pan2met.conf, "default.yaml")
 default_config = yaml.safe_load(default_config_str)
 
 
-def override_config(filename: Path) -> dict:
+def override_config(filename: Path, config=default_config) -> dict:
     """
     Read default config and override it with values from config of a file
 
     :param filename: path to a config file.
     :return: the config
     """
-
-    config = default_config
 
     # Update config globally overriding default_config with keys from given config filename
     with open(filename, "r") as file:
@@ -38,8 +35,6 @@ def override_config(filename: Path) -> dict:
             )
 
     # Log the used config
-    with io.StringIO() as config_string_stream:
-        config.write(config_string_stream)
-        logger.info(f"Using config:\n{config_string_stream.getvalue()}")
+    logger.info(f"Using config:\n{yaml.dump(config)}")
 
     return config
