@@ -11,6 +11,8 @@ inference:
         - all_reactions_catalyzed
         - degradation_pathway_missing_first
         - biosynthesis_pathway_missing_last
+        - linear_subpathway_specificity
+        - reaction_specificity
         - key_reaction_missing
         - pathway_score
     pathway_score:
@@ -32,3 +34,7 @@ reference:
         database: ./tests/data/mock_metabiantes.db
     biopax_folder:
         path: ./tests/data/biopax-specification/Level3/examples
+    linear_subpathways:
+        path: ./tmp/specific_linear_subpathways.tsv
+    reaction_species:
+        path: ./tmp/specific_reaction.tsv

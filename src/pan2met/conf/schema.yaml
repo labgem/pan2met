@@ -26,6 +26,8 @@ inference:
                 - all_reactions_catalyzed
                 - degradation_pathway_missing_first
                 - biosynthesis_pathway_missing_last
+                - linear_subpathway_specificity
+                - reaction_specificity
                 - key_reaction_missing
                 - pathway_score
         pathway_score:
@@ -67,11 +69,19 @@ reference:
                 file:
                     type: string
         metabiantes:
+            type: dict
             schema:
                 database:
                     type: string
 
         biopax_folder:
+            type: dict
+            schema:
+                path:
+                    type: string
+
+        linear_subpathways:
+            type: dict
             schema:
                 path:
                     type: string
