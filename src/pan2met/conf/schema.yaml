@@ -85,3 +85,9 @@ reference:
             schema:
                 path:
                     type: string
+
+        specific_reaction:
+          type: dict
+          schema:
+            path:
+              type: string
