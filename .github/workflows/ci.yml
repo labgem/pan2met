@@ -48,5 +48,8 @@ jobs:
         - name: Show versions
           run: pixi run -e default python -c "import pan2met; print('pan2met', pan2met.__version__)"
 
+        - name: Ensure the mock metabiantes database is build
+          run: cd tests/data && bash create_mock_metabiantes.sh
+
         - name: Run tests
           run: pixi run -e default python -m pytest
