@@ -7,11 +7,32 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import pytest
+
+from pan2met.config import default_config as config
+
+
+def _require_ncbi_taxonomy():
+    has_taxonomy = False
+    try:
+        assert Path(config["reference"]["ncbi_taxonomy"]).exists()
+        has_taxonomy = True
+    except AssertionError:
+        pass
+
+    return pytest.mark.skipif(
+        not has_taxonomy, reason="access to the NCBI Taxonomy dump required"
+    )
+
+
+require_ncbi_taxonomy = _require_ncbi_taxonomy()
+
 
 def run(cmd):
     subprocess.run(cmd, shell=True, check=True)
 
 
+@require_ncbi_taxonomy
 def test_metabolism_inference():
     with tempfile.TemporaryDirectory() as tmpdirname:
         outdir = Path(tmpdirname)
