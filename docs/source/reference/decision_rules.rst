@@ -29,9 +29,6 @@ pathway is rejected by default.
 A glimpse into the decision rules proposed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``pathway_ontology`` - Reject some metabolic pathway based on pathway ontology
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 ``biosynthesis_missing_last`` - Reject if a biosynthesis pathway lacks its "last" reaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -52,45 +49,55 @@ occurs in the organism.
 
 **Caution remark**: The same caution must be taken regarding the computation of the "first" reaction with topological sorting as for the rule ``biosynthesis_missing_last``.
 
-
 .. ```` - Reject the transport pathways
 .. ------------------------------------
 
 ``signaling_pathways`` - Reject the signaling pathways
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``all_reactions_catalyzed`` - Accept a pathway when all its non spontaneous reactions are catalyzed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Rationale**: If we found evidence for the catalysis of all reactions of a pathway in an organism, we can reasonably expect this pathway to occurs in effect in the organism.
 
 When all reactions of a given pathway are either spontaneous, or have a known enzyme catalyzing them.
 
-When all reactions of the pathway can be spontaneous, this rule will fire too.
+When all reactions of the pathway can be spontaneous, this rule will fire too. This can cause overprediction, pathways with no strong evidence could be accepted.
 
 ``all_reactions_missing`` - Reject a pathway when none of its non spontaneous reactions is catalyzed
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Rationale**: When none of the reactions of the pathway have an associated enzyme, we have no reason to retained it.
 
-``KeyReaction``
-^^^^^^^^^^^^^^^
+``key_reaction_missing`` - Reject a pathway when one 'key' reaction is missing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``SynthesisMissingLast`` - Reject a biosynthesis pathway missing its last reaction.
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-``DegradationMissingFirst`` - Reject a degradation pathway missing its last reaction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MetaCyc associate to some pathway some "key" reactions. When such "key" reactions are missing, we reject the pathway.
 
 
-``EnergyMissingHalf`` - Reject an energy metabolism related pathway when half of its non spontaneous reactions lacks a catalyzis
+``transport_pathway`` - Reject the pathway if it is a transport pathway
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Rationale**: A transport pathway is a little bit different than a metabolic pathway, so the decision rules might be even less adapted for such pathways.
+
+
+```EnergyMissingHalf`` - Reject an energy metabolism related pathway when half of its non spontaneous reactions lacks a catalyzis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**********Rationale**:
+****Rationale**:
 
-``PathwayScore`` - Accept the pathway if its pathway score exceeds a threshold
+``electron_transfer_pathway`` - Reject the pathway if the pathway is an electron transfer pathway and at least one reaction is missing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Rationale**: We may consider that a pathway involved in the energy metabolism must be present as a whole, to be considered.
+
+
+
+``pathway_score`` - Accept the pathway if its pathway score exceeds a threshold
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In last resort, we compute a pathway score whose objective is to mesure how we can be confident in the pathway prediction.
+This measure is based on arbitrary criterion and shall not be taken as an estimate of a probability that the pathway is indeed realized by the organism.
 
 How is the PathwayScore computed?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

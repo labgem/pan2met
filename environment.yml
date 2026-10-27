@@ -1,0 +1,13 @@
+# a conda environment to run pan2met
+name: pan2met
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.14
+  - graph-tool=3
+  - pip
+  - clingo
+  - sqlite
+  - pip:
+    - pan2met@git+https://github.com/labgem/pan2met.git@v0.1.1
