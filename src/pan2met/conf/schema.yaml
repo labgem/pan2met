@@ -20,13 +20,16 @@ inference:
             type: list
             allowed:
                 - taxonomic_range
-                - pathway_species
-                - pathway_key_reaction
-                - pathway_ontology
-                - pathway_variant
-                - pathway_score
+                - transport_pathway
+                - electron_transfer_pathway
                 - all_reactions_missing
                 - all_reactions_catalyzed
+                - degradation_pathway_missing_first
+                - biosynthesis_pathway_missing_last
+                - linear_subpathway_specificity
+                - reaction_specificity
+                - key_reaction_missing
+                - pathway_score
         pathway_score:
             type: dict
             schema:
@@ -66,11 +69,25 @@ reference:
                 file:
                     type: string
         metabiantes:
+            type: dict
             schema:
                 database:
                     type: string
 
         biopax_folder:
+            type: dict
             schema:
                 path:
                     type: string
+
+        linear_subpathways:
+            type: dict
+            schema:
+                path:
+                    type: string
+
+        specific_reaction:
+          type: dict
+          schema:
+            path:
+              type: string

@@ -1,36 +1,41 @@
 """
-pan2met metabolism --reactions reactions.list --output pathways.list \
-    --taxon-id 562 --reason pathways_pan2met_reason.log
+pan2met proteic-complex --monomers monomer.list --output complex.list
 """
 
 import subprocess
 import tempfile
 from pathlib import Path
 
+from pan2met.utils import write_output
+
+REACTIONS = [
+    "RXN-0",
+    "RXN-1",
+    "RXN-2",
+]
+
 
 def run(cmd):
+    print(f"Running {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
 
 def test_metabolism_inference():
     with tempfile.TemporaryDirectory() as tmpdirname:
         outdir = Path(tmpdirname)
-        reactions_filename = "./tests/test_data/cases/test0/reactions.list"
-        output_filename = outdir / "pathways.list"
-        # output_log_filename = outdir / "reason.log"
-        taxon_id = 562  # E. coli
 
-        cmd = (
-            f'pan2met metabolism --reactions "{reactions_filename}" --output "{output_filename}"'
-            f" --taxon-id {taxon_id} "
-            # --reason "{output_log_filename}"'
-        )
+        reactions_filename = outdir / "reactions.list"
+        output_filename = outdir / "pathways.list"
+
+        # Write a sample list of protein monomers
+        write_output(reactions_filename, REACTIONS)
+
+        cmd = f'pan2met minpath --reactions "{reactions_filename}" --output "{output_filename}"'
 
         run(cmd)
 
         expected_outputs = [
             output_filename,
-            # output_log_filename,
         ]
 
         for file in expected_outputs:

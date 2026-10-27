@@ -1,11 +1,12 @@
 import logging
 from collections import defaultdict
 from collections.abc import Iterable
+from pathlib import Path
 
 logger = logging.getLogger("pan2met")
 
 
-def read_list(filename: str) -> list[str]:
+def read_list(filename: Path) -> list[str]:
     """
     Read a list of strings from a file, one per line
     """
@@ -13,7 +14,7 @@ def read_list(filename: str) -> list[str]:
         return f.read().splitlines()
 
 
-def read_mapping(filename: str, sep="\t") -> dict[str, set[str]]:
+def read_mapping(filename: str) -> dict[str, set[str]]:
     """
     Read a dictionary from a file.
     """
@@ -28,6 +29,21 @@ def read_mapping(filename: str, sep="\t") -> dict[str, set[str]]:
     return dict(mapping)
 
 
+def read_list_mapping(filename: str) -> dict[str, list[set[str]]]:
+    """
+    Read a dictionary from a file, where the first column is the key and the second column is a comma separated values set.
+    """
+    mapping: dict[str, list[set[str]]] = defaultdict(list)
+    with open(filename, "r") as f:
+        for row in f:
+            parts = row.strip().split("\t")
+            if len(parts) == 2:
+                key, value = parts
+                values = value.split(",")
+                mapping[key].append(set(values))
+    return dict(mapping)
+
+
 def reverse_mapping(mapping: dict[str, set[str]]) -> dict[str, set[str]]:
     """
     Reverse a dictionnary. Set values as keys and keys as values.
@@ -39,7 +55,7 @@ def reverse_mapping(mapping: dict[str, set[str]]) -> dict[str, set[str]]:
     return dict(reversed)
 
 
-def write_output(filename: str, content: Iterable[str]):
+def write_output(filename: Path, content: Iterable[str]):
     """
     Write a list of strings to a file, one per line
     """

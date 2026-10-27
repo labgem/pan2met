@@ -11,6 +11,8 @@ inference:
         - all_reactions_catalyzed
         - degradation_pathway_missing_first
         - biosynthesis_pathway_missing_last
+        - linear_subpathway_specificity
+        - reaction_specificity
         - key_reaction_missing
         - pathway_score
     pathway_score:
@@ -28,9 +30,11 @@ inference:
 reference:
     ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01
     knowledge_base: metabiantes
-    padmet:
-        file: /mnt/shared/bank/metacyc.padmet
     metabiantes:
-        database: /mnt/shared/bank/metabiantes_metacyc_29.5.db
+        database: ./tests/data/mock_metabiantes.db
     biopax_folder:
-        path: ./tests/test_data/biopax-specification/Level3/examples
+        path: ./tests/data/biopax-specification/Level3/examples
+    linear_subpathways:
+        path: ./tmp/specific_linear_subpathways.tsv
+    specific_reaction:
+        path: ./tmp/specific_reaction.tsv

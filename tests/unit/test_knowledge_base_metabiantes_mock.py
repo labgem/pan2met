@@ -4,14 +4,14 @@ from pan2met.config import default_config
 from pan2met.io.knowledge_base import KnowledgeBase, select_kb
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def kb() -> KnowledgeBase:
     # Force the reference source to use metabiantes sql
     default_config["reference"]["knowledge_base"] = "metabiantes"
     if "metabiantes" not in default_config:
         default_config["reference"]["metabiantes"] = {}
     default_config["reference"]["metabiantes"]["database"] = (
-        "tests/test_data/mock_metabiantes.db"
+        "tests/data/mock_metabiantes.db"
     )
     return select_kb(default_config)
 

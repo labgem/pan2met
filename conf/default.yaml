@@ -1,0 +1,40 @@
+genomic_context:
+    transitive_distance: 3
+    local_edge_jaccard_threshold: 0.8
+
+inference:
+    rules:
+        - taxonomic_range
+        - transport_pathway
+        - electron_transfer_pathway
+        - all_reactions_missing
+        - all_reactions_catalyzed
+        - degradation_pathway_missing_first
+        - biosynthesis_pathway_missing_last
+        - key_reaction_missing
+        - linear_subpathway_specificity
+        - reaction_specificity
+        - pathway_score
+    pathway_score:
+        threshold: 0.15
+        # this value must be > 1 to be effective.
+        taxonomic_range_boost: 1.2
+        # must be above 1 too.
+        neighbor_species_boost: 1.2
+        components:
+            - uniqueness
+            - key_reaction
+            - taxonomic_range_boost
+            - neighbor_species_boost
+
+reference:
+    ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01
+    knowledge_base: metabiantes
+    metabiantes:
+        database: /mnt/shared/bank/metabiantes_metacyc_29.5.db
+    biopax_folder:
+        path: ./tests/data/biopax-specification/Level3/examples
+    linear_subpathways:
+        path: ./tmp/specific_linear_subpathways.tsv
+    specific_reaction:
+        path: ./tmp/specific_reaction.tsv
