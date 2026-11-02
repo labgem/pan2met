@@ -9,6 +9,8 @@ inference:
         - electron_transfer_pathway
         - all_reactions_missing
         - all_reactions_catalyzed
+        - in_taxonomic_range
+        - out_taxonomic_range
         - degradation_pathway_missing_first
         - biosynthesis_pathway_missing_last
         - linear_subpathway_specificity
@@ -26,6 +28,9 @@ inference:
             - key_reaction
             - taxonomic_range_boost
             - neighbor_species_boost
+    out_taxonomic_range:
+      override: true
+      minimum_catalysis_to_override: 3
 
 reference:
     ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01

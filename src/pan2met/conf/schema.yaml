@@ -19,7 +19,8 @@ inference:
         rules:
             type: list
             allowed:
-                - taxonomic_range
+                - in_taxonomic_range
+                - out_taxonomic_range
                 - transport_pathway
                 - electron_transfer_pathway
                 - all_reactions_missing
@@ -51,6 +52,15 @@ inference:
                         - key_reaction
                         - taxonomic_range_boost
                         - neighbor_species_boost
+        out_taxonomic_range:
+          type: dict
+          schema:
+            minimum_catalysis_to_override:
+              type: int
+              min: 1
+            override:
+              type: bool
+
 
 reference:
     type: dict

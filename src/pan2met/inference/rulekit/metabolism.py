@@ -132,6 +132,10 @@ class ApplicableRule(Rule):
 
 
 class AllReactionsRule(ApplicableRule):
+    """
+    Accept a pathway when all non-spontaneous reactions are catalyzed
+    """
+
     ID = "all_reactions_catalyzed"
 
     def __init__(self, kb):
@@ -158,6 +162,10 @@ class NoReactionCatalyzedRule(ApplicableRule):
         """
         Applies if none of the non spontaneous reactions is catalyzed, and there is at least one reaction in this case.
         """
+        return all(
+            reaction not in context.catalyzed_reactions
+            for reaction in context.pathway_non_spontaneous_reactions
+        )
 
     def apply(self, context):
         """
@@ -167,6 +175,10 @@ class NoReactionCatalyzedRule(ApplicableRule):
 
 
 class TransportPathwayRule(ApplicableRule):
+    """
+    Reject a transport pathway
+    """
+
     ID = "transport_pathway"
 
     def __init__(self, kb):
@@ -186,6 +198,10 @@ class TransportPathwayRule(ApplicableRule):
 
 
 class ElectronTransferRule(ApplicableRule):
+    """
+    Reject an electron transfer pathway having at least one non-spontaneous reaction with no known catalysis.
+    """
+
     ID = "electron_transfer_pathway"
 
     def __init__(self, kb):
@@ -202,12 +218,17 @@ class ElectronTransferRule(ApplicableRule):
         )
 
     def apply(self, context):
-        "Reject a transport pathway"
+        "Reject an electron transfer pathway"
         return False
 
 
 class PathwayInTaxonomicRangeRule(ApplicableRule):
-    ID = "taxonomic_range"
+    """
+    Accept a pathway if the organism is in the expected taxonomic range of the pathway
+    and all non-spontaneous reactions are catalyzed.
+    """
+
+    ID = "in_taxonomic_range"
 
     def __init__(self, kb):
         self.rule_applicability([kb.pathway_taxonomic_range])
@@ -219,7 +240,41 @@ class PathwayInTaxonomicRangeRule(ApplicableRule):
         return True
 
 
+class PathwayOutTaxonomicRangeRule(ApplicableRule):
+    """
+    Reject a pathway if the organism is not in the pathway expected taxonomic range
+
+    A variant of this rule when `inference.out_taxonomic_range.override` is set to True
+    disable the rule for pathway having a number of catalyzed reactions at least equal
+    to a threshold value configured in `inference.out_taxonomic_range.minimum_catalysis_to_override`.
+    """
+
+    ID = "out_taxonomic_range"
+
+    def __init__(self, kb):
+        self.rule_applicability([kb.pathway_taxonomic_range])
+
+    def evaluate(self, context):
+        # Override rule, if the pathway has more than a configured minimum number of catalyzed reactions
+        if (
+            context.config["inference"]["out_taxonomic_range"]["override"]
+            and len(context.pathway_catalyzed_reactions)
+            >= context.config["inference"]["out_taxonomic_range"][
+                "minimum_catalysis_to_override"
+            ]
+        ):
+            return False
+        return not context.in_taxonomic_range
+
+    def apply(self, context):
+        return False
+
+
 class PathwayDegradationMissingFirstRule(ApplicableRule):
+    """
+    Reject a degradation pathway missing the first reactions in the reaction graph topological sort.
+    """
+
     ID = "degradation_pathway_missing_first"
 
     def __init__(self, kb):
@@ -240,6 +295,12 @@ class PathwayDegradationMissingFirstRule(ApplicableRule):
 
 
 class PathwayBiosynthesisMissingLastRule(ApplicableRule):
+    """
+    Reject a biosynthesis pathway missing its last reaction in the topological order of the reaction graph.
+    The last reaction of the pathway reaction graph topological order is expected to be the one leading to the metabolite of interest (though not necessarily always the case).
+
+    """
+
     ID = "biosynthesis_pathway_missing_last"
 
     def __init__(self, kb):
@@ -267,8 +328,9 @@ class MissingKeyReactionRule(ApplicableRule):
 
     def evaluate(self, context):
         pathway_key_reactions = context.kb.key_reactions_of_pathway(context.pathway_id)
-        return (
-            len(set(pathway_key_reactions).difference(context.catalyzed_reactions)) > 0
+        return any(
+            reaction not in context.catalyzed_reactions
+            for reaction in pathway_key_reactions
         )
 
     def apply(self, context):
