@@ -54,7 +54,7 @@ class ASPMetabolicBipartiteNetworkInference:
     def dump_asp_atoms_semicolon(self, atoms: list[str], type: str) -> str:
         return f"{type}(" + ";".join(f'"{atom}"' for atom in atoms) + ")."
 
-    def inferred_reactions(self, catalysis: list[str]) -> set[str]:
+    def inferred_reactions(self, catalysis: list[str], seed: str) -> set[str]:
         """
         List inferred reactions of the built metabolic graph using Answer Set Programming/ASP inference rules.
         """
@@ -67,9 +67,11 @@ class ASPMetabolicBipartiteNetworkInference:
         ) as denovo_bipartite_metabolic_graph_rule_path:
             inline_asp = self.dump_metabolic_knowledge_to_asp()
             inline_asp += self.dump_asp_atoms_semicolon(catalysis, "catalysis")
+            seed_asp = f'seed("{seed}").'
+            inline_asp += seed_asp
 
-            # with open('/tmp/atoms.lp', "w") as f:
-            #     f.write(inline_asp)
+            with open("/tmp/atoms.lp", "w") as f:
+                f.write(inline_asp)
 
             answers = clyngor.solve(
                 [denovo_bipartite_metabolic_graph_rule_path],
@@ -92,6 +94,11 @@ def parse_arguments():
     parser.add_argument(
         "--catalysis", help="list of catalyzed reaction identifiers", required=True
     )
+    parser.add_argument(
+        "--seed",
+        help="seed reaction to build the metabolic graph around.",
+        required=True,
+    )
     parser.add_argument("-o", "--output", help="output list of pathways", required=True)
     return parser.parse_args()
 
@@ -104,13 +111,13 @@ def main():
         config = override_config(args.config, default_config)
     else:
         config = default_config
-    if args.catalysis:
-        catalysis = set(read_list(args.catalysis))
-        kb = select_kb(config)
-        inference = ASPMetabolicBipartiteNetworkInference(kb)
 
-        inferred_reactions: set[str] = inference.inferred_reactions(catalysis)
-        write_output(args.output, inferred_reactions)
+    catalysis = set(read_list(args.catalysis))
+    kb = select_kb(config)
+    inference = ASPMetabolicBipartiteNetworkInference(kb)
+
+    inferred_reactions: set[str] = inference.inferred_reactions(catalysis, args.seed)
+    write_output(args.output, inferred_reactions)
 
 
 if __name__ == "__main__":
