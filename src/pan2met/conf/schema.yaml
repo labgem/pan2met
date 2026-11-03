@@ -52,14 +52,14 @@ inference:
                         - key_reaction
                         - taxonomic_range_boost
                         - neighbor_species_boost
-        out_taxonomic_range:
-          type: dict
-          schema:
-            minimum_catalysis_to_override:
-              type: int
-              min: 1
-            override:
-              type: bool
+        # out_taxonomic_range:
+        #   type: dict
+        #   schema:
+        #     minimum_catalysis_to_override:
+        #       type: int
+        #       min: 1
+        #     override:
+        #       type: bool
 
 
 reference:

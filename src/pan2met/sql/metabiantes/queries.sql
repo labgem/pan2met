@@ -174,3 +174,18 @@ WHERE complex.type = 'complex';
 SELECT polypeptide_complex_component.component_id
 FROM polypeptide_complex_component
 WHERE polypeptide_complex_component.complex_id = :complex_id;
+
+
+--name: get_reaction_physiological_direction(reaction_id)^
+-- Get the physiological direction of a reaction
+SELECT reaction.reaction_physiological_direction
+FROM reaction
+WHERE reaction.id = :reaction_id;
+
+-- name: get_side_of_reaction(reaction_id, reaction_side)
+-- Get the list of product metabolites of a reaction
+SELECT reaction_substrate.substrate_id
+FROM reaction_substrate
+WHERE reaction_substrate.reaction_id = :reaction_id
+AND reaction_substrate.reaction_side = :reaction_side;
+

@@ -4,7 +4,6 @@ genomic_context:
 
 inference:
     rules:
-        - taxonomic_range
         - transport_pathway
         - electron_transfer_pathway
         - all_reactions_missing
@@ -28,9 +27,9 @@ inference:
             - key_reaction
             - taxonomic_range_boost
             - neighbor_species_boost
-    out_taxonomic_range:
-      override: true
-      minimum_catalysis_to_override: 3
+    # out_taxonomic_range:
+    #   override: true
+    #   minimum_catalysis_to_override: 3
 
 reference:
     ncbi_taxonomy: /mnt/shared/bank/NCBI-Taxonomy/taxdmp_2026-01-01

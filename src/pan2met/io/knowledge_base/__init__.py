@@ -177,6 +177,20 @@ class KnowledgeBase(ABC):
         """
         raise NotImplementedError()
 
+    @unsupported
+    def reactant_of_reaction(self, reaction_id: str) -> list[str]:
+        """
+        Get the list of reactant metabolite of a reaction.
+        """
+        raise NotImplementedError()
+
+    @unsupported
+    def product_of_reaction(self, reaction_id: str) -> list[str]:
+        """
+        Get the list of product metabolite of a reaction.
+        """
+        raise NotImplementedError()
+
 
 def select_kb(config) -> KnowledgeBase:
     match config["reference"]["knowledge_base"]:

@@ -30,7 +30,9 @@ reaction_hole(Reaction) :- selected_reaction(Reaction)
 
 % define a seed reaction with seed(Reaction).
 
-reachable(Reaction) :- seed(Reaction) , selected_reaction(Reaction).
+1 = { seed(Reaction) : catalysis(Reaction) }.
+
+reachable(Reaction) :- seed(Reaction).
 reachable(Reaction1) :- selected_reaction(Reaction1)
                      , selected_reaction(Reaction2)
                      , reaction_product(Reaction1, Metabolite)

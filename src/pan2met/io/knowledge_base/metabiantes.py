@@ -11,6 +11,7 @@ import aiosql
 import pan2met
 import pan2met.sql.metabiantes
 
+from ...utils import logger
 from . import KnowledgeBase
 
 
@@ -255,3 +256,59 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
                 self.connection, complex_id=complex_id
             )
         )
+
+    def reaction_physiological_direction(self, reaction_id) -> str | None:
+        """
+        "left-to-right" or "right-to-left" or null
+        """
+        return self.queries.get_reaction_physiological_direction(
+            self.connection, reaction_id=reaction_id
+        )[0]
+
+    def sides_of_reaction(self, reaction_id: str) -> tuple[list[str], list[str]]:
+        """
+        Get the list of reactant and product metabolites of a reaction. (in the physiological order)
+        """
+
+        physiological_direction = self.reaction_physiological_direction(reaction_id)
+
+        if physiological_direction is None:
+            # when no physiological order is defined, we assume "left-to-right"
+            logger.warning(
+                f"No physiological order defined for {reaction_id}. Default to 'left-to-right'"
+            )
+            physiological_direction = "left-to-right"
+
+        if physiological_direction == "left-to-right":
+            product_side = "RIGHT"
+            reactant_side = "LEFT"
+        elif physiological_direction == "right-to-left":
+            product_side = "LEFT"
+            reactant_side = "RIGHT"
+        else:
+            logger.critical(f"not understood {physiological_direction}")
+
+        reactants = self._aiosql_to_list(
+            self.queries.get_side_of_reaction(
+                self.connection, reaction_id=reaction_id, reaction_side=reactant_side
+            )
+        )
+        products = self._aiosql_to_list(
+            self.queries.get_side_of_reaction(
+                self.connection, reaction_id=reaction_id, reaction_side=product_side
+            )
+        )
+
+        return (reactants, products)
+
+    def reactant_of_reaction(self, reaction_id: str) -> list[str]:
+        """
+        Get the list of reactant and product metabolites of a reaction. (in the physiological order)
+        """
+        return self.sides_of_reaction(reaction_id)[0]
+
+    def product_of_reaction(self, reaction_id: str) -> list[str]:
+        """
+        Get the list of product metabolite of a reaction. (in the physiological order)
+        """
+        return self.sides_of_reaction(reaction_id)[1]
