@@ -188,6 +188,12 @@ def argument_parser():
         default=True,
     )
     parser.add_argument(
+        "--intra-variant",
+        action=argparse.BooleanOptionalAction,
+        help="whether to search the linear subpathway for pathways inside a variant group",
+        default=False,
+    )
+    parser.add_argument(
         "-o",
         "--output",
         help="output filename (defaults to stdout)",
@@ -214,18 +220,43 @@ def main():
         config = default_config
 
     kb: KnowledgeBase = select_kb(config)
-    reaction_graph, _reaction_to_vertex = reaction_graph_from_knowledge_base(kb)
     reaction_to_pathway = build_reaction_to_pathway_mapping(kb)
+    if not args.intra_variant:
+        reaction_graph, _reaction_to_vertex = reaction_graph_from_knowledge_base(
+            kb, pathways=kb.pathways()
+        )
 
-    with open(args.output, "w") as f:
-        writer = csv.writer(f, delimiter="\t")
-        header = ["pathway", "linear reaction path"]
-        writer.writerow(header)
-        for linear_path_reactions, pathway in find_linear_subpathways(
-            reaction_graph, reaction_to_pathway, args.extremities, args.specific_only
-        ):
-            record = [pathway, ",".join(linear_path_reactions)]
-            writer.writerow(record)
+        with open(args.output, "w") as f:
+            writer = csv.writer(f, delimiter="\t")
+            header = ["pathway", "linear reaction path"]
+            writer.writerow(header)
+            for linear_path_reactions, pathway in find_linear_subpathways(
+                reaction_graph,
+                reaction_to_pathway,
+                args.extremities,
+                args.specific_only,
+            ):
+                record = [pathway, ",".join(linear_path_reactions)]
+                writer.writerow(record)
+    else:
+        with open(args.output, "w") as f:
+            writer = csv.writer(f, delimiter="\t")
+            header = ["pathway", "linear reaction path"]
+            writer.writerow(header)
+
+            for variant_group in kb.variant_groups():
+                pathways = kb.pathways_of_variant_group(variant_group)
+                reaction_graph, _reaction_to_vertex = (
+                    reaction_graph_from_knowledge_base(kb, pathways=pathways)
+                )
+                for linear_path_reactions, pathway in find_linear_subpathways(
+                    reaction_graph,
+                    reaction_to_pathway,
+                    args.extremities,
+                    args.specific_only,
+                ):
+                    record = [pathway, ",".join(linear_path_reactions)]
+                    writer.writerow(record)
 
 
 if __name__ == "__main__":

@@ -180,6 +180,22 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
             self.queries.get_variants_of_pathway(self.connection, pathway_id=pathway_id)
         )
 
+    def variant_groups(self) -> list[int]:
+        """
+        List the variant group identifiers.
+        """
+        return self._aiosql_to_list(self.queries.get_variant_groups(self.connection))
+
+    def pathways_of_variant_group(self, variant_group_id: int) -> list[str]:
+        """
+        List of the pathways belonging to a variant group.
+        """
+        return self._aiosql_to_list(
+            self.queries.get_variant_group_pathways(
+                self.connection, variant_group_id=variant_group_id
+            )
+        )
+
     def ontology_parent_class_of_pathway(self, pathway_id: str) -> list[str]:
         """
         List the parent class of a pathway in the ontology of pathway tools

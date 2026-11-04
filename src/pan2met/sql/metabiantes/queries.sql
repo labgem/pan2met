@@ -189,3 +189,13 @@ FROM reaction_substrate
 WHERE reaction_substrate.reaction_id = :reaction_id
 AND reaction_substrate.reaction_side = :reaction_side;
 
+-- name: get_variant_groups()
+-- Get the list of variant group identifiers
+SELECT distinct pathway_variant_group.variant_group_id
+FROM pathway_variant_group;
+
+-- name: get_variant_group_pathways(variant_group_id)
+-- Get the list of pathway variants belonging to a given variant group
+SELECT pathway_variant_group.variant_id
+FROM pathway_variant_group
+WHERE pathway_variant_group.variant_group_id = :variant_group_id;

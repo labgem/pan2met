@@ -10,13 +10,15 @@ from .knowledge_base import KnowledgeBase
 
 
 def reaction_graph_from_knowledge_base(
-    kb: KnowledgeBase,
+    kb: KnowledgeBase, pathways: list[str] | None
 ) -> tuple[gt.Graph, dict[str, gt.Vertex]]:
     """
     Build a reaction graph, based on the content of the knowledgebase
     """
     edges: set[tuple[str, str]] = set()
-    for pathway in kb.pathways():
+    if pathways is None:
+        pathways = kb.pathways()
+    for pathway in pathways:
         for reaction_from, reaction_to in kb.pathway_reaction_order(pathway):
             edge = (reaction_from, reaction_to)
             edges.add(edge)
