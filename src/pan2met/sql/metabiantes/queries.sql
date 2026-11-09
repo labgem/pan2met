@@ -184,7 +184,7 @@ WHERE reaction.id = :reaction_id;
 
 -- name: get_side_of_reaction(reaction_id, reaction_side)
 -- Get the list of product metabolites of a reaction
-SELECT reaction_substrate.substrate_id
+SELECT reaction_substrate.substrate_id, reaction_substrate.stoechiometry
 FROM reaction_substrate
 WHERE reaction_substrate.reaction_id = :reaction_id
 AND reaction_substrate.reaction_side = :reaction_side;

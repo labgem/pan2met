@@ -277,11 +277,20 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         """
         "left-to-right" or "right-to-left" or null
         """
-        return self.queries.get_reaction_physiological_direction(
+        results = self.queries.get_reaction_physiological_direction(
             self.connection, reaction_id=reaction_id
-        )[0]
+        )
+        if results is not None:
+            return results[0]
+        else:
+            return None
 
-    def sides_of_reaction(self, reaction_id: str) -> tuple[list[str], list[str]]:
+    def sides_of_reaction(
+        self, reaction_id: str, coefficient: bool = False
+    ) -> (
+        tuple[list[str], list[str]]
+        | tuple[list[tuple[int, str]], list[tuple[int, str]]]
+    ):
         """
         Get the list of reactant and product metabolites of a reaction. (in the physiological order)
         """
@@ -304,27 +313,54 @@ class MetabiantesKnowledgeBase(KnowledgeBase):
         else:
             logger.critical(f"not understood {physiological_direction}")
 
-        reactants = self._aiosql_to_list(
-            self.queries.get_side_of_reaction(
+        if not coefficient:
+            results = self.queries.get_side_of_reaction(
                 self.connection, reaction_id=reaction_id, reaction_side=reactant_side
             )
-        )
-        products = self._aiosql_to_list(
-            self.queries.get_side_of_reaction(
+            if results is not None:
+                reactants = self._aiosql_to_list(results)
+            else:
+                reactants = []
+
+            results = self.queries.get_side_of_reaction(
                 self.connection, reaction_id=reaction_id, reaction_side=product_side
             )
-        )
+            if results is not None:
+                products = self._aiosql_to_list(
+                    self.queries.get_side_of_reaction(
+                        self.connection,
+                        reaction_id=reaction_id,
+                        reaction_side=product_side,
+                    )
+                )
+            else:
+                products = []
+            return (reactants, products)
+        else:
+            results = self.queries.get_side_of_reaction(
+                self.connection, reaction_id=reaction_id, reaction_side=reactant_side
+            )
+            reactants = [
+                (int(res[1]), res[0]) for res in results if results is not None
+            ]
+            results = self.queries.get_side_of_reaction(
+                self.connection, reaction_id=reaction_id, reaction_side=product_side
+            )
+            products = [(int(res[1]), res[0]) for res in results if results is not None]
+            return (reactants, products)
 
-        return (reactants, products)
-
-    def reactant_of_reaction(self, reaction_id: str) -> list[str]:
+    def reactant_of_reaction(
+        self, reaction_id: str, coefficient: bool = False
+    ) -> list[str] | list[tuple[int, str]]:
         """
         Get the list of reactant and product metabolites of a reaction. (in the physiological order)
         """
-        return self.sides_of_reaction(reaction_id)[0]
+        return self.sides_of_reaction(reaction_id, coefficient)[0]
 
-    def product_of_reaction(self, reaction_id: str) -> list[str]:
+    def product_of_reaction(
+        self, reaction_id: str, coefficient: bool = False
+    ) -> list[str] | list[tuple[int, str]]:
         """
         Get the list of product metabolite of a reaction. (in the physiological order)
         """
-        return self.sides_of_reaction(reaction_id)[1]
+        return self.sides_of_reaction(reaction_id, coefficient)[1]
